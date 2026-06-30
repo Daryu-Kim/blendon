@@ -1,0 +1,47 @@
+import type { Category, GradeBenefit, GradeCode } from '~/types/domain'
+
+export const gradePolicy: Record<GradeCode, Omit<GradeBenefit, 'id' | 'gradeCode' | 'createdAt' | 'updatedAt'>> = {
+  BASIC: { internalCode: 'G1', level: 1, label: 'BASIC', discountRate: 0, pointRate: 1, minPurchaseAmount: 0, freeShippingThreshold: 50000, isVisible: true, order: 1 },
+  PLUS: { internalCode: 'G3', level: 3, label: 'PLUS', discountRate: 3, pointRate: 1.5, minPurchaseAmount: 100000, freeShippingThreshold: 50000, isVisible: true, order: 2 },
+  PRO: { internalCode: 'G5', level: 5, label: 'PRO', discountRate: 5, pointRate: 2, minPurchaseAmount: 300000, freeShippingThreshold: 30000, isVisible: true, order: 3 },
+  VIP: { internalCode: 'G8', level: 8, label: 'VIP', discountRate: 8, pointRate: 3, minPurchaseAmount: 700000, freeShippingThreshold: 0, isVisible: true, order: 4 },
+  BLACK: { internalCode: 'G10', level: 10, label: 'BLACK', discountRate: 12, pointRate: 5, minPurchaseAmount: 1500000, freeShippingThreshold: 0, isVisible: true, order: 5 }
+}
+
+export const gradeBenefitSeed: GradeBenefit[] = Object.entries(gradePolicy).map(([gradeCode, policy]) => {
+  const now = new Date(0).toISOString()
+  return { id: gradeCode as GradeCode, gradeCode: gradeCode as GradeCode, ...policy, createdAt: now, updatedAt: now }
+})
+
+export const categorySeed: Category[] = [
+  { id: 'device', name: '디바이스', slug: 'device', parentId: null, depth: 1, order: 1, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'device-starter', name: '입문용', slug: 'starter-device', parentId: 'device', depth: 2, order: 1, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'device-compact', name: '컴팩트형', slug: 'compact-device', parentId: 'device', depth: 2, order: 2, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'device-high', name: '고출력형', slug: 'high-power-device', parentId: 'device', depth: 2, order: 3, isVisible: true, minUserGradeToView: 'PLUS', adultOnly: true },
+  { id: 'device-allinone', name: '일체형', slug: 'all-in-one-device', parentId: 'device', depth: 2, order: 4, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'device-replaceable', name: '교체형', slug: 'replaceable-device', parentId: 'device', depth: 2, order: 5, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'flavor', name: '플레이버', slug: 'flavor', parentId: null, depth: 1, order: 2, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'flavor-fruit', name: '과일', slug: 'fruit', parentId: 'flavor', depth: 2, order: 1, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'flavor-menthol', name: '멘솔', slug: 'menthol', parentId: 'flavor', depth: 2, order: 2, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'flavor-dessert', name: '디저트', slug: 'dessert', parentId: 'flavor', depth: 2, order: 3, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'flavor-drink', name: '음료', slug: 'drink', parentId: 'flavor', depth: 2, order: 4, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'flavor-tobacco', name: '타바코', slug: 'tobacco-note', parentId: 'flavor', depth: 2, order: 5, isVisible: true, minUserGradeToView: 'PLUS', adultOnly: true },
+  { id: 'flavor-simple', name: '심플', slug: 'simple', parentId: 'flavor', depth: 2, order: 6, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'nicotine-free', name: '니코틴 프리', slug: 'nicotine-free', parentId: null, depth: 1, order: 3, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'nicotine-free-flavor', name: '무니코틴 플레이버', slug: 'zero-flavor', parentId: 'nicotine-free', depth: 2, order: 1, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'nicotine-free-starter', name: '입문 추천', slug: 'zero-starter', parentId: 'nicotine-free', depth: 2, order: 2, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'nicotine-free-daily', name: '데일리 추천', slug: 'zero-daily', parentId: 'nicotine-free', depth: 2, order: 3, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'adult-only', name: '성인 전용', slug: 'adult-only', parentId: null, depth: 1, order: 4, isVisible: true, minUserGradeToView: 'PLUS', adultOnly: true },
+  { id: 'alternative-nicotine', name: '대체 니코틴', slug: 'alternative-choice', parentId: 'adult-only', depth: 2, order: 1, isVisible: true, minUserGradeToView: 'PLUS', adultOnly: true },
+  { id: 'member-only', name: '회원 전용 상품', slug: 'member-only', parentId: 'adult-only', depth: 2, order: 2, isVisible: true, minUserGradeToView: 'PRO', adultOnly: true },
+  { id: 'consumable', name: '리필/소모품', slug: 'consumable', parentId: null, depth: 1, order: 5, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'consumable-pod', name: '팟', slug: 'pod', parentId: 'consumable', depth: 2, order: 1, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'consumable-coil', name: '코일', slug: 'coil', parentId: 'consumable', depth: 2, order: 2, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'consumable-cartridge', name: '카트리지', slug: 'cartridge', parentId: 'consumable', depth: 2, order: 3, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'consumable-cable', name: '충전기/케이블', slug: 'cable', parentId: 'consumable', depth: 2, order: 4, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'consumable-case', name: '케이스/파우치', slug: 'case', parentId: 'consumable', depth: 2, order: 5, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'brand', name: '브랜드관', slug: 'brand', parentId: null, depth: 1, order: 6, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'starter-pick', name: '입문 추천', slug: 'starter-pick', parentId: null, depth: 1, order: 7, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'lounge-pick', name: '라운지 픽', slug: 'lounge-pick', parentId: null, depth: 1, order: 8, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false },
+  { id: 'event', name: '이벤트', slug: 'event', parentId: null, depth: 1, order: 9, isVisible: true, minUserGradeToView: 'BASIC', adultOnly: false }
+]

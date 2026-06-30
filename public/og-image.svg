@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#F7F3EA"/>
+  <rect x="80" y="80" width="1040" height="470" rx="36" fill="#fff"/>
+  <circle cx="960" cy="166" r="70" fill="#D6A85A"/>
+  <circle cx="1000" cy="240" r="52" fill="#8FAE9D"/>
+  <text x="130" y="225" font-family="Pretendard, Arial, sans-serif" font-size="70" font-weight="800" fill="#171717">BLEND ON</text>
+  <text x="130" y="305" font-family="Pretendard, Arial, sans-serif" font-size="34" fill="#171717">취향을 블렌딩하다</text>
+  <text x="130" y="375" font-family="Pretendard, Arial, sans-serif" font-size="28" fill="#5f574b">성인 취향 라이프스타일 편집샵</text>
+</svg>

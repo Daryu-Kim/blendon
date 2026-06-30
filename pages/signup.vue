@@ -1,0 +1,492 @@
+<template>
+  <main class="section page-shell signup-page">
+    <section class="signup-shell">
+      <header class="signup-header">
+        <p class="eyebrow">JOIN</p>
+        <h1>회원가입</h1>
+        <p>본인확인 후 계정 정보를 입력해 주세요.</p>
+      </header>
+
+      <form class="signup-form" @submit.prevent="submit">
+        <section class="surface form-section">
+          <div class="section-heading">
+            <span>01</span>
+            <div>
+              <h2>본인확인</h2>
+              <p>회원가입 시 성인 여부를 1회 확인합니다.</p>
+            </div>
+          </div>
+
+          <div class="form-grid two-fields">
+            <div class="form-row">
+              <label for="displayName">이름</label>
+              <Input id="displayName" v-model="form.displayName" autocomplete="name" required />
+            </div>
+            <div class="form-row">
+              <label for="phoneNumber">휴대폰 번호</label>
+              <Input id="phoneNumber" v-model="form.phoneNumber" inputmode="tel" placeholder="010-0000-0000" required />
+            </div>
+            <div class="form-row">
+              <label for="birthDate">생년월일</label>
+              <Input id="birthDate" v-model="form.birthDate" type="date" required />
+            </div>
+            <div class="verify-action">
+              <Button type="button" variant="secondary" :disabled="identityVerified" @click="verifyIdentity">
+                {{ identityVerified ? '확인 완료' : '본인확인' }}
+              </Button>
+            </div>
+          </div>
+          <p v-if="identityMessage" class="success">{{ identityMessage }}</p>
+        </section>
+
+        <section class="surface form-section">
+          <div class="section-heading">
+            <span>02</span>
+            <div>
+              <h2>계정 정보</h2>
+              <p>로그인에 사용할 아이디와 비밀번호를 입력합니다.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="loginId">아이디</label>
+              <Input id="loginId" v-model="form.loginId" autocomplete="username" placeholder="영문/숫자 4자 이상" required />
+            </div>
+            <div class="form-row">
+              <label for="email">이메일</label>
+              <Input id="email" v-model="form.email" type="email" autocomplete="email" required />
+            </div>
+            <div class="form-row">
+              <label for="password">비밀번호</label>
+              <Input id="password" v-model="form.password" type="password" autocomplete="new-password" required minlength="6" />
+            </div>
+            <div class="form-row">
+              <label for="passwordConfirm">비밀번호 확인</label>
+              <Input id="passwordConfirm" v-model="passwordConfirm" type="password" autocomplete="new-password" required minlength="6" />
+            </div>
+          </div>
+        </section>
+
+        <section class="surface form-section">
+          <div class="section-heading">
+            <span>03</span>
+            <div>
+              <h2>약관 동의</h2>
+              <p>필수 약관에 동의해야 가입할 수 있습니다.</p>
+            </div>
+          </div>
+
+          <div class="terms-box">
+            <label class="check-row all">
+              <input v-model="allTerms" type="checkbox" >
+              <span>전체 동의</span>
+            </label>
+            <div class="check-row with-action">
+              <label>
+                <input v-model="terms.service" type="checkbox" required >
+                <span>[필수] 이용약관 동의</span>
+              </label>
+              <button type="button" @click="openPolicy('terms')">보기</button>
+            </div>
+            <div class="check-row with-action">
+              <label>
+                <input v-model="terms.privacy" type="checkbox" required >
+                <span>[필수] 개인정보 수집 및 이용 동의</span>
+              </label>
+              <button type="button" @click="openPolicy('privacy')">보기</button>
+            </div>
+            <div class="check-row with-action">
+              <label>
+                <input v-model="terms.refund" type="checkbox" required >
+                <span>[필수] 취소/환불 정책 확인</span>
+              </label>
+              <button type="button" @click="openPolicy('refund')">보기</button>
+            </div>
+            <div class="check-row with-action">
+              <label>
+                <input v-model="terms.marketing" type="checkbox" >
+                <span>[선택] 이벤트 및 혜택 안내 수신 동의</span>
+              </label>
+              <button type="button" @click="openPolicy('marketing')">보기</button>
+            </div>
+            <div class="check-row with-action">
+              <label>
+                <input v-model="terms.nightMarketing" type="checkbox" >
+                <span>[선택] 심야 알림 수신 동의</span>
+              </label>
+              <button type="button" @click="openPolicy('nightMarketing')">보기</button>
+            </div>
+          </div>
+        </section>
+
+        <p v-if="error" class="error">{{ error }}</p>
+        <div class="submit-row">
+          <Button type="submit" size="lg" :disabled="loading">가입하기</Button>
+          <NuxtLink to="/login">이미 계정이 있어요</NuxtLink>
+        </div>
+      </form>
+    </section>
+
+    <Modal :open="Boolean(activePolicy)" :title="activePolicyTitle" @close="activePolicy = null">
+      <div class="policy-modal">
+        <p>시행일: {{ legalConfig.effectiveDate }}</p>
+        <section v-for="section in activePolicySections" :key="section.title">
+          <h3>{{ section.title }}</h3>
+          <p>{{ section.body }}</p>
+        </section>
+      </div>
+    </Modal>
+  </main>
+</template>
+
+<script setup lang="ts">
+import type { SignUpProfileInput } from '~/stores/auth'
+import { legalConfig } from '~/config/legal'
+
+const auth = useAuthStore()
+const verifier = useAdultVerification()
+const router = useRouter()
+
+const form = reactive({
+  loginId: '',
+  email: '',
+  password: '',
+  displayName: '',
+  phoneNumber: '',
+  birthDate: ''
+})
+const passwordConfirm = ref('')
+const terms = reactive({
+  service: false,
+  privacy: false,
+  refund: false,
+  marketing: false,
+  nightMarketing: false
+})
+const identityVerified = ref(false)
+const identityMessage = ref('')
+const error = ref('')
+const loading = ref(false)
+
+const allTerms = computed({
+  get: () => terms.service && terms.privacy && terms.refund && terms.marketing && terms.nightMarketing,
+  set: (checked: boolean) => {
+    terms.service = checked
+    terms.privacy = checked
+    terms.refund = checked
+    terms.marketing = checked
+    terms.nightMarketing = checked
+  }
+})
+
+type PolicyKey = 'terms' | 'privacy' | 'refund' | 'marketing' | 'nightMarketing'
+
+const activePolicy = ref<PolicyKey | null>(null)
+
+const policyTitles: Record<PolicyKey, string> = {
+  terms: '이용약관',
+  privacy: '개인정보 수집 및 이용',
+  refund: '취소/환불 정책',
+  marketing: '이벤트 및 혜택 안내 수신 동의',
+  nightMarketing: '심야 알림 수신 동의'
+}
+
+const activePolicyTitle = computed(() => (activePolicy.value ? policyTitles[activePolicy.value] : ''))
+const activePolicySections = computed(() => {
+  if (activePolicy.value === 'terms') return legalConfig.terms
+  if (activePolicy.value === 'privacy') return legalConfig.privacy
+  if (activePolicy.value === 'refund') return legalConfig.refundPolicy
+  if (activePolicy.value === 'marketing') return legalConfig.marketing
+  if (activePolicy.value === 'nightMarketing') return legalConfig.nightMarketing
+  return []
+})
+
+const openPolicy = (key: PolicyKey) => {
+  activePolicy.value = key
+}
+
+const requiredTermsAccepted = computed(() => terms.service && terms.privacy && terms.refund)
+
+const isAdult = (value: string) => {
+  const birth = new Date(`${value}T00:00:00+09:00`)
+  if (Number.isNaN(birth.getTime())) return false
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age -= 1
+  return age >= 19
+}
+
+const verifyIdentity = () => {
+  error.value = ''
+  identityMessage.value = ''
+  if (!form.displayName.trim() || !form.phoneNumber.trim() || !form.birthDate) {
+    error.value = '이름, 휴대폰 번호, 생년월일을 입력해 주세요.'
+    return
+  }
+  if (!isAdult(form.birthDate)) {
+    error.value = '성인 고객만 가입할 수 있습니다.'
+    identityVerified.value = false
+    return
+  }
+  identityVerified.value = true
+  identityMessage.value = '본인확인이 완료되었습니다.'
+}
+
+watch(
+  () => [form.displayName, form.phoneNumber, form.birthDate],
+  () => {
+    identityVerified.value = false
+    identityMessage.value = ''
+  }
+)
+
+const submit = async () => {
+  error.value = ''
+  if (!identityVerified.value) {
+    error.value = '본인확인을 먼저 진행해 주세요.'
+    return
+  }
+  if (!/^[a-zA-Z0-9._-]{4,30}$/.test(form.loginId)) {
+    error.value = '아이디는 영문, 숫자, 일부 기호 포함 4자 이상으로 입력해 주세요.'
+    return
+  }
+  if (form.password !== passwordConfirm.value) {
+    error.value = '비밀번호가 일치하지 않습니다.'
+    return
+  }
+  if (!requiredTermsAccepted.value) {
+    error.value = '필수 약관에 동의해 주세요.'
+    return
+  }
+
+  loading.value = true
+  try {
+    const agreedAt = new Date().toISOString()
+    const consent = (accepted: boolean) => ({ accepted, agreedAt: accepted ? agreedAt : null })
+    const profileInput: SignUpProfileInput = {
+      loginId: form.loginId,
+      email: form.email,
+      displayName: form.displayName,
+      phoneNumber: form.phoneNumber,
+      birthDate: form.birthDate,
+      termsAgreement: {
+        service: consent(terms.service),
+        privacy: consent(terms.privacy),
+        refund: consent(terms.refund),
+        marketing: consent(terms.marketing),
+        nightMarketing: consent(terms.nightMarketing),
+        agreedAt
+      }
+    }
+
+    await auth.signUp(form.email, form.password, form.displayName, profileInput)
+    await verifier.verifyWithMockProvider(form.birthDate)
+    await router.push('/mypage')
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '회원가입에 실패했어요.'
+  } finally {
+    loading.value = false
+  }
+}
+
+useHead({ title: '회원가입' })
+</script>
+
+<style scoped>
+.signup-page {
+  display: grid;
+  justify-items: center;
+}
+
+.signup-shell {
+  display: grid;
+  gap: 20px;
+  width: min(760px, 100%);
+}
+
+.signup-header {
+  text-align: center;
+}
+
+.signup-header h1,
+.signup-header p {
+  margin: 0;
+}
+
+.signup-header p:not(.eyebrow) {
+  margin-top: 8px;
+  color: var(--color-muted);
+}
+
+.signup-form {
+  display: grid;
+  gap: 16px;
+}
+
+.form-section {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.section-heading {
+  display: flex;
+  gap: 12px;
+  align-items: start;
+}
+
+.section-heading > span {
+  display: grid;
+  min-width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 900;
+}
+
+.section-heading h2,
+.section-heading p {
+  margin: 0;
+}
+
+.section-heading p {
+  margin-top: 4px;
+  color: var(--color-muted);
+}
+
+.verify-action {
+  display: flex;
+  align-items: end;
+}
+
+.terms-box {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.check-row {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--color-line);
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+.check-row.with-action {
+  justify-content: space-between;
+  padding-right: 10px;
+}
+
+.check-row.with-action label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.check-row.with-action span {
+  line-height: 1.35;
+}
+
+.check-row.with-action button {
+  flex: 0 0 auto;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 900;
+  padding: 7px 11px;
+}
+
+.check-row:first-child {
+  border-top: 0;
+}
+
+.check-row.all {
+  background: #fbf5e9;
+  font-weight: 900;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.success,
+.error {
+  margin: 0;
+  font-weight: 800;
+}
+
+.success {
+  color: #497a5b;
+}
+
+.error {
+  color: var(--color-warning);
+}
+
+.submit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.submit-row a {
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.policy-modal {
+  display: grid;
+  gap: 18px;
+}
+
+.policy-modal > p,
+.policy-modal section p,
+.policy-modal section h3 {
+  margin: 0;
+}
+
+.policy-modal > p {
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.policy-modal section {
+  display: grid;
+  gap: 7px;
+}
+
+.policy-modal h3 {
+  font-size: 16px;
+}
+
+.policy-modal section p {
+  color: var(--color-muted);
+  line-height: 1.75;
+}
+
+@media (min-width: 700px) {
+  .two-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .verify-action {
+    align-items: end;
+  }
+}
+</style>
