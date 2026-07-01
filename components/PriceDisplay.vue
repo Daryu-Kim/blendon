@@ -6,25 +6,32 @@
         <strong>{{ formatCurrency(price) }}</strong>
         <span v-if="rate > 0">{{ rate }}%</span>
       </div>
-      <del v-if="product.compareAtPrice">{{ formatCurrency(product.compareAtPrice) }}</del>
+      <del v-if="product.compareAtPrice">{{
+        formatCurrency(product.compareAtPrice)
+      }}</del>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Product, UserProfile } from '~/types/domain'
-import { currentUnitPrice, discountRate, shouldHidePrice } from '~/utils/access'
-import { formatCurrency } from '~/utils/format'
+import type { Product, UserProfile } from "~/types/domain";
+import {
+  currentUnitPrice,
+  discountRate,
+  shouldHidePrice,
+} from "~/utils/access";
+import { formatCurrency } from "~/utils/format";
 
-const props = defineProps<{ product: Product; user?: UserProfile | null }>()
-const hidden = computed(() => shouldHidePrice(props.product, props.user))
-const price = computed(() => currentUnitPrice(props.product, props.user))
-const rate = computed(() => discountRate(props.product, props.user))
+const props = defineProps<{ product: Product; user?: UserProfile | null }>();
+const hidden = computed(() => shouldHidePrice(props.product, props.user));
+const price = computed(() => currentUnitPrice(props.product, props.user));
+const rate = computed(() => discountRate(props.product, props.user));
 const message = computed(() => {
-  if (!props.user) return '로그인 후 혜택가 확인'
-  if (props.product.isAdultOnly && !props.user.isAdultVerified) return '성인 회원 전용'
-  return '권한 확인 후 가격 확인'
-})
+  if (!props.user) return "로그인 후 혜택가 확인";
+  if (props.product.isAdultOnly && !props.user.isAdultVerified)
+    return "성인 회원 전용";
+  return "권한 확인 후 가격 확인";
+});
 </script>
 
 <style scoped>

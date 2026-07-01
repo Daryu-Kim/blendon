@@ -7,7 +7,11 @@
       </div>
     </div>
     <div v-if="orderStore.myOrders.length" class="order-list">
-      <article v-for="order in orderStore.myOrders" :key="order.id" class="surface order-card">
+      <article
+        v-for="order in orderStore.myOrders"
+        :key="order.id"
+        class="surface order-card"
+      >
         <div>
           <strong>{{ order.orderNo }}</strong>
           <p>{{ formatDate(order.createdAt) }}</p>
@@ -19,17 +23,23 @@
         <strong>{{ formatCurrency(order.totalAmount) }}</strong>
       </article>
     </div>
-    <EmptyState v-else title="주문 내역이 없어요." description="상품을 둘러보고 첫 주문을 시작해 보세요." action-label="상품 보기" action-to="/products" />
+    <EmptyState
+      v-else
+      title="주문 내역이 없어요."
+      description="상품을 둘러보고 첫 주문을 시작해 보세요."
+      action-label="상품 보기"
+      action-to="/products"
+    />
   </main>
 </template>
 
 <script setup lang="ts">
-import { formatCurrency, formatDate } from '~/utils/format'
+import { formatCurrency, formatDate } from "~/utils/format";
 
-definePageMeta({ middleware: 'auth' })
-const orderStore = useOrderStore()
-onMounted(() => orderStore.hydrate())
-useHead({ title: '주문 내역' })
+definePageMeta({ middleware: "auth" });
+const orderStore = useOrderStore();
+onMounted(() => orderStore.hydrate());
+useHead({ title: "주문 내역" });
 </script>
 
 <style scoped>

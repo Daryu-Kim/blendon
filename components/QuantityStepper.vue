@@ -1,18 +1,34 @@
 <template>
   <div class="stepper" aria-label="수량 선택">
-    <button type="button" :disabled="modelValue <= min" @click="update(modelValue - 1)">-</button>
+    <button
+      type="button"
+      :disabled="modelValue <= min"
+      @click="update(modelValue - 1)"
+    >
+      -
+    </button>
     <span>{{ modelValue }}</span>
-    <button type="button" :disabled="modelValue >= max" @click="update(modelValue + 1)">+</button>
+    <button
+      type="button"
+      :disabled="modelValue >= max"
+      @click="update(modelValue + 1)"
+    >
+      +
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-const props = withDefaults(defineProps<{ modelValue: number; min?: number; max?: number }>(), {
-  min: 1,
-  max: 99
-})
-const emit = defineEmits<{ 'update:modelValue': [value: number] }>()
-const update = (value: number) => emit('update:modelValue', Math.min(props.max, Math.max(props.min, value)))
+const props = withDefaults(
+  defineProps<{ modelValue: number; min?: number; max?: number }>(),
+  {
+    min: 1,
+    max: 99,
+  },
+);
+const emit = defineEmits<{ "update:modelValue": [value: number] }>();
+const update = (value: number) =>
+  emit("update:modelValue", Math.min(props.max, Math.max(props.min, value)));
 </script>
 
 <style scoped>

@@ -14,26 +14,35 @@
           <dd>{{ item.value }}</dd>
         </div>
       </dl>
-      <p class="notice">실제 결제 운영 전 사업자등록증, 통신판매업 신고증, 고객센터 정보를 기준으로 최신 정보로 교체해야 합니다.</p>
+      <p class="notice">
+        실제 결제 운영 전 사업자등록증, 통신판매업 신고증, 고객센터 정보를
+        기준으로 최신 정보로 교체해야 합니다.
+      </p>
     </section>
   </main>
 </template>
 
 <script setup lang="ts">
-import { legalConfig } from '~/config/legal'
+import { legalConfig } from "~/config/legal";
 
 const businessItems = [
-  { label: '상호', value: legalConfig.business.companyName },
-  { label: '대표자', value: legalConfig.business.representative },
-  { label: '사업자등록번호', value: legalConfig.business.businessRegistrationNumber },
-  { label: '통신판매업 신고번호', value: legalConfig.business.mailOrderSalesNumber },
-  { label: '사업장 주소', value: legalConfig.business.address },
-  { label: '고객센터', value: legalConfig.business.customerServicePhone },
-  { label: '이메일', value: legalConfig.business.customerServiceEmail },
-  { label: '호스팅 서비스', value: legalConfig.business.hostingProvider }
-]
+  { label: "상호", value: legalConfig.business.companyName },
+  { label: "대표자", value: legalConfig.business.representative },
+  {
+    label: "사업자등록번호",
+    value: legalConfig.business.businessRegistrationNumber,
+  },
+  {
+    label: "통신판매업 신고번호",
+    value: legalConfig.business.mailOrderSalesNumber,
+  },
+  { label: "사업장 주소", value: legalConfig.business.address },
+  { label: "고객센터", value: legalConfig.business.customerServicePhone },
+  { label: "이메일", value: legalConfig.business.customerServiceEmail },
+  { label: "호스팅 서비스", value: legalConfig.business.hostingProvider },
+];
 
-useHead({ title: '사업자 정보' })
+useHead({ title: "사업자 정보" });
 </script>
 
 <style scoped>

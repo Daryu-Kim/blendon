@@ -1,14 +1,26 @@
 <template>
-  <div v-if="messages.length" class="toast-stack" aria-live="polite" aria-atomic="true">
-    <div v-for="toast in messages" :key="toast.id" class="toast" :class="`toast--${toast.type}`">
+  <div
+    v-if="messages.length"
+    class="toast-stack"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    <div
+      v-for="toast in messages"
+      :key="toast.id"
+      class="toast"
+      :class="`toast--${toast.type}`"
+    >
       <span>{{ toast.message }}</span>
-      <button type="button" aria-label="알림 닫기" @click="remove(toast.id)">×</button>
+      <button type="button" aria-label="알림 닫기" @click="remove(toast.id)">
+        ×
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const { messages, remove } = useToast()
+const { messages, remove } = useToast();
 </script>
 
 <style scoped>

@@ -19,7 +19,12 @@
         </div>
       </div>
       <div class="category-tile-grid">
-        <NuxtLink v-for="tile in categoryTiles" :key="tile.title" :to="tile.to" class="category-tile">
+        <NuxtLink
+          v-for="tile in categoryTiles"
+          :key="tile.title"
+          :to="tile.to"
+          class="category-tile"
+        >
           <span>{{ tile.kicker }}</span>
           <strong>{{ tile.title }}</strong>
           <p>{{ tile.description }}</p>
@@ -35,7 +40,9 @@
         </div>
       </div>
       <nav class="best-tabs" aria-label="베스트 상품 바로가기">
-        <NuxtLink v-for="tab in bestTabs" :key="tab.label" :to="tab.to">{{ tab.label }}</NuxtLink>
+        <NuxtLink v-for="tab in bestTabs" :key="tab.label" :to="tab.to">{{
+          tab.label
+        }}</NuxtLink>
       </nav>
       <ProductGrid :products="products.slice(0, 5)" />
     </section>
@@ -46,10 +53,16 @@
         <h2>니코틴 없이 즐기는 향의 선택</h2>
         <p>부담은 낮추고, 취향은 더 선명하게.</p>
       </div>
-      <Button to="/products?category=nicotine-free" variant="secondary">니코틴 프리 보기</Button>
+      <Button to="/products?category=nicotine-free" variant="secondary"
+        >니코틴 프리 보기</Button
+      >
     </section>
 
-    <section v-for="section in sections" :key="section.title" class="section page-shell product-section">
+    <section
+      v-for="section in sections"
+      :key="section.title"
+      class="section page-shell product-section"
+    >
       <div class="section-title">
         <div>
           <h2>{{ section.title }}</h2>
@@ -65,13 +78,19 @@
         <article>
           <span>01</span>
           <h2>성인 회원 이용 안내</h2>
-          <p>성인 전용 상품은 회원가입 시 확인된 성인 회원만 상세 정보와 가격을 확인할 수 있습니다.</p>
+          <p>
+            성인 전용 상품은 회원가입 시 확인된 성인 회원만 상세 정보와 가격을
+            확인할 수 있습니다.
+          </p>
           <NuxtLink to="/guide">이용안내 보기</NuxtLink>
         </article>
         <article>
           <span>02</span>
           <h2>배송/픽업 안내</h2>
-          <p>기본 배송부터 추후 매장 픽업과 라운지 픽업까지 확장할 수 있게 설계합니다.</p>
+          <p>
+            기본 배송부터 추후 매장 픽업과 라운지 픽업까지 확장할 수 있게
+            설계합니다.
+          </p>
           <NuxtLink to="/guide">이용안내 보기</NuxtLink>
         </article>
         <article>
@@ -86,54 +105,133 @@
 </template>
 
 <script setup lang="ts">
-const productStore = useProductStore()
-const products = computed(() => productStore.visibleProducts)
+const productStore = useProductStore();
+const products = computed(() => productStore.visibleProducts);
 
 onMounted(async () => {
-  await productStore.fetchCatalog()
-})
+  await productStore.fetchCatalog();
+});
 
-const byCategory = (categoryId: string) => products.value.filter((product) => product.categoryIds.includes(categoryId)).slice(0, 5)
+const byCategory = (categoryId: string) =>
+  products.value
+    .filter((product) => product.categoryIds.includes(categoryId))
+    .slice(0, 5);
 
 const noticeItems = [
-  { title: 'ADULT ONLY', description: '성인 회원 전용 카테고리 운영', to: '/guide' },
-  { title: 'PICKUP READY', description: '매장 픽업 확장 준비 중', to: '/guide' },
-  { title: 'MEMBERSHIP', description: '등급별 혜택가 구조 적용', to: '/mypage' }
-]
+  {
+    title: "ADULT ONLY",
+    description: "성인 회원 전용 카테고리 운영",
+    to: "/guide",
+  },
+  {
+    title: "PICKUP READY",
+    description: "매장 픽업 확장 준비 중",
+    to: "/guide",
+  },
+  {
+    title: "MEMBERSHIP",
+    description: "등급별 혜택가 구조 적용",
+    to: "/mypage",
+  },
+];
 
 const categoryTiles = [
-  { kicker: 'DEVICE', title: '디바이스', description: '입문용부터 교체형까지', to: '/products?category=device' },
-  { kicker: 'FLAVOR', title: '플레이버', description: '향과 무드로 고르는 선택', to: '/products?category=flavor' },
-  { kicker: 'ZERO', title: '니코틴 프리', description: '니코틴 없이 즐기는 향', to: '/products?category=nicotine-free' },
-  { kicker: 'REFILL', title: '리필/소모품', description: '팟, 카트리지, 케이블', to: '/products?category=consumable' },
-  { kicker: 'LOUNGE', title: '라운지 픽', description: '오프라인 확장 셀렉션', to: '/products?category=lounge-pick' }
-]
+  {
+    kicker: "DEVICE",
+    title: "디바이스",
+    description: "입문용부터 교체형까지",
+    to: "/products?category=device",
+  },
+  {
+    kicker: "FLAVOR",
+    title: "플레이버",
+    description: "향과 무드로 고르는 선택",
+    to: "/products?category=flavor",
+  },
+  {
+    kicker: "ZERO",
+    title: "니코틴 프리",
+    description: "니코틴 없이 즐기는 향",
+    to: "/products?category=nicotine-free",
+  },
+  {
+    kicker: "REFILL",
+    title: "리필/소모품",
+    description: "팟, 카트리지, 케이블",
+    to: "/products?category=consumable",
+  },
+  {
+    kicker: "LOUNGE",
+    title: "라운지 픽",
+    description: "오프라인 확장 셀렉션",
+    to: "/products?category=lounge-pick",
+  },
+];
 
 const bestTabs = [
-  { label: '전체', to: '/products' },
-  { label: '디바이스', to: '/products?category=device' },
-  { label: '니코틴 프리', to: '/products?category=nicotine-free' },
-  { label: '리필/소모품', to: '/products?category=consumable' },
-  { label: '라운지 픽', to: '/products?category=lounge-pick' }
-]
+  { label: "전체", to: "/products" },
+  { label: "디바이스", to: "/products?category=device" },
+  { label: "니코틴 프리", to: "/products?category=nicotine-free" },
+  { label: "리필/소모품", to: "/products?category=consumable" },
+  { label: "라운지 픽", to: "/products?category=lounge-pick" },
+];
 
 const sections = computed(() => [
-  { title: '오늘의 인기 상품', description: '지금 많이 확인하는 셀렉션입니다.', to: '/products', products: products.value.slice(0, 5) },
-  { title: '처음이라면 이 상품부터', description: '구성, 호환성, 사용 흐름이 쉬운 상품을 모았어요.', to: '/products?category=starter-pick', products: byCategory('starter-pick') },
-  { title: '니코틴 프리 플레이버', description: '니코틴 없이 즐기는 향의 선택.', to: '/products?category=nicotine-free', products: byCategory('nicotine-free') },
-  { title: '리필/소모품', description: '팟, 카트리지, 케이블 등 필요한 구성입니다.', to: '/products?category=consumable', products: byCategory('consumable') },
-  { title: '라운지 픽', description: '오프라인 라운지 확장을 염두에 둔 큐레이션입니다.', to: '/products?category=lounge-pick', products: byCategory('lounge-pick') },
-  { title: '새로 들어온 상품', description: '최근 등록된 더미 상품 기준으로 보여줍니다.', to: '/products', products: [...products.value].reverse().slice(0, 5) },
-  { title: '브랜드관', description: '가상 브랜드 셀렉션으로 구성된 초기 브랜드관입니다.', to: '/products?category=brand', products: products.value.slice(0, 5) }
-])
+  {
+    title: "오늘의 인기 상품",
+    description: "지금 많이 확인하는 셀렉션입니다.",
+    to: "/products",
+    products: products.value.slice(0, 5),
+  },
+  {
+    title: "처음이라면 이 상품부터",
+    description: "구성, 호환성, 사용 흐름이 쉬운 상품을 모았어요.",
+    to: "/products?category=starter-pick",
+    products: byCategory("starter-pick"),
+  },
+  {
+    title: "니코틴 프리 플레이버",
+    description: "니코틴 없이 즐기는 향의 선택.",
+    to: "/products?category=nicotine-free",
+    products: byCategory("nicotine-free"),
+  },
+  {
+    title: "리필/소모품",
+    description: "팟, 카트리지, 케이블 등 필요한 구성입니다.",
+    to: "/products?category=consumable",
+    products: byCategory("consumable"),
+  },
+  {
+    title: "라운지 픽",
+    description: "오프라인 라운지 확장을 염두에 둔 큐레이션입니다.",
+    to: "/products?category=lounge-pick",
+    products: byCategory("lounge-pick"),
+  },
+  {
+    title: "새로 들어온 상품",
+    description: "최근 등록된 더미 상품 기준으로 보여줍니다.",
+    to: "/products",
+    products: [...products.value].reverse().slice(0, 5),
+  },
+  {
+    title: "브랜드관",
+    description: "가상 브랜드 셀렉션으로 구성된 초기 브랜드관입니다.",
+    to: "/products?category=brand",
+    products: products.value.slice(0, 5),
+  },
+]);
 
-useHead({ title: '홈' })
+useHead({ title: "홈" });
 </script>
 
 <style scoped>
 .shop-home {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(247, 243, 234, 0) 340px),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(247, 243, 234, 0) 340px
+    ),
     var(--color-background);
 }
 
@@ -189,7 +287,11 @@ useHead({ title: '홈' })
   border: 1px solid #eadfcd;
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.76)),
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(255, 255, 255, 0.76)
+    ),
     linear-gradient(135deg, #f7f3ea, #e7efe9);
   padding: 16px;
 }
@@ -314,5 +416,4 @@ useHead({ title: '홈' })
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-
 </style>

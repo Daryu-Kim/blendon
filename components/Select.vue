@@ -1,12 +1,19 @@
 <template>
-  <select class="ui-select" :value="modelValue" v-bind="$attrs" @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)">
+  <select
+    class="ui-select"
+    :value="modelValue"
+    v-bind="$attrs"
+    @change="
+      $emit('update:modelValue', ($event.target as HTMLSelectElement).value)
+    "
+  >
     <slot />
   </select>
 </template>
 
 <script setup lang="ts">
-defineProps<{ modelValue?: string | number }>()
-defineEmits<{ 'update:modelValue': [value: string] }>()
+defineProps<{ modelValue?: string | number }>();
+defineEmits<{ "update:modelValue": [value: string] }>();
 </script>
 
 <style scoped>

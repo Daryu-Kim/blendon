@@ -6,18 +6,21 @@
     <div>
       <p class="eyebrow">ADULT ONLY</p>
       <h2>성인 회원만 이용할 수 있어요.</h2>
-      <p>{{ brand.name }}은 회원가입 시 확인된 성인 고객을 위한 취향 기반 커머스입니다.</p>
+      <p>
+        {{ brand.name }}은 회원가입 시 확인된 성인 고객을 위한 취향 기반
+        커머스입니다.
+      </p>
     </div>
     <Button :to="auth.isLoggedIn ? '/support' : '/signup'" variant="secondary">
-      {{ auth.isLoggedIn ? '고객센터 문의' : '회원가입' }}
+      {{ auth.isLoggedIn ? "고객센터 문의" : "회원가입" }}
     </Button>
   </div>
 </template>
 
 <script setup lang="ts">
-const auth = useAuthStore()
-const { brand } = useAppConfig()
-const allowed = computed(() => Boolean(auth.profile?.isAdultVerified))
+const auth = useAuthStore();
+const { brand } = useAppConfig();
+const allowed = computed(() => Boolean(auth.profile?.isAdultVerified));
 </script>
 
 <style scoped>

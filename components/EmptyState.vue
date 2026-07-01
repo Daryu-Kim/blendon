@@ -3,14 +3,21 @@
     <PackageOpen :size="42" aria-hidden="true" />
     <h2>{{ title }}</h2>
     <p>{{ description }}</p>
-    <Button v-if="actionTo && actionLabel" :to="actionTo">{{ actionLabel }}</Button>
+    <Button v-if="actionTo && actionLabel" :to="actionTo">{{
+      actionLabel
+    }}</Button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { PackageOpen } from '@lucide/vue'
+import { PackageOpen } from "@lucide/vue";
 
-defineProps<{ title: string; description: string; actionLabel?: string; actionTo?: string }>()
+defineProps<{
+  title: string;
+  description: string;
+  actionLabel?: string;
+  actionTo?: string;
+}>();
 </script>
 
 <style scoped>

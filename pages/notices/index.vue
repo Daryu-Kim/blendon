@@ -7,7 +7,11 @@
       </div>
     </div>
     <div class="notice-list">
-      <article v-for="notice in notices" :key="notice.id" class="surface notice-card">
+      <article
+        v-for="notice in notices"
+        :key="notice.id"
+        class="surface notice-card"
+      >
         <span v-if="notice.isPinned" class="pill">고정</span>
         <h2>{{ notice.title }}</h2>
         <p>{{ notice.content }}</p>
@@ -18,11 +22,11 @@
 </template>
 
 <script setup lang="ts">
-import { mockNotices } from '~/data/mock'
-import { formatDate } from '~/utils/format'
+import { mockNotices } from "~/data/mock";
+import { formatDate } from "~/utils/format";
 
-const notices = mockNotices
-useHead({ title: '공지사항' })
+const notices = mockNotices;
+useHead({ title: "공지사항" });
 </script>
 
 <style scoped>

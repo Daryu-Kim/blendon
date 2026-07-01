@@ -11,7 +11,11 @@
       <SearchBar />
       <Select v-model="categoryId" aria-label="카테고리">
         <option value="">전체 카테고리</option>
-        <option v-for="category in productStore.rootCategories" :key="category.id" :value="category.id">
+        <option
+          v-for="category in productStore.rootCategories"
+          :key="category.id"
+          :value="category.id"
+        >
           {{ category.name }}
         </option>
       </Select>
@@ -22,28 +26,31 @@
 </template>
 
 <script setup lang="ts">
-const route = useRoute()
-const productStore = useProductStore()
+const route = useRoute();
+const productStore = useProductStore();
 const categoryId = computed({
   get: () => productStore.selectedCategoryId,
-  set: (value) => productStore.setCategory(value)
-})
+  set: (value) => productStore.setCategory(value),
+});
 
 onMounted(async () => {
-  await productStore.fetchCatalog()
-  if (route.query.q) productStore.setQuery(String(route.query.q))
-  if (route.query.category) productStore.setCategory(String(route.query.category))
-})
+  await productStore.fetchCatalog();
+  if (route.query.q) productStore.setQuery(String(route.query.q));
+  if (route.query.category)
+    productStore.setCategory(String(route.query.category));
+});
 
 watch(
   () => route.query,
   (query) => {
-    productStore.setQuery(query.q ? String(query.q) : productStore.query)
-    productStore.setCategory(query.category ? String(query.category) : productStore.selectedCategoryId)
-  }
-)
+    productStore.setQuery(query.q ? String(query.q) : productStore.query);
+    productStore.setCategory(
+      query.category ? String(query.category) : productStore.selectedCategoryId,
+    );
+  },
+);
 
-useHead({ title: '상품 목록' })
+useHead({ title: "상품 목록" });
 </script>
 
 <style scoped>

@@ -1,6 +1,8 @@
 <template>
   <nav class="category-nav" aria-label="상품 카테고리">
-    <NuxtLink to="/products" :class="{ active: !activeCategoryId }">전체</NuxtLink>
+    <NuxtLink to="/products" :class="{ active: !activeCategoryId }"
+      >전체</NuxtLink
+    >
     <NuxtLink
       v-for="category in categories"
       :key="category.id"
@@ -13,10 +15,12 @@
 </template>
 
 <script setup lang="ts">
-const productStore = useProductStore()
-const route = useRoute()
-const categories = computed(() => productStore.rootCategories)
-const activeCategoryId = computed(() => (route.path === '/products' ? String(route.query.category || '') : ''))
+const productStore = useProductStore();
+const route = useRoute();
+const categories = computed(() => productStore.rootCategories);
+const activeCategoryId = computed(() =>
+  route.path === "/products" ? String(route.query.category || "") : "",
+);
 </script>
 
 <style scoped>

@@ -1,39 +1,56 @@
 <template>
-  <NuxtLink v-if="to" v-bind="$attrs" :to="to" :class="classes" :aria-disabled="disabled">
+  <NuxtLink
+    v-if="to"
+    v-bind="$attrs"
+    :to="to"
+    :class="classes"
+    :aria-disabled="disabled"
+  >
     <component :is="icon" v-if="icon" :size="18" aria-hidden="true" />
     <slot />
   </NuxtLink>
-  <button v-else v-bind="$attrs" :class="classes" :type="type" :disabled="disabled">
+  <button
+    v-else
+    v-bind="$attrs"
+    :class="classes"
+    :type="type"
+    :disabled="disabled"
+  >
     <component :is="icon" v-if="icon" :size="18" aria-hidden="true" />
     <slot />
   </button>
 </template>
 
 <script setup lang="ts">
-import type { Component } from 'vue'
+import type { Component } from "vue";
 
-defineOptions({ inheritAttrs: false })
+defineOptions({ inheritAttrs: false });
 
 const props = withDefaults(
   defineProps<{
-    to?: string
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
-    size?: 'sm' | 'md' | 'lg'
-    disabled?: boolean
-    type?: 'button' | 'submit' | 'reset'
-    icon?: Component
+    to?: string;
+    variant?: "primary" | "secondary" | "ghost" | "danger";
+    size?: "sm" | "md" | "lg";
+    disabled?: boolean;
+    type?: "button" | "submit" | "reset";
+    icon?: Component;
   }>(),
   {
-    variant: 'primary',
-    size: 'md',
-    type: 'button',
+    variant: "primary",
+    size: "md",
+    type: "button",
     disabled: false,
     to: undefined,
-    icon: undefined
-  }
-)
+    icon: undefined,
+  },
+);
 
-const classes = computed(() => ['ui-button', `ui-button--${props.variant}`, `ui-button--${props.size}`, { 'is-disabled': props.disabled }])
+const classes = computed(() => [
+  "ui-button",
+  `ui-button--${props.variant}`,
+  `ui-button--${props.size}`,
+  { "is-disabled": props.disabled },
+]);
 </script>
 
 <style scoped>
@@ -48,7 +65,10 @@ const classes = computed(() => ['ui-button', `ui-button--${props.variant}`, `ui-
   padding: 0 18px;
   font-weight: 800;
   letter-spacing: 0;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 }
 
 .ui-button:hover {

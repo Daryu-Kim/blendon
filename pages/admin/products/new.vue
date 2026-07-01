@@ -11,13 +11,13 @@
 </template>
 
 <script setup lang="ts">
-import type { Product } from '~/types/domain'
+import type { Product } from "~/types/domain";
 
-definePageMeta({ layout: 'admin', middleware: 'admin' })
+definePageMeta({ layout: "admin", middleware: "admin" });
 
 const goList = async (_product: Product) => {
-  await navigateTo('/admin/products')
-}
+  await navigateTo("/admin/products");
+};
 
-useHead({ title: '관리자 상품 추가' })
+useHead({ title: "관리자 상품 추가" });
 </script>

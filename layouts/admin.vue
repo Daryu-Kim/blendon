@@ -13,16 +13,19 @@
 </template>
 
 <script setup lang="ts">
-const auth = useAuthStore()
-const toast = useToast()
+const auth = useAuthStore();
+const toast = useToast();
 
 onMounted(async () => {
-  await auth.init()
+  await auth.init();
   if (!auth.isAdmin) {
-    toast.show('관리자 권한이 필요한 페이지입니다.', 'warning')
-    await navigateTo({ path: '/', query: { notice: 'admin-forbidden' } }, { replace: true })
+    toast.show("관리자 권한이 필요한 페이지입니다.", "warning");
+    await navigateTo(
+      { path: "/", query: { notice: "admin-forbidden" } },
+      { replace: true },
+    );
   }
-})
+});
 </script>
 
 <style scoped>

@@ -8,14 +8,48 @@
     </div>
 
     <div class="grade-list">
-      <AdminFormSection v-for="benefit in benefits" :key="benefit.gradeCode" :title="benefit.label">
+      <AdminFormSection
+        v-for="benefit in benefits"
+        :key="benefit.gradeCode"
+        :title="benefit.label"
+      >
         <div class="form-grid">
-          <div class="form-row"><label>내부 코드</label><Input v-model="benefit.internalCode" /></div>
-          <div class="form-row"><label>레벨</label><Input v-model="benefit.level" type="number" /></div>
-          <div class="form-row"><label>할인율(%)</label><Input v-model="benefit.discountRate" type="number" min="0" max="100" /></div>
-          <div class="form-row"><label>적립률(%)</label><Input v-model="benefit.pointRate" type="number" min="0" max="100" /></div>
-          <div class="form-row"><label>승급 구매액</label><Input v-model="benefit.minPurchaseAmount" type="number" min="0" /></div>
-          <div class="form-row"><label>무료배송 기준</label><Input v-model="benefit.freeShippingThreshold" type="number" min="0" /></div>
+          <div class="form-row">
+            <label>내부 코드</label><Input v-model="benefit.internalCode" />
+          </div>
+          <div class="form-row">
+            <label>레벨</label><Input v-model="benefit.level" type="number" />
+          </div>
+          <div class="form-row">
+            <label>할인율(%)</label
+            ><Input
+              v-model="benefit.discountRate"
+              type="number"
+              min="0"
+              max="100"
+            />
+          </div>
+          <div class="form-row">
+            <label>적립률(%)</label
+            ><Input
+              v-model="benefit.pointRate"
+              type="number"
+              min="0"
+              max="100"
+            />
+          </div>
+          <div class="form-row">
+            <label>승급 구매액</label
+            ><Input v-model="benefit.minPurchaseAmount" type="number" min="0" />
+          </div>
+          <div class="form-row">
+            <label>무료배송 기준</label
+            ><Input
+              v-model="benefit.freeShippingThreshold"
+              type="number"
+              min="0"
+            />
+          </div>
         </div>
         <div class="admin-actions">
           <Button @click="save(benefit)">저장</Button>
@@ -26,17 +60,19 @@
 </template>
 
 <script setup lang="ts">
-import type { GradeBenefit } from '~/types/domain'
+import type { GradeBenefit } from "~/types/domain";
 
-definePageMeta({ layout: 'admin', middleware: 'admin' })
+definePageMeta({ layout: "admin", middleware: "admin" });
 
-const productStore = useProductStore()
-const benefits = ref<GradeBenefit[]>([])
+const productStore = useProductStore();
+const benefits = ref<GradeBenefit[]>([]);
 
 onMounted(async () => {
-  await productStore.fetchCatalog()
-  benefits.value = productStore.gradeBenefits.map((benefit) => ({ ...benefit }))
-})
+  await productStore.fetchCatalog();
+  benefits.value = productStore.gradeBenefits.map((benefit) => ({
+    ...benefit,
+  }));
+});
 
 const save = async (benefit: GradeBenefit) => {
   await productStore.upsertGradeBenefit({
@@ -45,11 +81,11 @@ const save = async (benefit: GradeBenefit) => {
     discountRate: Number(benefit.discountRate),
     pointRate: Number(benefit.pointRate),
     minPurchaseAmount: Number(benefit.minPurchaseAmount),
-    freeShippingThreshold: Number(benefit.freeShippingThreshold)
-  })
-}
+    freeShippingThreshold: Number(benefit.freeShippingThreshold),
+  });
+};
 
-useHead({ title: '관리자 회원 등급 관리' })
+useHead({ title: "관리자 회원 등급 관리" });
 </script>
 
 <style scoped>

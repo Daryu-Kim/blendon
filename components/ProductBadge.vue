@@ -1,9 +1,13 @@
 <template>
-  <span class="product-badge" :class="{ adult: label.includes('성인'), zero: label.includes('프리') }">{{ label }}</span>
+  <span
+    class="product-badge"
+    :class="{ adult: label.includes('성인'), zero: label.includes('프리') }"
+    >{{ label }}</span
+  >
 </template>
 
 <script setup lang="ts">
-defineProps<{ label: string }>()
+defineProps<{ label: string }>();
 </script>
 
 <style scoped>

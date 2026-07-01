@@ -18,12 +18,12 @@
 </template>
 
 <script setup lang="ts">
-import { legalConfig } from '~/config/legal'
+import { legalConfig } from "~/config/legal";
 
-const { brand } = useAppConfig()
-const sections = legalConfig.terms
+const { brand } = useAppConfig();
+const sections = legalConfig.terms;
 
-useHead({ title: '이용약관' })
+useHead({ title: "이용약관" });
 </script>
 
 <style scoped>

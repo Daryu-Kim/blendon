@@ -9,8 +9,12 @@
           <label for="birthDate">생년월일</label>
           <Input id="birthDate" v-model="birthDate" type="date" required />
         </div>
-        <p class="muted">기존 계정 보정용 화면입니다. 신규 회원은 회원가입 단계에서 확인합니다.</p>
-        <p v-if="error || verifier.error.value" class="error">{{ error || verifier.error.value }}</p>
+        <p class="muted">
+          기존 계정 보정용 화면입니다. 신규 회원은 회원가입 단계에서 확인합니다.
+        </p>
+        <p v-if="error || verifier.error.value" class="error">
+          {{ error || verifier.error.value }}
+        </p>
         <Button type="submit" size="lg">확인 진행</Button>
       </form>
     </section>
@@ -18,29 +22,29 @@
 </template>
 
 <script setup lang="ts">
-const { brand } = useAppConfig()
-const auth = useAuthStore()
-const verifier = useAdultVerification()
-const router = useRouter()
-const birthDate = ref('1990-01-01')
-const error = ref('')
+const { brand } = useAppConfig();
+const auth = useAuthStore();
+const verifier = useAdultVerification();
+const router = useRouter();
+const birthDate = ref("1990-01-01");
+const error = ref("");
 
 const submit = async () => {
-  error.value = ''
+  error.value = "";
   if (!auth.profile) {
-    await router.push('/login?redirect=/adult-verification')
-    return
+    await router.push("/login?redirect=/adult-verification");
+    return;
   }
-  await verifier.verifyWithMockProvider(birthDate.value)
-  await router.push('/mypage')
-}
+  await verifier.verifyWithMockProvider(birthDate.value);
+  await router.push("/mypage");
+};
 
 onMounted(async () => {
-  await auth.init()
-  if (auth.isAdultVerified) await router.push('/mypage')
-})
+  await auth.init();
+  if (auth.isAdultVerified) await router.push("/mypage");
+});
 
-useHead({ title: '성인 회원 확인' })
+useHead({ title: "성인 회원 확인" });
 </script>
 
 <style scoped>

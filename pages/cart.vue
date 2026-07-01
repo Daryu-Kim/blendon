@@ -11,6 +11,6 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth' })
-useHead({ title: '장바구니' })
+definePageMeta({ middleware: "auth" });
+useHead({ title: "장바구니" });
 </script>

@@ -1,10 +1,17 @@
 <template>
-  <input class="ui-input" :value="modelValue" v-bind="$attrs" @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)" >
+  <input
+    class="ui-input"
+    :value="modelValue"
+    v-bind="$attrs"
+    @input="
+      $emit('update:modelValue', ($event.target as HTMLInputElement).value)
+    "
+  />
 </template>
 
 <script setup lang="ts">
-defineProps<{ modelValue?: string | number }>()
-defineEmits<{ 'update:modelValue': [value: string] }>()
+defineProps<{ modelValue?: string | number }>();
+defineEmits<{ "update:modelValue": [value: string] }>();
 </script>
 
 <style scoped>

@@ -1,11 +1,11 @@
-import { defineStore } from 'pinia'
+import { defineStore } from "pinia";
 
-export const useAdminStore = defineStore('admin', {
+export const useAdminStore = defineStore("admin", {
   getters: {
     dashboard() {
-      const orders = useOrderStore()
-      const products = useProductStore()
-      const users = useUserStore()
+      const orders = useOrderStore();
+      const products = useProductStore();
+      const users = useUserStore();
       return {
         todayOrderCount: orders.todayOrderCount,
         todayRevenue: orders.todayRevenue,
@@ -14,8 +14,8 @@ export const useAdminStore = defineStore('admin', {
         lowStockProducts: products.lowStockProducts,
         newUserCount: users.newUserCount,
         adultVerifiedCount: users.adultVerifiedCount,
-        recentOrders: orders.recentOrders
-      }
-    }
-  }
-})
+        recentOrders: orders.recentOrders,
+      };
+    },
+  },
+});

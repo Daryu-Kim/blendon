@@ -9,16 +9,30 @@
     />
     <template v-else>
       <div class="cart-list">
-        <article v-for="item in cart.detailedItems" :key="item?.id" class="cart-item surface">
-          <img :src="item?.product.thumbnailUrl" :alt="item?.product.name" >
+        <article
+          v-for="item in cart.detailedItems"
+          :key="item?.id"
+          class="cart-item surface"
+        >
+          <img :src="item?.product.thumbnailUrl" :alt="item?.product.name" />
           <div>
             <h3>{{ item?.product.name }}</h3>
             <p>{{ item?.option.optionName }}</p>
-            <PriceDisplay v-if="item?.product" :product="item.product" :user="auth.profile" />
+            <PriceDisplay
+              v-if="item?.product"
+              :product="item.product"
+              :user="auth.profile"
+            />
           </div>
           <div class="cart-actions">
-            <QuantityStepper v-if="item" :model-value="item.quantity" @update:model-value="cart.updateQuantity(item.id, $event)" />
-            <button v-if="item" type="button" @click="cart.remove(item.id)">삭제</button>
+            <QuantityStepper
+              v-if="item"
+              :model-value="item.quantity"
+              @update:model-value="cart.updateQuantity(item.id, $event)"
+            />
+            <button v-if="item" type="button" @click="cart.remove(item.id)">
+              삭제
+            </button>
           </div>
         </article>
       </div>
@@ -45,11 +59,11 @@
 </template>
 
 <script setup lang="ts">
-import { formatCurrency } from '~/utils/format'
+import { formatCurrency } from "~/utils/format";
 
-const cart = useCartStore()
-const auth = useAuthStore()
-onMounted(() => cart.hydrate())
+const cart = useCartStore();
+const auth = useAuthStore();
+onMounted(() => cart.hydrate());
 </script>
 
 <style scoped>

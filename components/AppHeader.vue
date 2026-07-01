@@ -2,7 +2,9 @@
   <header class="app-header">
     <div class="top-strip">
       <div class="page-shell top-strip-inner">
-        <p>회원가입 시 확인된 성인 회원만 성인 전용 카테고리를 이용할 수 있어요.</p>
+        <p>
+          회원가입 시 확인된 성인 회원만 성인 전용 카테고리를 이용할 수 있어요.
+        </p>
         <nav aria-label="상단 빠른 메뉴">
           <NuxtLink to="/notices">공지사항</NuxtLink>
           <NuxtLink to="/guide">이용안내</NuxtLink>
@@ -22,7 +24,12 @@
       </div>
 
       <nav class="header-actions" aria-label="사용자 메뉴">
-        <NuxtLink v-if="auth.isLoggedIn" class="icon-link" to="/mypage" title="마이페이지">
+        <NuxtLink
+          v-if="auth.isLoggedIn"
+          class="icon-link"
+          to="/mypage"
+          title="마이페이지"
+        >
           <User :size="20" />
           <span>MY</span>
         </NuxtLink>
@@ -39,23 +46,25 @@
     <div class="nav-band">
       <div class="page-shell nav-row">
         <CategoryNav />
-        <NuxtLink class="nav-promo" to="/products?category=lounge-pick">라운지 픽</NuxtLink>
+        <NuxtLink class="nav-promo" to="/products?category=lounge-pick"
+          >라운지 픽</NuxtLink
+        >
       </div>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { LogIn, ShoppingBag, User } from '@lucide/vue'
+import { LogIn, ShoppingBag, User } from "@lucide/vue";
 
-const { brand } = useAppConfig()
-const auth = useAuthStore()
-const cart = useCartStore()
+const { brand } = useAppConfig();
+const auth = useAuthStore();
+const cart = useCartStore();
 
 onMounted(async () => {
-  await auth.init()
-  cart.hydrate()
-})
+  await auth.init();
+  cart.hydrate();
+});
 </script>
 
 <style scoped>

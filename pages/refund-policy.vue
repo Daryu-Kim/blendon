@@ -18,11 +18,11 @@
 </template>
 
 <script setup lang="ts">
-import { legalConfig } from '~/config/legal'
+import { legalConfig } from "~/config/legal";
 
-const sections = legalConfig.refundPolicy
+const sections = legalConfig.refundPolicy;
 
-useHead({ title: '취소/환불 정책' })
+useHead({ title: "취소/환불 정책" });
 </script>
 
 <style scoped>

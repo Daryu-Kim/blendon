@@ -1,10 +1,17 @@
 <template>
   <Teleport to="body">
     <div v-if="open" class="modal-backdrop" @click.self="$emit('close')">
-      <section class="modal surface" role="dialog" aria-modal="true" :aria-label="title">
+      <section
+        class="modal surface"
+        role="dialog"
+        aria-modal="true"
+        :aria-label="title"
+      >
         <header>
           <h2>{{ title }}</h2>
-          <button type="button" title="닫기" @click="$emit('close')"><X :size="18" /></button>
+          <button type="button" title="닫기" @click="$emit('close')">
+            <X :size="18" />
+          </button>
         </header>
         <slot />
       </section>
@@ -13,10 +20,10 @@
 </template>
 
 <script setup lang="ts">
-import { X } from '@lucide/vue'
+import { X } from "@lucide/vue";
 
-defineProps<{ open: boolean; title: string }>()
-defineEmits<{ close: [] }>()
+defineProps<{ open: boolean; title: string }>();
+defineEmits<{ close: [] }>();
 </script>
 
 <style scoped>

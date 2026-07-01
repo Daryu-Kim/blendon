@@ -4,7 +4,9 @@
       <table>
         <thead>
           <tr>
-            <th v-for="column in columns" :key="column.key">{{ column.label }}</th>
+            <th v-for="column in columns" :key="column.key">
+              {{ column.label }}
+            </th>
             <th v-if="$slots.actions">관리</th>
           </tr>
         </thead>
@@ -25,10 +27,10 @@
 
 <script setup lang="ts" generic="T extends Record<string, any>">
 defineProps<{
-  rows: T[]
-  columns: readonly { key: keyof T & string; label: string }[]
-  rowKey: keyof T & string
-}>()
+  rows: T[];
+  columns: readonly { key: keyof T & string; label: string }[];
+  rowKey: keyof T & string;
+}>();
 </script>
 
 <style scoped>

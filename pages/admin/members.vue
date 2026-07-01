@@ -8,14 +8,30 @@
     </div>
 
     <AdminTable :rows="users.users" :columns="columns" row-key="uid">
-      <template #isAdultVerified="{ row }">{{ row.isAdultVerified ? '인증 완료' : '미인증' }}</template>
-      <template #availablePoint="{ row }">{{ formatCurrency(row.availablePoint) }}</template>
+      <template #isAdultVerified="{ row }">{{
+        row.isAdultVerified ? "인증 완료" : "미인증"
+      }}</template>
+      <template #availablePoint="{ row }">{{
+        formatCurrency(row.availablePoint)
+      }}</template>
       <template #actions="{ row }">
         <div class="row-actions">
-          <Select :model-value="row.userGrade" @update:model-value="users.updateUserGrade(row.uid, $event as typeof row.userGrade)">
-            <option v-for="grade in grades" :key="grade" :value="grade">{{ grade }}</option>
+          <Select
+            :model-value="row.userGrade"
+            @update:model-value="
+              users.updateUserGrade(row.uid, $event as typeof row.userGrade)
+            "
+          >
+            <option v-for="grade in grades" :key="grade" :value="grade">
+              {{ grade }}
+            </option>
           </Select>
-          <Select :model-value="row.role" @update:model-value="users.updateUserRole(row.uid, $event as typeof row.role)">
+          <Select
+            :model-value="row.role"
+            @update:model-value="
+              users.updateUserRole(row.uid, $event as typeof row.role)
+            "
+          >
             <option value="customer">customer</option>
             <option value="staff">staff</option>
             <option value="manager">manager</option>
@@ -29,22 +45,22 @@
 </template>
 
 <script setup lang="ts">
-import { formatCurrency } from '~/utils/format'
-import type { GradeCode } from '~/types/domain'
+import { formatCurrency } from "~/utils/format";
+import type { GradeCode } from "~/types/domain";
 
-definePageMeta({ layout: 'admin', middleware: 'admin' })
-const users = useUserStore()
-const grades: GradeCode[] = ['BASIC', 'PLUS', 'PRO', 'VIP', 'BLACK']
+definePageMeta({ layout: "admin", middleware: "admin" });
+const users = useUserStore();
+const grades: GradeCode[] = ["BASIC", "PLUS", "PRO", "VIP", "BLACK"];
 const columns = [
-  { key: 'email', label: '이메일' },
-  { key: 'displayName', label: '이름' },
-  { key: 'isAdultVerified', label: '성인 인증' },
-  { key: 'userGrade', label: '등급' },
-  { key: 'role', label: '권한' },
-  { key: 'availablePoint', label: '포인트' }
-] as const
+  { key: "email", label: "이메일" },
+  { key: "displayName", label: "이름" },
+  { key: "isAdultVerified", label: "성인 인증" },
+  { key: "userGrade", label: "등급" },
+  { key: "role", label: "권한" },
+  { key: "availablePoint", label: "포인트" },
+] as const;
 
-useHead({ title: '관리자 회원 관리' })
+useHead({ title: "관리자 회원 관리" });
 </script>
 
 <style scoped>

@@ -1,6 +1,10 @@
 <template>
   <div v-if="products.length" class="product-grid">
-    <ProductCard v-for="product in products" :key="product.id" :product="product" />
+    <ProductCard
+      v-for="product in products"
+      :key="product.id"
+      :product="product"
+    />
   </div>
   <EmptyState
     v-else
@@ -12,9 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Product } from '~/types/domain'
+import type { Product } from "~/types/domain";
 
-defineProps<{ products: Product[] }>()
+defineProps<{ products: Product[] }>();
 </script>
 
 <style scoped>

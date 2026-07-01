@@ -1,14 +1,16 @@
 <template>
   <div v-if="show" class="loading-overlay">
-    <div class="loader" />
-    <span>{{ label }}</span>
+    <div class="loading-panel" role="status" aria-live="polite">
+      <div class="loader" />
+      <span>{{ label }}</span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 withDefaults(defineProps<{ show: boolean; label?: string }>(), {
-  label: '처리 중'
-})
+  label: "처리 중",
+});
 </script>
 
 <style scoped>
@@ -18,9 +20,20 @@ withDefaults(defineProps<{ show: boolean; label?: string }>(), {
   z-index: 100;
   display: grid;
   place-items: center;
-  gap: 10px;
   background: rgba(247, 243, 234, 0.7);
   backdrop-filter: blur(6px);
+}
+
+.loading-panel {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-width: 160px;
+  border: 1px solid rgba(214, 168, 90, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
   font-weight: 800;
 }
 

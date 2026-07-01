@@ -17,17 +17,28 @@
             <h1>{{ slide.title }}</h1>
             <p>{{ slide.description }}</p>
             <div class="hero-actions">
-              <Button :to="slide.primaryTo" size="lg">{{ slide.primaryLabel }}</Button>
-              <Button :to="slide.secondaryTo" variant="ghost" size="lg">{{ slide.secondaryLabel }}</Button>
+              <Button :to="slide.primaryTo" size="lg">{{
+                slide.primaryLabel
+              }}</Button>
+              <Button :to="slide.secondaryTo" variant="ghost" size="lg">{{
+                slide.secondaryLabel
+              }}</Button>
             </div>
           </div>
 
           <div class="hero-visual" aria-hidden="true">
-            <img :src="slide.product?.thumbnailUrl || featured?.thumbnailUrl" :alt="slide.product?.name || featured?.name || ''" >
+            <img
+              :src="slide.product?.thumbnailUrl || featured?.thumbnailUrl"
+              :alt="slide.product?.name || featured?.name || ''"
+            />
             <div class="hero-product">
               <span>{{ slide.productKicker }}</span>
               <strong>{{ slide.product?.name || featured?.name }}</strong>
-              <p>{{ slide.product?.shortDescription || featured?.shortDescription }}</p>
+              <p>
+                {{
+                  slide.product?.shortDescription || featured?.shortDescription
+                }}
+              </p>
             </div>
           </div>
         </div>
@@ -37,62 +48,72 @@
 </template>
 
 <script setup lang="ts">
-import { Autoplay, Navigation, Pagination } from 'swiper/modules'
-import { Swiper, SwiperSlide } from 'swiper/vue'
-import 'swiper/css'
-import 'swiper/css/navigation'
-import 'swiper/css/pagination'
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/vue";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
-const { brand } = useAppConfig()
-const productStore = useProductStore()
-const products = computed(() => productStore.visibleProducts)
-const featured = computed(() => products.value.find((product) => product.categoryIds.includes('lounge-pick')) || products.value[0])
-const swiperModules = [Autoplay, Navigation, Pagination]
+const { brand } = useAppConfig();
+const productStore = useProductStore();
+const products = computed(() => productStore.visibleProducts);
+const featured = computed(
+  () =>
+    products.value.find((product) =>
+      product.categoryIds.includes("lounge-pick"),
+    ) || products.value[0],
+);
+const swiperModules = [Autoplay, Navigation, Pagination];
 
-const firstByCategory = (categoryId: string) => products.value.find((product) => product.categoryIds.includes(categoryId)) || featured.value
+const firstByCategory = (categoryId: string) =>
+  products.value.find((product) => product.categoryIds.includes(categoryId)) ||
+  featured.value;
 
 // 홈 메인 배너는 추후 Firestore banners 컬렉션과 연결할 수 있도록 데이터 배열로 분리한다.
 const heroSlides = computed(() => [
   {
-    id: 'editorial-main',
+    id: "editorial-main",
     kicker: brand.slogan,
     title: `취향을 블렌딩하다, ${brand.name}`,
-    description: '향, 맛, 무드를 쉽고 깔끔하게 고르는 성인 라이프스타일 편집샵.',
-    primaryLabel: '인기 상품 보기',
-    primaryTo: '/products',
-    secondaryLabel: '입문 추천 보기',
-    secondaryTo: '/products?category=starter-pick',
-    productKicker: 'LOUNGE PICK',
-    product: firstByCategory('lounge-pick'),
-    tone: 'cream'
+    description:
+      "향, 맛, 무드를 쉽고 깔끔하게 고르는 성인 라이프스타일 편집샵.",
+    primaryLabel: "인기 상품 보기",
+    primaryTo: "/products",
+    secondaryLabel: "입문 추천 보기",
+    secondaryTo: "/products?category=starter-pick",
+    productKicker: "LOUNGE PICK",
+    product: firstByCategory("lounge-pick"),
+    tone: "cream",
   },
   {
-    id: 'nicotine-free',
-    kicker: 'NICOTINE FREE',
-    title: '니코틴 없이 즐기는 향의 선택',
-    description: '부담은 낮추고, 취향은 더 선명하게. 데일리하게 고르기 좋은 플레이버를 모았습니다.',
-    primaryLabel: '니코틴 프리 보기',
-    primaryTo: '/products?category=nicotine-free',
-    secondaryLabel: '데일리 추천',
-    secondaryTo: '/products?category=starter-pick',
-    productKicker: 'ZERO FLAVOR',
-    product: firstByCategory('nicotine-free'),
-    tone: 'green'
+    id: "nicotine-free",
+    kicker: "NICOTINE FREE",
+    title: "니코틴 없이 즐기는 향의 선택",
+    description:
+      "부담은 낮추고, 취향은 더 선명하게. 데일리하게 고르기 좋은 플레이버를 모았습니다.",
+    primaryLabel: "니코틴 프리 보기",
+    primaryTo: "/products?category=nicotine-free",
+    secondaryLabel: "데일리 추천",
+    secondaryTo: "/products?category=starter-pick",
+    productKicker: "ZERO FLAVOR",
+    product: firstByCategory("nicotine-free"),
+    tone: "green",
   },
   {
-    id: 'refill-care',
-    kicker: 'REFILL & CARE',
-    title: '필요한 소모품을 깔끔하게',
-    description: '팟, 카트리지, 케이블까지 사용하는 디바이스에 맞춰 빠르게 확인하세요.',
-    primaryLabel: '리필/소모품 보기',
-    primaryTo: '/products?category=consumable',
-    secondaryLabel: '전체 상품',
-    secondaryTo: '/products',
-    productKicker: 'DAILY REFILL',
-    product: firstByCategory('consumable'),
-    tone: 'amber'
-  }
-])
+    id: "refill-care",
+    kicker: "REFILL & CARE",
+    title: "필요한 소모품을 깔끔하게",
+    description:
+      "팟, 카트리지, 케이블까지 사용하는 디바이스에 맞춰 빠르게 확인하세요.",
+    primaryLabel: "리필/소모품 보기",
+    primaryTo: "/products?category=consumable",
+    secondaryLabel: "전체 상품",
+    secondaryTo: "/products",
+    productKicker: "DAILY REFILL",
+    product: firstByCategory("consumable"),
+    tone: "amber",
+  },
+]);
 </script>
 
 <style scoped>
@@ -151,19 +172,31 @@ const heroSlides = computed(() => [
   min-height: 390px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 82% 28%, rgba(214, 168, 90, 0.34), transparent 30%),
+    radial-gradient(
+      circle at 82% 28%,
+      rgba(214, 168, 90, 0.34),
+      transparent 30%
+    ),
     linear-gradient(135deg, #fffaf0 0%, #f3ead9 52%, #e7efe9 100%);
 }
 
 .hero-stage--green {
   background:
-    radial-gradient(circle at 82% 28%, rgba(143, 174, 157, 0.38), transparent 30%),
+    radial-gradient(
+      circle at 82% 28%,
+      rgba(143, 174, 157, 0.38),
+      transparent 30%
+    ),
     linear-gradient(135deg, #fbfff8 0%, #edf5ed 52%, #fff7e6 100%);
 }
 
 .hero-stage--amber {
   background:
-    radial-gradient(circle at 82% 28%, rgba(232, 111, 97, 0.2), transparent 30%),
+    radial-gradient(
+      circle at 82% 28%,
+      rgba(232, 111, 97, 0.2),
+      transparent 30%
+    ),
     linear-gradient(135deg, #fffaf0 0%, #f7ebcf 48%, #f7f3ea 100%);
 }
 

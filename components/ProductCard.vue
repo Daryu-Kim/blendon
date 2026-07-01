@@ -1,14 +1,18 @@
 <template>
   <article class="product-card surface">
     <NuxtLink :to="`/products/${product.slug}`" class="image-link">
-      <img :src="product.thumbnailUrl" :alt="product.name" loading="lazy" >
+      <img :src="product.thumbnailUrl" :alt="product.name" loading="lazy" />
       <span v-if="product.isAdultOnly" class="adult-label">성인 전용</span>
       <span v-if="product.stock <= 10" class="stock-label">품절 임박</span>
     </NuxtLink>
     <div class="product-body">
       <span class="brand-name">{{ product.brandName }}</span>
       <div class="badge-row">
-        <ProductBadge v-for="badge in product.badges.slice(0, 2)" :key="badge" :label="badge" />
+        <ProductBadge
+          v-for="badge in product.badges.slice(0, 2)"
+          :key="badge"
+          :label="badge"
+        />
       </div>
       <NuxtLink :to="`/products/${product.slug}`">
         <h3>{{ product.name }}</h3>
@@ -22,7 +26,7 @@
           size="sm"
           :icon="canBuy ? ShoppingBag : LockKeyhole"
         >
-          {{ canBuy ? '보기' : '확인' }}
+          {{ canBuy ? "보기" : "확인" }}
         </Button>
       </div>
     </div>
@@ -30,13 +34,13 @@
 </template>
 
 <script setup lang="ts">
-import { LockKeyhole, ShoppingBag } from '@lucide/vue'
-import type { Product } from '~/types/domain'
-import { canBuyProduct } from '~/utils/access'
+import { LockKeyhole, ShoppingBag } from "@lucide/vue";
+import type { Product } from "~/types/domain";
+import { canBuyProduct } from "~/utils/access";
 
-const props = defineProps<{ product: Product }>()
-const auth = useAuthStore()
-const canBuy = computed(() => canBuyProduct(props.product, auth.profile))
+const props = defineProps<{ product: Product }>();
+const auth = useAuthStore();
+const canBuy = computed(() => canBuyProduct(props.product, auth.profile));
 </script>
 
 <style scoped>
@@ -45,7 +49,9 @@ const canBuy = computed(() => canBuyProduct(props.product, auth.profile))
   overflow: hidden;
   border-color: #efe6d8;
   box-shadow: none;
-  transition: border-color 0.18s ease, transform 0.18s ease;
+  transition:
+    border-color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .product-card:hover {

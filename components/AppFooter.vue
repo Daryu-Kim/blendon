@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-const { brand } = useAppConfig()
+const { brand } = useAppConfig();
 </script>
 
 <style scoped>
@@ -67,7 +67,9 @@ const { brand } = useAppConfig()
 
 @media (min-width: 760px) {
   .footer-grid {
-    grid-template-columns: minmax(0, 1.4fr) minmax(150px, 0.55fr) minmax(170px, 0.7fr) minmax(170px, 0.65fr);
+    grid-template-columns:
+      minmax(0, 1.4fr) minmax(150px, 0.55fr) minmax(170px, 0.7fr)
+      minmax(170px, 0.65fr);
   }
 }
 </style>

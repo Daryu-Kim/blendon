@@ -1,21 +1,31 @@
 <template>
   <form class="search-bar" role="search" @submit.prevent="submit">
     <Search :size="18" aria-hidden="true" />
-    <input v-model="query" type="search" placeholder="상품, 향, 무드 검색" aria-label="상품 검색" >
-    <button type="submit" title="검색"><ArrowRight :size="18" aria-hidden="true" /></button>
+    <input
+      v-model="query"
+      type="search"
+      placeholder="상품, 향, 무드 검색"
+      aria-label="상품 검색"
+    />
+    <button type="submit" title="검색">
+      <ArrowRight :size="18" aria-hidden="true" />
+    </button>
   </form>
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, Search } from '@lucide/vue'
+import { ArrowRight, Search } from "@lucide/vue";
 
-const productStore = useProductStore()
-const router = useRouter()
-const query = ref(productStore.query)
+const productStore = useProductStore();
+const router = useRouter();
+const query = ref(productStore.query);
 const submit = async () => {
-  productStore.setQuery(query.value)
-  await router.push({ path: '/products', query: query.value ? { q: query.value } : undefined })
-}
+  productStore.setQuery(query.value);
+  await router.push({
+    path: "/products",
+    query: query.value ? { q: query.value } : undefined,
+  });
+};
 </script>
 
 <style scoped>

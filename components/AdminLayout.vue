@@ -16,11 +16,11 @@
 </template>
 
 <script setup lang="ts">
-const auth = useAuthStore()
+const auth = useAuthStore();
 
 onMounted(() => {
-  auth.init()
-})
+  auth.init();
+});
 </script>
 
 <style scoped>

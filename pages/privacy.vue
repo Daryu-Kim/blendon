@@ -18,11 +18,11 @@
 </template>
 
 <script setup lang="ts">
-import { legalConfig } from '~/config/legal'
+import { legalConfig } from "~/config/legal";
 
-const sections = legalConfig.privacy
+const sections = legalConfig.privacy;
 
-useHead({ title: '개인정보처리방침' })
+useHead({ title: "개인정보처리방침" });
 </script>
 
 <style scoped>

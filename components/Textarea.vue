@@ -1,10 +1,17 @@
 <template>
-  <textarea class="ui-textarea" :value="modelValue" v-bind="$attrs" @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)" />
+  <textarea
+    class="ui-textarea"
+    :value="modelValue"
+    v-bind="$attrs"
+    @input="
+      $emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)
+    "
+  />
 </template>
 
 <script setup lang="ts">
-defineProps<{ modelValue?: string }>()
-defineEmits<{ 'update:modelValue': [value: string] }>()
+defineProps<{ modelValue?: string }>();
+defineEmits<{ "update:modelValue": [value: string] }>();
 </script>
 
 <style scoped>

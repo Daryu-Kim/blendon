@@ -11,9 +11,18 @@
       <section class="surface panel">
         <h2>{{ auth.profile?.displayName }}</h2>
         <dl>
-          <div><dt>이메일</dt><dd>{{ auth.profile?.email }}</dd></div>
-          <div><dt>등급</dt><dd>{{ auth.profile?.userGrade }}</dd></div>
-          <div><dt>보유 포인트</dt><dd>{{ formatCurrency(auth.profile?.availablePoint || 0) }}</dd></div>
+          <div>
+            <dt>이메일</dt>
+            <dd>{{ auth.profile?.email }}</dd>
+          </div>
+          <div>
+            <dt>등급</dt>
+            <dd>{{ auth.profile?.userGrade }}</dd>
+          </div>
+          <div>
+            <dt>보유 포인트</dt>
+            <dd>{{ formatCurrency(auth.profile?.availablePoint || 0) }}</dd>
+          </div>
         </dl>
       </section>
       <section class="surface panel">
@@ -21,7 +30,9 @@
         <div class="quick-links">
           <Button to="/orders" variant="ghost">주문 내역</Button>
           <Button to="/cart" variant="ghost">장바구니</Button>
-          <Button v-if="auth.isAdmin" to="/admin" variant="secondary">관리자</Button>
+          <Button v-if="auth.isAdmin" to="/admin" variant="secondary"
+            >관리자</Button
+          >
         </div>
       </section>
     </div>
@@ -29,17 +40,17 @@
 </template>
 
 <script setup lang="ts">
-import { formatCurrency } from '~/utils/format'
+import { formatCurrency } from "~/utils/format";
 
-definePageMeta({ middleware: 'auth' })
-const auth = useAuthStore()
-const router = useRouter()
+definePageMeta({ middleware: "auth" });
+const auth = useAuthStore();
+const router = useRouter();
 const logout = async () => {
-  await auth.signOut()
-  await router.push('/')
-}
+  await auth.signOut();
+  await router.push("/");
+};
 
-useHead({ title: '마이페이지' })
+useHead({ title: "마이페이지" });
 </script>
 
 <style scoped>

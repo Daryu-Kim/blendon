@@ -1,18 +1,33 @@
 <template>
   <main class="section page-shell">
-    <EmptyState v-if="!product" title="상품을 찾을 수 없어요." description="주소를 다시 확인해 주세요." action-label="상품 목록" action-to="/products" />
+    <EmptyState
+      v-if="!product"
+      title="상품을 찾을 수 없어요."
+      description="주소를 다시 확인해 주세요."
+      action-label="상품 목록"
+      action-to="/products"
+    />
     <div v-else class="product-detail">
       <section class="gallery">
-        <img :src="selectedImage" :alt="product.name" class="main-image" >
+        <img :src="selectedImage" :alt="product.name" class="main-image" />
         <div class="thumbs">
-          <button v-for="image in product.imageUrls" :key="image" type="button" @click="selectedImage = image">
-            <img :src="image" :alt="product.name" >
+          <button
+            v-for="image in product.imageUrls"
+            :key="image"
+            type="button"
+            @click="selectedImage = image"
+          >
+            <img :src="image" :alt="product.name" />
           </button>
         </div>
       </section>
       <section class="surface buy-box">
         <div class="badge-row">
-          <ProductBadge v-for="badge in product.badges" :key="badge" :label="badge" />
+          <ProductBadge
+            v-for="badge in product.badges"
+            :key="badge"
+            :label="badge"
+          />
         </div>
         <h1>{{ product.name }}</h1>
         <p class="short">{{ product.shortDescription }}</p>
@@ -22,21 +37,30 @@
           <div class="form-row">
             <label for="option">옵션</label>
             <Select id="option" v-model="optionId">
-              <option v-for="option in product.options" :key="option.optionId" :value="option.optionId">
+              <option
+                v-for="option in product.options"
+                :key="option.optionId"
+                :value="option.optionId"
+              >
                 {{ option.optionName }} / 재고 {{ option.stock }}
               </option>
             </Select>
           </div>
           <div class="form-row">
             <label>수량</label>
-            <QuantityStepper v-model="quantity" :max="selectedOption?.stock || 1" />
+            <QuantityStepper
+              v-model="quantity"
+              :max="selectedOption?.stock || 1"
+            />
           </div>
-          <Button size="lg" :disabled="!canBuy" @click="addToCart">{{ canBuy ? '장바구니 담기' : '구매 권한 확인 필요' }}</Button>
+          <Button size="lg" :disabled="!canBuy" @click="addToCart">{{
+            canBuy ? "장바구니 담기" : "구매 권한 확인 필요"
+          }}</Button>
         </template>
       </section>
       <section class="surface detail-copy">
         <h2>이런 분께 추천해요</h2>
-        <p>{{ product.tags.join(', ') }}</p>
+        <p>{{ product.tags.join(", ") }}</p>
         <h2>확인해주세요</h2>
         <p>{{ description }}</p>
         <div class="profile">
@@ -50,38 +74,47 @@
 </template>
 
 <script setup lang="ts">
-import { canBuyProduct, maskRestrictedText } from '~/utils/access'
+import { canBuyProduct, maskRestrictedText } from "~/utils/access";
 
-const route = useRoute()
-const productStore = useProductStore()
-const cart = useCartStore()
-const auth = useAuthStore()
-const product = computed(() => productStore.findBySlug(String(route.params.slug)))
-const selectedImage = ref('')
-const optionId = ref('')
-const quantity = ref(1)
-const selectedOption = computed(() => product.value?.options.find((option) => option.optionId === optionId.value))
-const canBuy = computed(() => Boolean(product.value && canBuyProduct(product.value, auth.profile)))
-const description = computed(() => (product.value ? maskRestrictedText(product.value, auth.profile) : ''))
+const route = useRoute();
+const productStore = useProductStore();
+const cart = useCartStore();
+const auth = useAuthStore();
+const product = computed(() =>
+  productStore.findBySlug(String(route.params.slug)),
+);
+const selectedImage = ref("");
+const optionId = ref("");
+const quantity = ref(1);
+const selectedOption = computed(() =>
+  product.value?.options.find((option) => option.optionId === optionId.value),
+);
+const canBuy = computed(() =>
+  Boolean(product.value && canBuyProduct(product.value, auth.profile)),
+);
+const description = computed(() =>
+  product.value ? maskRestrictedText(product.value, auth.profile) : "",
+);
 
 onMounted(async () => {
-  await productStore.fetchCatalog()
-})
+  await productStore.fetchCatalog();
+});
 
 watchEffect(() => {
   if (product.value) {
-    selectedImage.value ||= product.value.imageUrls[0] || product.value.thumbnailUrl
-    optionId.value ||= product.value.options[0]?.optionId || ''
+    selectedImage.value ||=
+      product.value.imageUrls[0] || product.value.thumbnailUrl;
+    optionId.value ||= product.value.options[0]?.optionId || "";
   }
-})
+});
 
 const addToCart = () => {
-  if (!product.value) return
-  cart.add(product.value.id, optionId.value, quantity.value)
-  navigateTo('/cart')
-}
+  if (!product.value) return;
+  cart.add(product.value.id, optionId.value, quantity.value);
+  navigateTo("/cart");
+};
 
-useHead(() => ({ title: product.value?.name || '상품 상세' }))
+useHead(() => ({ title: product.value?.name || "상품 상세" }));
 </script>
 
 <style scoped>

@@ -8,12 +8,16 @@
 </template>
 
 <script setup lang="ts">
-import type { GradeCode } from '~/types/domain'
-import { hasGradeAtLeast } from '~/utils/access'
+import type { GradeCode } from "~/types/domain";
+import { hasGradeAtLeast } from "~/utils/access";
 
-const props = defineProps<{ minGrade: GradeCode }>()
-const auth = useAuthStore()
-const allowed = computed(() => Boolean(auth.profile && hasGradeAtLeast(auth.profile.userGrade, props.minGrade)))
+const props = defineProps<{ minGrade: GradeCode }>();
+const auth = useAuthStore();
+const allowed = computed(() =>
+  Boolean(
+    auth.profile && hasGradeAtLeast(auth.profile.userGrade, props.minGrade),
+  ),
+);
 </script>
 
 <style scoped>

@@ -1,9 +1,9 @@
-import type { BrandConfig } from '~/types/domain'
+import type { BrandConfig } from "~/types/domain";
 
-declare module 'nuxt/schema' {
+declare module "nuxt/schema" {
   interface AppConfig {
-    brand: BrandConfig
+    brand: BrandConfig;
   }
 }
 
-export {}
+export {};
