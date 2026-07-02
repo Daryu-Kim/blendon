@@ -13,12 +13,18 @@ service cloud.firestore {
       return signedIn() ? userDoc(request.auth.uid) : {};
     }
 
-    function role() {
-      return signedIn() && request.auth.token.role != null ? request.auth.token.role : myProfile().role;
+    function tokenRole() {
+      return signedIn() && request.auth.token.role != null ? request.auth.token.role : 'customer';
+    }
+
+    function profileRole() {
+      return signedIn() && myProfile().role != null ? myProfile().role : 'customer';
     }
 
     function isAdmin() {
-      return signedIn() && role() in ['manager', 'admin', 'owner'];
+      return signedIn()
+        && (tokenRole() in ['manager', 'admin', 'owner']
+          || profileRole() in ['manager', 'admin', 'owner']);
     }
 
     function gradeLevel(grade) {
@@ -30,7 +36,7 @@ service cloud.firestore {
     }
 
     function userGradeLevel() {
-      return signedIn() && myProfile().userGrade != null ? gradeLevel(myProfile().userGrade) : 0;
+      return signedIn() && myProfile().userGrade != null ? gradeLevel(myProfile().userGrade) : 1;
     }
 
     function isAdultVerified() {
@@ -59,7 +65,7 @@ service cloud.firestore {
     }
 
     match /categories/{categoryId} {
-      allow read: if resource.data.isVisible == true
+      allow read: if isAdmin() || resource.data.isVisible == true
         && (resource.data.adultOnly != true || isAdultVerified())
         && userGradeLevel() >= gradeLevel(resource.data.minUserGradeToView);
       allow create, update, delete: if isAdmin();
@@ -75,9 +81,15 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /siteSettings/{settingId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /orders/{orderId} {
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create, update, delete: if false;
+      allow update: if isAdmin();
+      allow create, delete: if false;
     }
 
     match /cartItems/{cartItemId} {
@@ -93,6 +105,11 @@ service cloud.firestore {
 
     match /notices/{noticeId} {
       allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /noticePopups/{popupId} {
+      allow read: if resource.data.isActive == true || isAdmin();
       allow create, update, delete: if isAdmin();
     }
 

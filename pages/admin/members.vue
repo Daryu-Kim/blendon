@@ -60,6 +60,10 @@ const columns = [
   { key: "availablePoint", label: "포인트" },
 ] as const;
 
+onMounted(async () => {
+  await users.fetchUsers(true);
+});
+
 useHead({ title: "관리자 회원 관리" });
 </script>
 

@@ -2,7 +2,6 @@
   <article class="product-card surface">
     <NuxtLink :to="`/products/${product.slug}`" class="image-link">
       <img :src="product.thumbnailUrl" :alt="product.name" loading="lazy" />
-      <span v-if="product.isAdultOnly" class="adult-label">성인 전용</span>
       <span v-if="product.stock <= 10" class="stock-label">품절 임박</span>
     </NuxtLink>
     <div class="product-body">
@@ -70,18 +69,6 @@ const canBuy = computed(() => canBuyProduct(props.product, auth.profile));
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.adult-label {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  border-radius: 999px;
-  background: rgba(23, 23, 23, 0.88);
-  color: #fff;
-  padding: 6px 9px;
-  font-size: 12px;
-  font-weight: 800;
 }
 
 .stock-label {

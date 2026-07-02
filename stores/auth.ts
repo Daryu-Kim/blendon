@@ -15,7 +15,6 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { defineStore } from "pinia";
-import { mockUsers } from "~/data/mock";
 import { hasAdminAccess } from "~/utils/access";
 import { toUserMessage } from "~/utils/error-message";
 import type {
@@ -135,12 +134,6 @@ const toSessionState = (profile: UserProfile): AuthSessionState => ({
   savedAt: new Date().toISOString(),
 });
 
-const readStoredSession = () => {
-  if (!import.meta.client) return null;
-  const raw = sessionStorage.getItem(storageKey);
-  return raw ? (JSON.parse(raw) as AuthSessionState) : null;
-};
-
 const writeStoredProfile = (profile: UserProfile | null) => {
   if (!import.meta.client) return;
   if (!profile) sessionStorage.removeItem(storageKey);
@@ -166,26 +159,9 @@ export const useAuthStore = defineStore("auth", {
       if (this.initialized || !import.meta.client) return;
       const nuxtApp = useNuxtApp();
       const firebase = nuxtApp.$firebase;
-      const runtime = useRuntimeConfig();
 
       if (!firebase.enabled || !firebase.auth || !firebase.db) {
-        const session = readStoredSession();
-        if (runtime.public.enableMockAuth && session) {
-          const mockProfile = mockUsers.find(
-            (user) => user.uid === session.uid,
-          );
-          this.profile = normalizeProfile(
-            mockProfile ||
-              createDefaultProfile(
-                session.uid,
-                session.email,
-                session.displayName,
-                { loginId: session.loginId },
-              ),
-          );
-        } else {
-          this.profile = null;
-        }
+        this.profile = null;
         this.initialized = true;
         return;
       }
@@ -252,20 +228,7 @@ export const useAuthStore = defineStore("auth", {
             return this.profile;
           }
 
-          if (!useRuntimeConfig().public.enableMockAuth)
-            throw new Error("Firebase Authentication 설정이 필요합니다.");
-          const preset = mockUsers.find((user) => user.email === email);
-          const profile = normalizeProfile(
-            preset ||
-              createDefaultProfile(
-                `mock-${Date.now()}`,
-                email,
-                email.split("@")[0] || "블렌드 고객",
-              ),
-          );
-          this.profile = profile;
-          writeStoredProfile(profile);
-          return profile;
+          throw new Error("Firebase Authentication 설정이 필요합니다.");
         }, "로그인 처리 중");
       } catch (error) {
         this.error = toUserMessage(
@@ -312,17 +275,7 @@ export const useAuthStore = defineStore("auth", {
             return profile;
           }
 
-          if (!useRuntimeConfig().public.enableMockAuth)
-            throw new Error("Firebase Authentication 설정이 필요합니다.");
-          const profile = createDefaultProfile(
-            `mock-${Date.now()}`,
-            email,
-            displayName,
-            input,
-          );
-          this.profile = profile;
-          writeStoredProfile(profile);
-          return profile;
+          throw new Error("Firebase Authentication 설정이 필요합니다.");
         }, "회원가입 처리 중");
       } catch (error) {
         this.error = toUserMessage(

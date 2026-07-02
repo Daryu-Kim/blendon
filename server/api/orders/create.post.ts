@@ -1,7 +1,6 @@
 import { buildPendingOrder } from "~/server/utils/order-service";
 import { saveServerOrder } from "~/server/utils/order-store";
 import { getFirebaseAdmin } from "~/server/utils/firebase-admin";
-import { mockProducts } from "~/data/mock";
 import type {
   CartItem,
   PaymentMethod,
@@ -11,7 +10,6 @@ import type {
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
-    user: UserProfile;
     cartItems: CartItem[];
     checkout: {
       recipientName: string;
@@ -25,9 +23,6 @@ export default defineEventHandler(async (event) => {
   }>(event);
 
   const admin = getFirebaseAdmin();
-  const runtime = useRuntimeConfig();
-  let user = body.user;
-  let products: Product[];
 
   if (admin) {
     const token = getHeader(event, "authorization")?.replace(/^Bearer\s+/i, "");
@@ -43,29 +38,27 @@ export default defineEventHandler(async (event) => {
         statusCode: 404,
         statusMessage: "회원 정보를 찾을 수 없습니다.",
       });
-    user = userSnap.data() as UserProfile;
+    const user = userSnap.data() as UserProfile;
     const productDocs = await Promise.all(
       body.cartItems.map((item) =>
         admin.db.collection("products").doc(item.productId).get(),
       ),
     );
-    products = productDocs
+    const products = productDocs
       .filter((snap) => snap.exists)
       .map((snap) => ({ id: snap.id, ...snap.data() }) as Product);
-  } else if (runtime.public.enableMockAuth) {
-    products = mockProducts;
+
+    const order = buildPendingOrder(
+      user,
+      body.cartItems,
+      body.checkout,
+      products,
+    );
+    return await saveServerOrder(order);
   } else {
     throw createError({
       statusCode: 500,
       statusMessage: "Firebase Admin 설정이 필요합니다.",
     });
   }
-
-  const order = buildPendingOrder(
-    user,
-    body.cartItems,
-    body.checkout,
-    products,
-  );
-  return saveServerOrder(order);
 });

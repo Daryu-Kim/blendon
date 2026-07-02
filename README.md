@@ -16,12 +16,9 @@ npm install
 npm run dev
 ```
 
-개발 서버는 기본적으로 `http://localhost:3000`에서 실행됩니다. 운영 기본값은 mock auth/payment 비활성화입니다. 로컬 화면 흐름만 확인해야 할 때는 `.env`에서 `NUXT_PUBLIC_ENABLE_MOCK_AUTH=true`, `NUXT_PUBLIC_ENABLE_MOCK_PAYMENTS=true`를 명시적으로 켭니다.
+개발 서버는 기본적으로 `http://localhost:3000`에서 실행됩니다. 로그인, 회원, 상품, 주문, 공지, 배너 관리는 Firebase Auth/Firestore/Storage 실서버 설정을 기준으로 동작합니다. 로컬에서 결제 흐름만 확인해야 할 때는 `.env`에서 `NUXT_PUBLIC_ENABLE_MOCK_PAYMENTS=true`를 명시적으로 켭니다.
 
-테스트 계정:
-
-- 고객: `customer@example.com` / 아무 비밀번호
-- 관리자: `admin@example.com` / 아무 비밀번호
+테스트 계정은 Firebase Authentication에 직접 생성하고, Firestore `users/{uid}` 문서의 `role`을 `admin` 또는 `owner`로 설정해야 관리자에 접근할 수 있습니다.
 
 ## 환경변수
 
@@ -41,12 +38,20 @@ npm run dev
 2. Firestore, Storage를 생성합니다.
 3. `firestore.rules`, `storage.rules`, `firestore.indexes.json`을 배포합니다.
 4. Functions 배포 전 `functions` 폴더에서 `npm install && npm run build`를 확인합니다.
-5. 관리자 계정은 custom claims의 `role=admin` 또는 users 문서의 `role`로 구분합니다.
+5. 관리자 계정은 Firestore `users/{uid}.role`과 Firebase Auth custom claims의 `role`로 구분합니다. Storage 업로드 권한은 custom claim을 사용하므로 관리자 이미지 업로드 전 claim을 설정해야 합니다.
 
 ```bash
 firebase deploy --only firestore:rules,firestore:indexes,storage
 firebase deploy --only functions
 ```
+
+관리자 custom claim 설정:
+
+```bash
+ADMIN_EMAIL=admin@example.com ADMIN_ROLE=owner npm run admin:claim
+```
+
+실행 후 해당 관리자는 로그아웃 후 다시 로그인해야 새 custom claim이 ID token에 반영됩니다.
 
 ## PortOne 결제 구조
 
@@ -78,7 +83,7 @@ firebase deploy --only functions
 - 상품: `/products`, `/products/[slug]`
 - 장바구니/주문: `/cart`, `/checkout`, `/payment/complete`
 - 회원: `/login`, `/signup`, `/mypage`
-- 관리자: `/admin`, `/admin/products`, `/admin/products/new`, `/admin/products/[id]`, `/admin/orders`, `/admin/members`, `/admin/grades`, `/admin/categories`, `/admin/banners`
+- 관리자: `/admin`, `/admin/products`, `/admin/products/new`, `/admin/products/[id]`, `/admin/orders`, `/admin/members`, `/admin/grades`, `/admin/categories`, `/admin/notices`, `/admin/banners`
 
 ## 배포
 

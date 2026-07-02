@@ -23,7 +23,7 @@
         </div>
         <div class="form-row wide">
           <label>상세 설명</label
-          ><Textarea v-model="form.description" rows="5" />
+          ><MarkdownEditor v-model="form.description" path-prefix="products/descriptions" />
         </div>
       </div>
       <div class="check-grid">
@@ -104,7 +104,7 @@
 
     <AdminFormSection
       title="성인/권한 정책"
-      description="프론트 노출뿐 아니라 Firestore Rules와 서버 검증 기준으로도 사용합니다."
+      description="쇼핑몰은 성인 전용으로 운영하며, 등급별 열람/구매 권한을 함께 관리합니다."
     >
       <div class="form-grid">
         <div class="form-row">
@@ -127,8 +127,8 @@
         <div class="form-row">
           <label>성인 전용</label
           ><Select v-model="adultOnlyText"
-            ><option value="false">아니오</option>
-            <option value="true">예</option></Select
+            ><option value="true">예</option>
+            <option value="false">아니오</option></Select
           >
         </div>
         <div class="form-row">
@@ -160,6 +160,37 @@
             ><option value="true">숨김</option>
             <option value="false">표시</option></Select
           >
+        </div>
+      </div>
+    </AdminFormSection>
+
+    <AdminFormSection
+      title="상품 SEO"
+      description="상품 상세 페이지의 검색/공유 메타 정보를 설정합니다."
+    >
+      <div class="form-grid">
+        <div class="form-row wide">
+          <label>SEO 타이틀</label>
+          <Input v-model="form.seoTitle" placeholder="비워두면 상품명 사용" />
+        </div>
+        <div class="form-row wide">
+          <label>SEO 설명</label>
+          <Input
+            v-model="form.seoDescription"
+            placeholder="비워두면 간단 설명 사용"
+          />
+        </div>
+        <div class="form-row wide">
+          <label>SEO 키워드</label>
+          <Input v-model="seoKeywordsText" placeholder="쉼표로 구분" />
+        </div>
+        <div class="form-row">
+          <label>OG 이미지</label>
+          <ImageUploader v-model="form.ogImageUrl" path-prefix="products/seo" />
+        </div>
+        <div class="form-row">
+          <label>캐노니컬 URL</label>
+          <Input v-model="form.canonicalUrl" placeholder="비워두면 자동 생성" />
         </div>
       </div>
     </AdminFormSection>
@@ -258,18 +289,21 @@ const createEmptyProduct = (): Product => ({
   nicotineType: "not-applicable",
   isNicotineFree: false,
   isAlternativeNicotine: false,
-  isAdultOnly: false,
+  isAdultOnly: true,
   isVisible: true,
   minUserGradeToView: "BASIC",
   minUserGradeToBuy: "BASIC",
   isPriceHiddenBeforeLogin: true,
-  isPriceHiddenBeforeAdultVerification: false,
+  isPriceHiddenBeforeAdultVerification: true,
   status: "draft",
   detailImageUrls: [],
   viewRoles: [],
   buyRoles: [],
   seoTitle: "",
   seoDescription: "",
+  seoKeywords: [],
+  ogImageUrl: "",
+  canonicalUrl: "",
   adminMemo: "",
   createdAt: now,
   updatedAt: now,
@@ -284,6 +318,7 @@ const imageUrlsText = ref((form.imageUrls || []).join("\n"));
 const detailImageUrlsText = ref((form.detailImageUrls || []).join("\n"));
 const badgesText = ref((form.badges || []).join(", "));
 const tagsText = ref((form.tags || []).join(", "));
+const seoKeywordsText = ref((form.seoKeywords || []).join(", "));
 const optionsText = ref(
   JSON.stringify(
     form.options?.length ? form.options : [defaultOption()],
@@ -366,6 +401,7 @@ const submit = async () => {
     detailImageUrls: splitLines(detailImageUrlsText.value),
     badges: splitComma(badgesText.value),
     tags: splitComma(tagsText.value),
+    seoKeywords: splitComma(seoKeywordsText.value),
     options: parsedOptions.length ? parsedOptions : [defaultOption()],
     isNicotineFree: form.nicotineType === "nicotine-free",
     isAlternativeNicotine: form.nicotineType === "alternative-nicotine",

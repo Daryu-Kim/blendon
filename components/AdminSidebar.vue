@@ -13,9 +13,12 @@
 <script setup lang="ts">
 import {
   Boxes,
+  BellRing,
   LayoutDashboard,
   Megaphone,
+  Newspaper,
   Package,
+  Settings,
   ShieldCheck,
   ShoppingCart,
   Users,
@@ -29,7 +32,10 @@ const items = [
   { to: "/admin/members", label: "회원 관리", icon: Users },
   { to: "/admin/grades", label: "회원 등급", icon: ShieldCheck },
   { to: "/admin/categories", label: "카테고리", icon: Boxes },
+  { to: "/admin/notices", label: "공지사항", icon: Newspaper },
+  { to: "/admin/popups", label: "공지 팝업", icon: BellRing },
   { to: "/admin/banners", label: "배너/콘텐츠", icon: Megaphone },
+  { to: "/admin/settings", label: "쇼핑몰 설정/SEO", icon: Settings },
 ];
 </script>
 

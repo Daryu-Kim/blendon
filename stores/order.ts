@@ -1,5 +1,14 @@
+import {
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { defineStore } from "pinia";
-import { mockOrders } from "~/data/mock";
 import type { Address, Order, PaymentMethod, PickupType } from "~/types/domain";
 
 export interface CheckoutInput {
@@ -12,30 +21,62 @@ export interface CheckoutInput {
   paymentMethod: PaymentMethod;
 }
 
-const ordersKey = "blend-on-orders";
-
-const readOrders = (): Order[] => {
-  if (!import.meta.client) return [...mockOrders];
-  const raw = localStorage.getItem(ordersKey);
-  return raw ? (JSON.parse(raw) as Order[]) : [...mockOrders];
+const timestampToIso = (value: unknown) => {
+  if (
+    value &&
+    typeof value === "object" &&
+    "toDate" in value &&
+    typeof value.toDate === "function"
+  ) {
+    return value.toDate().toISOString();
+  }
+  return typeof value === "string" ? value : new Date().toISOString();
 };
 
-const writeOrders = (orders: Order[]) => {
-  if (import.meta.client)
-    localStorage.setItem(ordersKey, JSON.stringify(orders));
-};
+const normalizeOrder = (id: string, data: Partial<Order>): Order =>
+  ({
+    ...data,
+    id,
+    orderNo: data.orderNo || id,
+    userId: data.userId || "",
+    items: data.items || [],
+    subtotalAmount: Number(data.subtotalAmount || 0),
+    deliveryFee: Number(data.deliveryFee || 0),
+    discountAmount: Number(data.discountAmount || 0),
+    pointUsed: Number(data.pointUsed || 0),
+    totalAmount: Number(data.totalAmount || 0),
+    paymentStatus: data.paymentStatus || "pending",
+    paymentMethod: data.paymentMethod || "card",
+    orderStatus: data.orderStatus || "pending",
+    deliveryStatus: data.deliveryStatus || "none",
+    claimStatus: data.claimStatus || "none",
+    paymentProvider: "portone",
+    portonePaymentId: data.portonePaymentId || null,
+    portoneImpUid: data.portoneImpUid || null,
+    paymentId: data.paymentId || null,
+    recipientName: data.recipientName || "",
+    recipientPhone: data.recipientPhone || "",
+    address: data.address || { zipCode: "", address1: "", address2: "" },
+    deliveryMemo: data.deliveryMemo || "",
+    pickupType: data.pickupType || "delivery",
+    createdAt: timestampToIso(data.createdAt),
+    updatedAt: timestampToIso(data.updatedAt),
+    paidAt: data.paidAt || null,
+    adminMemo: data.adminMemo || "",
+  }) satisfies Order;
 
 export const useOrderStore = defineStore("order", {
   state: () => ({
-    orders: [...mockOrders] as Order[],
+    orders: [] as Order[],
+    initialized: false,
     loading: false,
   }),
   getters: {
     myOrders: (state) => {
       const uid = useAuthStore().profile?.uid;
-      return state.orders.filter(
-        (order) => !uid || order.userId === uid || order.userId === "mock-user",
-      );
+      return uid
+        ? state.orders.filter((order) => order.userId === uid)
+        : [];
     },
     pendingPaymentCount: (state) =>
       state.orders.filter(
@@ -44,19 +85,58 @@ export const useOrderStore = defineStore("order", {
       ).length,
     preparingDeliveryCount: (state) =>
       state.orders.filter((order) => order.deliveryStatus === "ready").length,
-    todayOrderCount: (state) => state.orders.length,
-    todayRevenue: (state) =>
-      state.orders
-        .filter((order) => order.paymentStatus === "paid")
-        .reduce((sum, order) => sum + order.totalAmount, 0),
+    todayOrderCount: (state) => {
+      const today = new Date().toISOString().slice(0, 10);
+      return state.orders.filter((order) => order.createdAt.startsWith(today))
+        .length;
+    },
+    todayRevenue: (state) => {
+      const today = new Date().toISOString().slice(0, 10);
+      return state.orders
+        .filter(
+          (order) =>
+            order.paymentStatus === "paid" && order.createdAt.startsWith(today),
+        )
+        .reduce((sum, order) => sum + order.totalAmount, 0);
+    },
     recentOrders: (state) =>
       [...state.orders]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         .slice(0, 8),
   },
   actions: {
+    async fetchOrders(force = false) {
+      if (this.initialized && !force) return;
+      const firebase = useNuxtApp().$firebase;
+      const auth = useAuthStore();
+      this.loading = true;
+      try {
+        await useGlobalLoading().withLoading(async () => {
+          if (!firebase.enabled || !firebase.db || !auth.profile) {
+            this.orders = [];
+            this.initialized = true;
+            return;
+          }
+          const base = collection(firebase.db, "orders");
+          const ordersQuery = auth.isAdmin
+            ? query(base, orderBy("createdAt", "desc"))
+            : query(
+                base,
+                where("userId", "==", auth.profile.uid),
+                orderBy("createdAt", "desc"),
+              );
+          const snap = await getDocs(ordersQuery);
+          this.orders = snap.docs.map((item) =>
+            normalizeOrder(item.id, item.data() as Partial<Order>),
+          );
+          this.initialized = true;
+        }, "주문 정보를 불러오는 중");
+      } finally {
+        this.loading = false;
+      }
+    },
     hydrate() {
-      this.orders = readOrders();
+      return this.fetchOrders();
     },
     async createPendingOrder(input: CheckoutInput) {
       const auth = useAuthStore();
@@ -83,8 +163,7 @@ export const useOrderStore = defineStore("order", {
             }),
           "주문을 생성하는 중",
         );
-        this.orders.unshift(order);
-        writeOrders(this.orders);
+        this.updateOrder(order);
         return order;
       } finally {
         this.loading = false;
@@ -99,35 +178,32 @@ export const useOrderStore = defineStore("order", {
           }),
         "결제를 검증하는 중",
       );
-      const index = this.orders.findIndex(
-        (order) => order.id === result.order.id,
-      );
-      if (index >= 0) this.orders[index] = result.order;
-      else this.orders.unshift(result.order);
-      writeOrders(this.orders);
+      this.updateOrder(result.order);
       return result.order;
     },
     updateOrder(order: Order) {
-      const index = this.orders.findIndex((item) => item.id === order.id);
-      if (index >= 0) this.orders[index] = order;
-      else this.orders.unshift(order);
-      writeOrders(this.orders);
+      const normalized = normalizeOrder(order.id, order);
+      const index = this.orders.findIndex((item) => item.id === normalized.id);
+      if (index >= 0) this.orders[index] = normalized;
+      else this.orders.unshift(normalized);
+    },
+    async patchOrder(orderId: string, updates: Partial<Order>) {
+      const order = this.orders.find((item) => item.id === orderId);
+      if (order) Object.assign(order, updates, { updatedAt: new Date().toISOString() });
+      const firebase = useNuxtApp().$firebase;
+      if (!firebase.enabled || !firebase.db) return;
+      await useGlobalLoading().withLoading(async () => {
+        await updateDoc(doc(firebase.db!, "orders", orderId), {
+          ...updates,
+          updatedAt: serverTimestamp(),
+        });
+      }, "주문 정보를 저장하는 중");
     },
     setOrderStatus(orderId: string, status: Order["orderStatus"]) {
-      const order = this.orders.find((item) => item.id === orderId);
-      if (order) {
-        order.orderStatus = status;
-        order.updatedAt = new Date().toISOString();
-        writeOrders(this.orders);
-      }
+      return this.patchOrder(orderId, { orderStatus: status });
     },
     setDeliveryStatus(orderId: string, status: Order["deliveryStatus"]) {
-      const order = this.orders.find((item) => item.id === orderId);
-      if (order) {
-        order.deliveryStatus = status;
-        order.updatedAt = new Date().toISOString();
-        writeOrders(this.orders);
-      }
+      return this.patchOrder(orderId, { deliveryStatus: status });
     },
   },
 });

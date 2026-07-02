@@ -24,13 +24,20 @@ export const getPortOnePayment = async (
   const config = useRuntimeConfig();
   const mockEnabled = config.public.enableMockPayments;
 
-  if (mockEnabled || !config.portoneApiSecret) {
+  if (mockEnabled) {
     return {
       paymentId,
       status: "PAID",
       paidAmount: expectedAmount,
       raw: { mode: "mock" },
     };
+  }
+
+  if (!config.portoneApiSecret) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "PortOne API secret 설정이 필요합니다.",
+    });
   }
 
   const response = await $fetch<PortOnePaymentResponse>(

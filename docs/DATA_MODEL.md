@@ -106,7 +106,10 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `isPriceHiddenBeforeAdultVerification` | boolean          | 성인 확인 전 가격 숨김                                                                |
 | `viewRoles`, `buyRoles`                | string[]         | 향후 staff/manager 전용 상품 확장                                                     |
 | `status`                               | string           | `draft`, `active`, `hidden`, `soldOut`, `deleted`                                     |
-| `seoTitle`, `seoDescription`           | string           | 기본 메타 확장                                                                        |
+| `seoTitle`, `seoDescription`           | string           | 상품 상세 SEO 타이틀/설명                                                            |
+| `seoKeywords`                          | string[]         | 상품 상세 SEO 키워드                                                                  |
+| `ogImageUrl`                           | string           | 상품 공유 이미지                                                                       |
+| `canonicalUrl`                         | string           | 상품 canonical URL. 비어 있으면 `/products/{slug}` 사용                              |
 | `adminMemo`                            | string           | 관리자 메모                                                                           |
 | `createdAt`, `updatedAt`               | timestamp/string | 시각                                                                                  |
 
@@ -160,9 +163,26 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 | Field                    | Type             |
 | ------------------------ | ---------------- |
-| `id`, `title`, `content` | string           |
+| `id`, `title`            | string           |
+| `content`                | string           |
 | `isPinned`               | boolean          |
 | `createdAt`, `updatedAt` | timestamp/string |
+
+### `noticePopups/{popupId}`
+
+사이트 진입 시 오버레이 모달로 노출되는 공지 팝업이다. 관리자만 작성/수정/삭제 가능하고, 소비자는 활성 팝업만 읽는다.
+
+| Field                    | Type                         | Notes                                  |
+| ------------------------ | ---------------------------- | -------------------------------------- |
+| `id`, `title`, `content` | string                       | 식별자, 제목, Toast UI Markdown 본문   |
+| `imageUrl`               | string                       | 팝업 상단 이미지                       |
+| `linkUrl`, `buttonText`  | string                       | 연결 링크와 버튼 문구                  |
+| `placement`              | `main`, `all`                | 메인 접속 또는 전체 페이지             |
+| `isActive`               | boolean                      | 활성 여부                              |
+| `dismissMode`            | `session`, `today`, `none`   | 닫기 유지 방식                         |
+| `startsAt`, `endsAt`     | timestamp/string/null        | 노출 기간                              |
+| `order`                  | number                       | 노출 순서                              |
+| `createdAt`, `updatedAt` | timestamp/string             | 시각                                   |
 
 ### `inquiries/{inquiryId}`
 
@@ -186,6 +206,36 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `requestedAt`, `verifiedAt` | timestamp/string/null             |
 | `reason`                    | string                            |
 
+### `siteSettings/global`
+
+카페24 관리자 기본 설정에 해당하는 쇼핑몰 운영 정보다. 이 프로젝트는 성인 전용 쇼핑몰이므로 `adultOnly`와 `hideAdultVerificationStatusOnConsumer`는 기본적으로 `true`로 유지한다.
+
+| Field                                      | Type    |
+| ------------------------------------------ | ------- |
+| `mallName`, `mallDescription`              | string  |
+| `adultOnly`                                | boolean |
+| `requireAdultVerificationToBrowse`         | boolean |
+| `hideAdultVerificationStatusOnConsumer`    | boolean |
+| `businessName`, `representativeName`       | string  |
+| `businessRegistrationNumber`               | string  |
+| `mailOrderSalesNumber`                     | string  |
+| `businessAddress`                          | string  |
+| `customerCenterPhone`, `customerCenterEmail` | string |
+| `updatedAt`                                | timestamp/string |
+
+### `siteSettings/seo`
+
+사이트 공통 SEO/공유 메타 설정이다. 상품 상세는 상품별 SEO 필드가 우선한다.
+
+| Field                                      | Type     |
+| ------------------------------------------ | -------- |
+| `defaultTitle`, `titleTemplate`            | string   |
+| `defaultDescription`, `defaultKeywords`    | string/string[] |
+| `ogTitle`, `ogDescription`, `ogImageUrl`   | string   |
+| `canonicalBaseUrl`                         | string   |
+| `robots`                                   | string   |
+| `updatedAt`                                | timestamp/string |
+
 ### `storeSettings/{settingId}`
 
 브랜드명, 사업자 정보, 배송비, 픽업 지점, 약관 버전 같은 운영 설정 확장용 컬렉션이다.
@@ -200,7 +250,12 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | ----------------------- | ---------------- | -------------------------- |
 | `products/thumbnails/*` | 상품 대표 이미지 | 관리자만 업로드, 공개 읽기 |
 | `products/details/*`    | 상품 상세 이미지 | 관리자만 업로드, 공개 읽기 |
+| `products/descriptions/*` | 상품 상세 설명 삽입 이미지 | 관리자만 업로드, 공개 읽기 |
+| `products/seo/*`        | 상품 SEO/공유 이미지 | 관리자만 업로드, 공개 읽기 |
 | `banners/*`             | 배너 이미지      | 관리자만 업로드, 공개 읽기 |
+| `notices/*`             | 공지사항 본문 이미지 | 관리자만 업로드, 공개 읽기 |
+| `notice-popups/*`       | 공지 팝업 이미지/본문 이미지 | 관리자만 업로드, 공개 읽기 |
+| `seo/*`                 | 사이트 공통 SEO 이미지 | 관리자만 업로드, 공개 읽기 |
 | `uploads/*`             | 임시/공통 이미지 | 관리자만 업로드, 공개 읽기 |
 
 ## Server Boundaries

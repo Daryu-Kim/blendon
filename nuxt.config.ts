@@ -10,7 +10,11 @@ export default defineNuxtConfig({
     appManifest: false,
   },
   modules: ["@pinia/nuxt", "@nuxt/eslint"],
-  css: ["~/assets/css/main.css"],
+  css: [
+    "@toast-ui/editor/dist/toastui-editor.css",
+    "@toast-ui/editor/dist/toastui-editor-viewer.css",
+    "~/assets/css/main.css",
+  ],
   ignore: ["functions/**", ".output/**", ".firebase/**"],
   watchers: {
     chokidar: {
@@ -39,7 +43,6 @@ export default defineNuxtConfig({
     adminInitialEmail: process.env.ADMIN_INITIAL_EMAIL,
     public: {
       appEnv: process.env.NUXT_PUBLIC_APP_ENV || "local",
-      enableMockAuth: process.env.NUXT_PUBLIC_ENABLE_MOCK_AUTH === "true",
       enableMockPayments:
         process.env.NUXT_PUBLIC_ENABLE_MOCK_PAYMENTS === "true",
       firebaseApiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY,

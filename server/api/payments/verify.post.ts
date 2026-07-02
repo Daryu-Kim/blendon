@@ -1,8 +1,9 @@
+import { failOrderPayment } from "~/server/utils/order-service";
 import {
-  failOrderPayment,
-  confirmPaidOrder,
-} from "~/server/utils/order-service";
-import { findServerOrder, saveServerOrder } from "~/server/utils/order-store";
+  confirmServerOrderPayment,
+  getServerOrder,
+  saveServerOrder,
+} from "~/server/utils/order-store";
 import { getPortOnePayment } from "~/server/utils/portone";
 
 export default defineEventHandler(async (event) => {
@@ -14,7 +15,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const order = findServerOrder(body.orderId);
+  const order = await getServerOrder(body.orderId);
   if (!order)
     throw createError({
       statusCode: 404,
@@ -23,11 +24,10 @@ export default defineEventHandler(async (event) => {
 
   const payment = await getPortOnePayment(body.paymentId, order.totalAmount);
   if (payment.status === "PAID" && payment.paidAmount === order.totalAmount) {
-    // Production path: wrap this update and stock decrement in a Firestore transaction.
     return {
-      order: saveServerOrder(confirmPaidOrder(order, payment.paymentId)),
+      order: await confirmServerOrderPayment(order, payment.paymentId),
     };
   }
 
-  return { order: saveServerOrder(failOrderPayment(order)) };
+  return { order: await saveServerOrder(failOrderPayment(order)) };
 });

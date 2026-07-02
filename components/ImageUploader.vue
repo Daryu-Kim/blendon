@@ -28,8 +28,9 @@ import {
 } from "firebase/storage";
 
 const props = withDefaults(
-  defineProps<{ modelValue: string; pathPrefix?: string }>(),
+  defineProps<{ modelValue?: string; pathPrefix?: string }>(),
   {
+    modelValue: "",
     pathPrefix: "uploads",
   },
 );

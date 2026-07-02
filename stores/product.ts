@@ -8,12 +8,11 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { defineStore } from "pinia";
-import { categorySeed, gradeBenefitSeed } from "~/config/catalog";
-import { mockProducts } from "~/data/mock";
 import { canViewProduct } from "~/utils/access";
-import type { Category, GradeBenefit, Product } from "~/types/domain";
+import type { Category, GradeBenefit, GradeCode, Product } from "~/types/domain";
 
 const timestampToIso = (value: unknown) => {
   if (
@@ -69,16 +68,26 @@ const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
   buyRoles: data.buyRoles || [],
   seoTitle: data.seoTitle || "",
   seoDescription: data.seoDescription || "",
+  seoKeywords: data.seoKeywords || [],
+  ogImageUrl: data.ogImageUrl || "",
+  canonicalUrl: data.canonicalUrl || "",
   adminMemo: data.adminMemo || "",
   createdAt: timestampToIso(data.createdAt),
   updatedAt: timestampToIso(data.updatedAt),
 });
 
+const orderedGrades: GradeCode[] = ["BASIC", "PLUS", "PRO", "VIP", "BLACK"];
+
+const allowedGradesFor = (grade?: GradeCode | null) => {
+  const index = Math.max(0, orderedGrades.indexOf(grade || "BASIC"));
+  return orderedGrades.slice(0, index + 1);
+};
+
 export const useProductStore = defineStore("product", {
   state: () => ({
     products: [] as Product[],
-    categories: [...categorySeed] as Category[],
-    gradeBenefits: [...gradeBenefitSeed] as GradeBenefit[],
+    categories: [] as Category[],
+    gradeBenefits: [] as GradeBenefit[],
     query: "",
     selectedCategoryId: "",
     initialized: false,
@@ -115,24 +124,48 @@ export const useProductStore = defineStore("product", {
   actions: {
     async fetchCatalog(force = false) {
       if (this.initialized && !force) return;
-      const runtime = useRuntimeConfig();
       const firebase = useNuxtApp().$firebase;
+      const auth = useAuthStore();
       const loading = useGlobalLoading();
       this.loading = true;
       try {
         await loading.withLoading(async () => {
           if (firebase.enabled && firebase.db) {
+            await auth.init();
+            const isAdmin = auth.isAdmin;
+            const gradeFilter = allowedGradesFor(auth.profile?.userGrade);
+            const productConstraints = isAdmin
+              ? [orderBy("updatedAt", "desc")]
+              : [
+                  where("isVisible", "==", true),
+                  where("status", "==", "active"),
+                  ...(!auth.isAdultVerified
+                    ? [where("isAdultOnly", "==", false)]
+                    : []),
+                  where("minUserGradeToView", "in", gradeFilter),
+                  orderBy("updatedAt", "desc"),
+                ];
+            const categoryConstraints = isAdmin
+              ? [orderBy("order", "asc")]
+              : [
+                  where("isVisible", "==", true),
+                  ...(!auth.isAdultVerified
+                    ? [where("adultOnly", "==", false)]
+                    : []),
+                  where("minUserGradeToView", "in", gradeFilter),
+                  orderBy("order", "asc"),
+                ];
             const [productSnap, categorySnap, gradeSnap] = await Promise.all([
               getDocs(
                 query(
                   collection(firebase.db, "products"),
-                  orderBy("updatedAt", "desc"),
+                  ...productConstraints,
                 ),
               ),
               getDocs(
                 query(
                   collection(firebase.db, "categories"),
-                  orderBy("order", "asc"),
+                  ...categoryConstraints,
                 ),
               ),
               getDocs(
@@ -145,22 +178,16 @@ export const useProductStore = defineStore("product", {
             this.products = productSnap.docs.map((item) =>
               normalizeProduct(item.id, item.data() as Partial<Product>),
             );
-            this.categories = categorySnap.empty
-              ? [...categorySeed]
-              : categorySnap.docs.map(
-                  (item) => ({ id: item.id, ...item.data() }) as Category,
-                );
-            this.gradeBenefits = gradeSnap.empty
-              ? [...gradeBenefitSeed]
-              : gradeSnap.docs.map(
-                  (item) => ({ id: item.id, ...item.data() }) as GradeBenefit,
-                );
+            this.categories = categorySnap.docs.map(
+              (item) => ({ id: item.id, ...item.data() }) as Category,
+            );
+            this.gradeBenefits = gradeSnap.docs.map(
+              (item) => ({ id: item.id, ...item.data() }) as GradeBenefit,
+            );
           } else {
-            this.products = runtime.public.enableMockAuth
-              ? [...mockProducts]
-              : [];
-            this.categories = [...categorySeed];
-            this.gradeBenefits = [...gradeBenefitSeed];
+            this.products = [];
+            this.categories = [];
+            this.gradeBenefits = [];
           }
           this.initialized = true;
         }, "카탈로그를 불러오는 중");
@@ -173,6 +200,11 @@ export const useProductStore = defineStore("product", {
     },
     findById(id: string) {
       return this.products.find((product) => product.id === id);
+    },
+    findGradeBenefit(id: string) {
+      return this.gradeBenefits.find(
+        (benefit) => benefit.id === id || benefit.gradeCode === id,
+      );
     },
     setQuery(query: string) {
       this.query = query;
@@ -251,6 +283,17 @@ export const useProductStore = defineStore("product", {
             { merge: true },
           );
         }, "회원 등급을 저장하는 중");
+      }
+    },
+    async removeGradeBenefit(id: string) {
+      this.gradeBenefits = this.gradeBenefits.filter(
+        (benefit) => benefit.id !== id && benefit.gradeCode !== id,
+      );
+      const firebase = useNuxtApp().$firebase;
+      if (firebase.enabled && firebase.db) {
+        await useGlobalLoading().withLoading(async () => {
+          await deleteDoc(doc(firebase.db!, "gradeBenefits", id));
+        }, "회원 등급을 삭제하는 중");
       }
     },
     async patchProduct(id: string, updates: Partial<Product>) {

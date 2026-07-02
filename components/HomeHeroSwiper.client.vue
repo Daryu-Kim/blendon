@@ -20,15 +20,20 @@
               <Button :to="slide.primaryTo" size="lg">{{
                 slide.primaryLabel
               }}</Button>
-              <Button :to="slide.secondaryTo" variant="ghost" size="lg">{{
-                slide.secondaryLabel
-              }}</Button>
+              <Button
+                v-if="slide.secondaryTo && slide.secondaryLabel"
+                :to="slide.secondaryTo"
+                variant="ghost"
+                size="lg"
+              >
+                {{ slide.secondaryLabel }}
+              </Button>
             </div>
           </div>
 
           <div class="hero-visual" aria-hidden="true">
             <img
-              :src="slide.product?.thumbnailUrl || featured?.thumbnailUrl"
+              :src="slide.imageUrl || slide.product?.thumbnailUrl || featured?.thumbnailUrl"
               :alt="slide.product?.name || featured?.name || ''"
             />
             <div class="hero-product">
@@ -56,6 +61,7 @@ import "swiper/css/pagination";
 
 const { brand } = useAppConfig();
 const productStore = useProductStore();
+const bannerStore = useBannerStore();
 const products = computed(() => productStore.visibleProducts);
 const featured = computed(
   () =>
@@ -69,8 +75,26 @@ const firstByCategory = (categoryId: string) =>
   products.value.find((product) => product.categoryIds.includes(categoryId)) ||
   featured.value;
 
-// 홈 메인 배너는 추후 Firestore banners 컬렉션과 연결할 수 있도록 데이터 배열로 분리한다.
-const heroSlides = computed(() => [
+interface HeroSlide {
+  id: string;
+  kicker: string;
+  title: string;
+  description: string;
+  primaryLabel: string;
+  primaryTo: string;
+  secondaryLabel?: string;
+  secondaryTo?: string;
+  productKicker: string;
+  product?: typeof featured.value;
+  imageUrl?: string;
+  tone: "cream" | "green" | "amber";
+}
+
+onMounted(async () => {
+  await bannerStore.fetchBanners();
+});
+
+const defaultSlides = computed<HeroSlide[]>(() => [
   {
     id: "editorial-main",
     kicker: brand.slogan,
@@ -114,6 +138,25 @@ const heroSlides = computed(() => [
     tone: "amber",
   },
 ]);
+
+const heroSlides = computed<HeroSlide[]>(() => {
+  if (!bannerStore.activeHomeMainBanners.length) return defaultSlides.value;
+  return bannerStore.activeHomeMainBanners.map((banner, index) => ({
+    id: banner.id,
+    kicker: brand.slogan,
+    title: banner.title,
+    description: banner.subtitle,
+    primaryLabel: banner.buttonText || "바로가기",
+    primaryTo: banner.linkUrl || "/products",
+    productKicker: "BLEND ON PICK",
+    product: firstByCategory(index === 0 ? "lounge-pick" : "starter-pick"),
+    imageUrl: banner.imageUrl,
+    tone: (["cream", "green", "amber"][index % 3] || "cream") as
+      | "cream"
+      | "green"
+      | "amber",
+  }));
+});
 </script>
 
 <style scoped>

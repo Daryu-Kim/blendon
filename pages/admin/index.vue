@@ -62,9 +62,13 @@ definePageMeta({ layout: "admin", middleware: "admin" });
 const admin = useAdminStore();
 const orders = useOrderStore();
 const products = useProductStore();
+const users = useUserStore();
 onMounted(async () => {
-  orders.hydrate();
-  await products.fetchCatalog();
+  await Promise.all([
+    orders.fetchOrders(true),
+    products.fetchCatalog(true),
+    users.fetchUsers(true),
+  ]);
 });
 const dashboard = computed(() => admin.dashboard);
 const orderColumns = [

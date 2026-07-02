@@ -10,12 +10,14 @@
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
     "lint": "nuxt prepare && eslint --no-error-on-unmatched-pattern app.vue error.vue app.config.ts nuxt.config.ts \"assets/**/*.{ts,js,vue}\" \"components/**/*.vue\" \"composables/**/*.ts\" \"config/**/*.ts\" \"data/**/*.ts\" \"layouts/**/*.vue\" \"middleware/**/*.ts\" \"pages/**/*.vue\" \"plugins/**/*.ts\" \"server/**/*.ts\" \"stores/**/*.ts\" \"types/**/*.ts\" \"utils/**/*.ts\" \"scripts/**/*.ts\"",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "admin:claim": "tsx scripts/set-admin-claim.ts"
   },
   "dependencies": {
     "@lucide/vue": "^1.22.0",
     "@pinia/nuxt": "^0.11.3",
     "@portone/browser-sdk": "^0.1.9",
+    "@toast-ui/editor": "^3.2.2",
     "firebase": "^12.15.0",
     "firebase-admin": "^13.6.0",
     "nuxt": "3.21.8",

@@ -55,7 +55,9 @@ import { formatCurrency } from "~/utils/format";
 
 definePageMeta({ layout: "admin", middleware: "admin" });
 const orders = useOrderStore();
-onMounted(() => orders.hydrate());
+onMounted(async () => {
+  await orders.fetchOrders(true);
+});
 const columns = [
   { key: "orderNo", label: "주문번호" },
   { key: "recipientName", label: "수령인" },

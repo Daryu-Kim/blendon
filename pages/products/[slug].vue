@@ -62,7 +62,8 @@
         <h2>이런 분께 추천해요</h2>
         <p>{{ product.tags.join(", ") }}</p>
         <h2>확인해주세요</h2>
-        <p>{{ description }}</p>
+        <MarkdownContent v-if="canBuy || !product.isAdultOnly" :content="description" />
+        <p v-else>{{ description }}</p>
         <div class="profile">
           <span>달콤함 {{ product.flavorProfile.sweetness }}/5</span>
           <span>쿨링 {{ product.flavorProfile.coolness }}/5</span>
@@ -80,6 +81,7 @@ const route = useRoute();
 const productStore = useProductStore();
 const cart = useCartStore();
 const auth = useAuthStore();
+const settingsStore = useSiteSettingsStore();
 const product = computed(() =>
   productStore.findBySlug(String(route.params.slug)),
 );
@@ -97,7 +99,10 @@ const description = computed(() =>
 );
 
 onMounted(async () => {
-  await productStore.fetchCatalog();
+  await Promise.all([
+    productStore.fetchCatalog(),
+    settingsStore.fetchSettings(),
+  ]);
 });
 
 watchEffect(() => {
@@ -114,7 +119,39 @@ const addToCart = () => {
   navigateTo("/cart");
 };
 
-useHead(() => ({ title: product.value?.name || "상품 상세" }));
+const absoluteUrl = (path: string | undefined) => {
+  const base = settingsStore.seo.canonicalBaseUrl.replace(/\/$/, "");
+  if (!path) return undefined;
+  if (/^https?:\/\//.test(path)) return path;
+  return base ? `${base}${path.startsWith("/") ? path : `/${path}`}` : path;
+};
+
+useHead(() => {
+  const item = product.value;
+  if (!item) return { title: "상품 상세" };
+  const title = item.seoTitle || item.name;
+  const descriptionText = item.seoDescription || item.shortDescription;
+  const ogImage = item.ogImageUrl || item.thumbnailUrl;
+  return {
+    title,
+    meta: [
+      { name: "description", content: descriptionText },
+      { name: "keywords", content: (item.seoKeywords || item.tags).join(", ") },
+      { property: "og:title", content: title },
+      { property: "og:description", content: descriptionText },
+      { property: "og:image", content: absoluteUrl(ogImage) },
+    ],
+    link: [
+      {
+        rel: "canonical",
+        href:
+          item.canonicalUrl ||
+          absoluteUrl(`/products/${item.slug}`) ||
+          `/products/${item.slug}`,
+      },
+    ],
+  };
+});
 </script>
 
 <style scoped>

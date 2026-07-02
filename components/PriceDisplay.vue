@@ -29,7 +29,7 @@ const rate = computed(() => discountRate(props.product, props.user));
 const message = computed(() => {
   if (!props.user) return "로그인 후 혜택가 확인";
   if (props.product.isAdultOnly && !props.user.isAdultVerified)
-    return "성인 회원 전용";
+    return "회원 확인 후 혜택가 확인";
   return "권한 확인 후 가격 확인";
 });
 </script>

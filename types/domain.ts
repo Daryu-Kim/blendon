@@ -116,6 +116,9 @@ export interface Product {
   buyRoles?: Role[];
   seoTitle?: string;
   seoDescription?: string;
+  seoKeywords?: string[];
+  ogImageUrl?: string;
+  canonicalUrl?: string;
   adminMemo?: string;
   createdAt: string;
   updatedAt: string;
@@ -233,6 +236,54 @@ export interface Banner {
   isActive: boolean;
   order: number;
   placement: "home-main" | "home-section" | "notice";
+}
+
+export interface SiteGlobalSettings {
+  id: "global";
+  mallName: string;
+  mallDescription: string;
+  adultOnly: boolean;
+  requireAdultVerificationToBrowse: boolean;
+  hideAdultVerificationStatusOnConsumer: boolean;
+  businessName: string;
+  representativeName: string;
+  businessRegistrationNumber: string;
+  mailOrderSalesNumber: string;
+  businessAddress: string;
+  customerCenterPhone: string;
+  customerCenterEmail: string;
+  updatedAt: string;
+}
+
+export interface SiteSeoSettings {
+  id: "seo";
+  defaultTitle: string;
+  titleTemplate: string;
+  defaultDescription: string;
+  defaultKeywords: string[];
+  ogTitle: string;
+  ogDescription: string;
+  ogImageUrl: string;
+  canonicalBaseUrl: string;
+  robots: string;
+  updatedAt: string;
+}
+
+export interface NoticePopup {
+  id: string;
+  title: string;
+  content: string;
+  imageUrl: string;
+  linkUrl: string;
+  buttonText: string;
+  placement: "main" | "all";
+  isActive: boolean;
+  dismissMode: "session" | "today" | "none";
+  startsAt: string | null;
+  endsAt: string | null;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Notice {
