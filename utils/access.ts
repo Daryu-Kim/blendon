@@ -1,7 +1,9 @@
 import { gradePolicy } from "~/config/catalog";
 import type {
+  AccessGradeCode,
   GradeBenefit,
   GradeCode,
+  Category,
   Product,
   Role,
   UserProfile,
@@ -25,13 +27,21 @@ export const hasRoleAtLeast = (
   role: Role,
 ) => Boolean(user && roleRank[user.role] >= roleRank[role]);
 
+export const PUBLIC_ACCESS_GRADE = "PUBLIC" as const;
+
+export const isPublicAccessGrade = (grade?: AccessGradeCode | null) =>
+  !grade || grade === PUBLIC_ACCESS_GRADE;
+
 const findGrade = (grade: GradeCode | undefined, grades: GradeBenefit[] = []) =>
   grades.find((item) => item.gradeCode === grade || item.id === grade);
 
 export const gradeLevel = (
-  grade: GradeCode | undefined,
+  grade: AccessGradeCode | undefined,
   grades: GradeBenefit[] = [],
-) => findGrade(grade, grades)?.level ?? gradePolicy[grade || ""]?.level ?? 0;
+) => {
+  if (isPublicAccessGrade(grade)) return 0;
+  return findGrade(grade, grades)?.level ?? gradePolicy[grade || ""]?.level ?? 0;
+};
 
 export const gradeDiscountRate = (
   grade: GradeCode | undefined,
@@ -43,9 +53,12 @@ export const gradeDiscountRate = (
 
 export const hasGradeAtLeast = (
   userGrade: GradeCode | undefined,
-  minGrade: GradeCode,
+  minGrade: AccessGradeCode,
   grades: GradeBenefit[] = [],
-) => gradeLevel(userGrade || "BASIC", grades) >= gradeLevel(minGrade, grades);
+) => {
+  if (isPublicAccessGrade(minGrade)) return true;
+  return gradeLevel(userGrade || "BASIC", grades) >= gradeLevel(minGrade, grades);
+};
 
 export const canViewProduct = (
   product: Product,
@@ -59,9 +72,39 @@ export const canViewProduct = (
   )
     return false;
   if (!user)
-    return !product.isAdultOnly && product.minUserGradeToView === "BASIC";
+    return !product.isAdultOnly && isPublicAccessGrade(product.minUserGradeToView);
   if (product.isAdultOnly && !user.isAdultVerified) return false;
   return hasGradeAtLeast(user.userGrade, product.minUserGradeToView, grades);
+};
+
+export const canViewCategory = (
+  category: Category,
+  user?: UserProfile | null,
+  grades: GradeBenefit[] = [],
+) => {
+  if (!category.isVisible) return false;
+  if (!user)
+    return !category.adultOnly && isPublicAccessGrade(category.minUserGradeToView);
+  if (category.adultOnly && !user.isAdultVerified) return false;
+  return hasGradeAtLeast(user.userGrade, category.minUserGradeToView, grades);
+};
+
+export const canViewProductWithCategories = (
+  product: Product,
+  categories: Category[] = [],
+  user?: UserProfile | null,
+  grades: GradeBenefit[] = [],
+) => {
+  if (!canViewProduct(product, user, grades)) return false;
+  if (!product.categoryIds.length) return true;
+  const accessibleCategoryIds = new Set(
+    categories
+      .filter((category) => canViewCategory(category, user, grades))
+      .map((category) => category.id),
+  );
+  return product.categoryIds.some((categoryId) =>
+    accessibleCategoryIds.has(categoryId),
+  );
 };
 
 export const canBuyProduct = (

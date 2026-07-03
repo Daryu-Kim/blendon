@@ -28,7 +28,10 @@ service cloud.firestore {
     }
 
     function gradeLevel(grade) {
-      return grade == 'BLACK' ? 10
+      return grade == 'PUBLIC' || grade == null ? 0
+        : exists(/databases/$(database)/documents/gradeBenefits/$(grade))
+        ? get(/databases/$(database)/documents/gradeBenefits/$(grade)).data.level
+        : grade == 'BLACK' ? 10
         : grade == 'VIP' ? 8
         : grade == 'PRO' ? 5
         : grade == 'PLUS' ? 3
@@ -36,7 +39,17 @@ service cloud.firestore {
     }
 
     function userGradeLevel() {
-      return signedIn() && myProfile().userGrade != null ? gradeLevel(myProfile().userGrade) : 1;
+      return signedIn() && myProfile().userGradeLevel is number
+        ? myProfile().userGradeLevel
+        : signedIn() && myProfile().userGrade != null
+          ? gradeLevel(myProfile().userGrade)
+          : 0;
+    }
+
+    function requiredGradeLevel(data) {
+      return data.minUserGradeLevel is number
+        ? data.minUserGradeLevel
+        : gradeLevel(data.minUserGradeToView);
     }
 
     function isAdultVerified() {
@@ -47,7 +60,7 @@ service cloud.firestore {
       return data.isVisible == true
         && !(data.status in ['hidden', 'deleted'])
         && (data.isAdultOnly != true || isAdultVerified())
-        && userGradeLevel() >= gradeLevel(data.minUserGradeToView);
+        && userGradeLevel() >= requiredGradeLevel(data);
     }
 
     match /users/{uid} {
@@ -55,7 +68,7 @@ service cloud.firestore {
       allow create: if signedIn() && request.auth.uid == uid && request.resource.data.role == 'customer';
       allow update: if signedIn()
         && request.auth.uid == uid
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdultVerified', 'adultVerifiedAt', 'adultVerificationProvider', 'totalPurchaseAmount']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'userGrade', 'userGradeLevel', 'isAdultVerified', 'adultVerifiedAt', 'adultVerificationProvider', 'totalPurchaseAmount']);
       allow update, delete: if isAdmin();
     }
 
@@ -67,7 +80,7 @@ service cloud.firestore {
     match /categories/{categoryId} {
       allow read: if isAdmin() || resource.data.isVisible == true
         && (resource.data.adultOnly != true || isAdultVerified())
-        && userGradeLevel() >= gradeLevel(resource.data.minUserGradeToView);
+        && userGradeLevel() >= requiredGradeLevel(resource.data);
       allow create, update, delete: if isAdmin();
     }
 

@@ -41,6 +41,8 @@ export default defineNuxtConfig({
     portoneApiSecret: process.env.PORTONE_API_SECRET,
     firebaseServiceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
     adminInitialEmail: process.env.ADMIN_INITIAL_EMAIL,
+    openaiApiKey: process.env.OPENAI_API_KEY,
+    openaiModel: process.env.OPENAI_MODEL || "gpt-5.5",
     public: {
       appEnv: process.env.NUXT_PUBLIC_APP_ENV || "local",
       enableMockPayments:

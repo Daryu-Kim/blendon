@@ -135,39 +135,60 @@ const noticeItems = [
   },
 ];
 
-const categoryTiles = [
+const categoryAllowed = (categoryId: string) =>
+  productStore.visibleCategories.some((category) => category.id === categoryId);
+
+const categoryTileItems = [
   {
     kicker: "DEVICE",
     title: "디바이스",
     description: "입문용부터 교체형까지",
+    categoryId: "device",
     to: "/products?category=device",
   },
   {
     kicker: "FLAVOR",
     title: "플레이버",
     description: "향과 무드로 고르는 선택",
+    categoryId: "flavor",
     to: "/products?category=flavor",
   },
   {
     kicker: "ZERO",
     title: "니코틴 프리",
     description: "니코틴 없이 즐기는 향",
+    categoryId: "nicotine-free",
     to: "/products?category=nicotine-free",
   },
   {
     kicker: "REFILL",
     title: "리필/소모품",
     description: "팟, 카트리지, 케이블",
+    categoryId: "consumable",
     to: "/products?category=consumable",
   },
 ];
+const categoryTiles = computed(() =>
+  categoryTileItems.filter((tile) => categoryAllowed(tile.categoryId)),
+);
 
-const bestTabs = [
+const bestTabItems = [
   { label: "전체", to: "/products" },
-  { label: "디바이스", to: "/products?category=device" },
-  { label: "니코틴 프리", to: "/products?category=nicotine-free" },
-  { label: "리필/소모품", to: "/products?category=consumable" },
+  { label: "디바이스", categoryId: "device", to: "/products?category=device" },
+  {
+    label: "니코틴 프리",
+    categoryId: "nicotine-free",
+    to: "/products?category=nicotine-free",
+  },
+  {
+    label: "리필/소모품",
+    categoryId: "consumable",
+    to: "/products?category=consumable",
+  },
 ];
+const bestTabs = computed(() =>
+  bestTabItems.filter((tab) => !tab.categoryId || categoryAllowed(tab.categoryId)),
+);
 
 const sections = computed(() => [
   {
@@ -212,7 +233,7 @@ const sections = computed(() => [
     to: "/products?category=brand",
     products: products.value.slice(0, 5),
   },
-]);
+].filter((section) => !section.to.includes("category=") || section.products.length));
 
 useHead({ title: "홈" });
 </script>

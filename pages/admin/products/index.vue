@@ -32,7 +32,7 @@
 
     <AdminTable :rows="filteredProducts" :columns="columns" row-key="id">
       <template #thumbnailUrl="{ row }">
-        <img class="thumb" :src="row.thumbnailUrl" :alt="row.name" />
+        <img class="thumb" :src="row.thumbnailUrl" :alt="row.name">
       </template>
       <template #memberPrice="{ row }">{{
         formatCurrency(row.memberPrice)
@@ -48,7 +48,7 @@
       <template #minUserGradeToView="{ row }">
         <span
           >{{ row.isAdultOnly ? "성인" : "일반" }} /
-          {{ row.minUserGradeToView }}+</span
+          {{ gradeLabel(row.minUserGradeToView) }}</span
         >
       </template>
       <template #actions="{ row }">
@@ -76,6 +76,7 @@
 
 <script setup lang="ts">
 import { formatCurrency } from "~/utils/format";
+import { PUBLIC_ACCESS_GRADE } from "~/utils/access";
 
 definePageMeta({ layout: "admin", middleware: "admin" });
 
@@ -108,6 +109,12 @@ const filteredProducts = computed(() => {
     return matchesKeyword && matchesStatus && matchesCategory;
   });
 });
+
+const gradeLabel = (gradeCode: string) => {
+  if (gradeCode === PUBLIC_ACCESS_GRADE) return "전체 공개";
+  const grade = productStore.findGradeBenefit(gradeCode);
+  return grade ? `${grade.label} 이상` : `${gradeCode} 이상`;
+};
 
 onMounted(async () => {
   await productStore.fetchCatalog();

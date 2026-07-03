@@ -26,25 +26,45 @@
           ><MarkdownEditor v-model="form.description" path-prefix="products/descriptions" />
         </div>
       </div>
-      <div class="check-grid">
-        <label
-          v-for="category in productStore.categories"
-          :key="category.id"
-          class="check-item"
-        >
-          <input
-            v-model="form.categoryIds"
-            type="checkbox"
-            :value="category.id"
-          />
-          <span>{{ category.name }}</span>
-        </label>
+    </AdminFormSection>
+
+    <AdminFormSection
+      title="카테고리"
+      description="상품은 여러 카테고리에 동시에 연결할 수 있습니다."
+    >
+      <div class="form-grid">
+        <div class="form-row wide">
+          <label>카테고리 선택</label>
+          <select v-model="form.categoryIds" class="multi-select" multiple>
+            <option
+              v-for="category in categoryOptions"
+              :key="category.id"
+              :value="category.id"
+            >
+              {{ category.treeName }}
+            </option>
+          </select>
+          <p class="field-help">
+            Ctrl 또는 Command 키를 누른 상태로 여러 카테고리를 선택할 수 있습니다.
+          </p>
+        </div>
+        <div v-if="selectedCategories.length" class="selected-chip-row wide">
+          <button
+            v-for="category in selectedCategories"
+            :key="category.id"
+            type="button"
+            class="selected-chip"
+            @click="removeCategory(category.id)"
+          >
+            {{ category.treeName }} ×
+          </button>
+        </div>
       </div>
     </AdminFormSection>
 
     <AdminFormSection
       title="이미지"
-      description="대표 이미지는 카드와 목록에, 상세 이미지는 상품 상세 하단에 사용합니다."
+      description="대표 이미지는 상품 카드에, 갤러리 이미지는 상품 상세 상단 이미지 목록에 사용합니다. 상세 본문 이미지는 Toast UI Editor에서 업로드합니다."
     >
       <div class="form-grid">
         <div class="form-row">
@@ -57,10 +77,6 @@
         <div class="form-row wide">
           <label>목록/갤러리 이미지 URL</label
           ><Textarea v-model="imageUrlsText" rows="3" />
-        </div>
-        <div class="form-row wide">
-          <label>상세 이미지 URL</label
-          ><Textarea v-model="detailImageUrlsText" rows="3" />
         </div>
       </div>
     </AdminFormSection>
@@ -135,11 +151,23 @@
           <label>최소 열람 등급</label
           ><Select v-model="form.minUserGradeToView">
             <option
-              v-for="grade in activeGradeBenefits"
+              v-for="grade in accessGradeOptions"
               :key="grade.gradeCode"
               :value="grade.gradeCode"
             >
-              {{ grade.label }} ({{ grade.gradeCode }})
+              {{ grade.label }}
+            </option>
+          </Select>
+        </div>
+        <div class="form-row">
+          <label>표시 최소 등급</label
+          ><Select v-model="form.displayMinUserGradeToView">
+            <option
+              v-for="grade in accessGradeOptions"
+              :key="grade.gradeCode"
+              :value="grade.gradeCode"
+            >
+              {{ grade.label }}
             </option>
           </Select>
         </div>
@@ -147,11 +175,11 @@
           <label>최소 구매 등급</label
           ><Select v-model="form.minUserGradeToBuy">
             <option
-              v-for="grade in activeGradeBenefits"
+              v-for="grade in accessGradeOptions"
               :key="grade.gradeCode"
               :value="grade.gradeCode"
             >
-              {{ grade.label }} ({{ grade.gradeCode }})
+              {{ grade.label }}
             </option>
           </Select>
         </div>
@@ -173,13 +201,63 @@
     </AdminFormSection>
 
     <AdminFormSection
+      title="속성/옵션"
+      description="상품 속성과 구매 옵션을 관리합니다."
+    >
+      <div class="form-grid">
+        <div class="form-row">
+          <label>디바이스 타입</label
+          ><Select v-model="form.deviceType"
+            ><option value="mtl">입호흡</option>
+            <option value="dtl">폐호흡</option>
+            <option value="disposable">일회용</option>
+            <option value="common">공통</option>
+            <option value="not_applicable">해당 없음</option></Select
+          >
+        </div>
+        <div class="form-row">
+          <label>성분 타입</label
+          ><Select v-model="form.nicotineType"
+            ><option value="none">무니코틴</option>
+            <option value="alternative">대체 니코틴</option>
+            <option value="synthetic">합성 니코틴</option>
+            <option value="not_applicable">기기/소모품</option></Select
+          >
+        </div>
+        <div class="form-row wide">
+          <label>배지</label
+          ><Input v-model="badgesText" placeholder="쉼표로 구분" />
+        </div>
+        <div class="form-row wide">
+          <div class="label-row">
+            <label>태그</label>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              :disabled="generatingTags"
+              @click="generateProductKeywords('tag')"
+              >자동완성</Button
+            >
+          </div>
+          <Input v-model="tagsText" placeholder="내부 검색용 태그, 쉼표로 구분" />
+        </div>
+        <AdminProductOptionsEditor v-model="form.options" class="wide" />
+        <div class="form-row wide">
+          <label>관리자 메모</label
+          ><Textarea v-model="form.adminMemo" rows="3" />
+        </div>
+      </div>
+    </AdminFormSection>
+
+    <AdminFormSection
       title="상품 SEO"
-      description="상품 상세 페이지의 검색/공유 메타 정보를 설정합니다."
+      description="상품 상세 페이지의 외부 검색/공유 메타 정보를 설정합니다."
     >
       <div class="form-grid">
         <div class="form-row wide">
           <label>SEO 타이틀</label>
-          <Input v-model="form.seoTitle" placeholder="비워두면 상품명 사용" />
+          <Input v-model="form.seoTitle" :placeholder="seoTitlePlaceholder" />
         </div>
         <div class="form-row wide">
           <label>SEO 설명</label>
@@ -189,8 +267,21 @@
           />
         </div>
         <div class="form-row wide">
-          <label>SEO 키워드</label>
-          <Input v-model="seoKeywordsText" placeholder="쉼표로 구분" />
+          <div class="label-row">
+            <label>SEO 키워드</label>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              :disabled="generatingSeoKeywords"
+              @click="generateProductKeywords('seo')"
+              >자동완성</Button
+            >
+          </div>
+          <Input
+            v-model="seoKeywordsText"
+            placeholder="외부 검색용 키워드, 쉼표로 구분"
+          />
         </div>
         <div class="form-row">
           <label>OG 이미지</label>
@@ -199,48 +290,6 @@
         <div class="form-row">
           <label>캐노니컬 URL</label>
           <Input v-model="form.canonicalUrl" placeholder="비워두면 자동 생성" />
-        </div>
-      </div>
-    </AdminFormSection>
-
-    <AdminFormSection
-      title="속성/옵션"
-      description="상품 속성과 구매 옵션을 관리합니다."
-    >
-      <div class="form-grid">
-        <div class="form-row">
-          <label>디바이스 타입</label
-          ><Select v-model="form.deviceType"
-            ><option value="none">없음</option>
-            <option value="starter">입문용</option>
-            <option value="compact">컴팩트형</option>
-            <option value="high-power">고출력형</option>
-            <option value="all-in-one">일체형</option>
-            <option value="replaceable">교체형</option>
-            <option value="consumable">소모품</option></Select
-          >
-        </div>
-        <div class="form-row">
-          <label>성분 타입</label
-          ><Select v-model="form.nicotineType"
-            ><option value="not-applicable">해당 없음</option>
-            <option value="nicotine-free">니코틴 프리</option>
-            <option value="alternative-nicotine">대체 니코틴</option>
-            <option value="none">없음</option></Select
-          >
-        </div>
-        <div class="form-row wide">
-          <label>배지</label
-          ><Input v-model="badgesText" placeholder="쉼표로 구분" />
-        </div>
-        <div class="form-row wide">
-          <label>태그</label
-          ><Input v-model="tagsText" placeholder="쉼표로 구분" />
-        </div>
-        <AdminProductOptionsEditor v-model="form.options" class="wide" />
-        <div class="form-row wide">
-          <label>관리자 메모</label
-          ><Textarea v-model="form.adminMemo" rows="3" />
         </div>
       </div>
     </AdminFormSection>
@@ -254,27 +303,48 @@
 
 <script setup lang="ts">
 import type { Product, ProductOption } from "~/types/domain";
+import { buildCategoryTree } from "~/utils/category-tree";
+import { toUserMessage } from "~/utils/error-message";
 import { toSafeId } from "~/utils/format";
+import { PUBLIC_ACCESS_GRADE } from "~/utils/access";
 
 const props = defineProps<{ product?: Product | null }>();
 const emit = defineEmits<{ saved: [product: Product] }>();
 
+type KeywordMode = "seo" | "tag";
+
 const productStore = useProductStore();
+const { brand } = useAppConfig();
 const now = new Date().toISOString();
 const fallbackGrades = [
-  { gradeCode: "BASIC", label: "BASIC" },
-  { gradeCode: "PLUS", label: "PLUS" },
-  { gradeCode: "PRO", label: "PRO" },
-  { gradeCode: "VIP", label: "VIP" },
-  { gradeCode: "BLACK", label: "BLACK" },
+  { gradeCode: "BASIC", label: "BASIC", level: 1, order: 1 },
+  { gradeCode: "PLUS", label: "PLUS", level: 3, order: 2 },
+  { gradeCode: "PRO", label: "PRO", level: 5, order: 3 },
+  { gradeCode: "VIP", label: "VIP", level: 8, order: 4 },
+  { gradeCode: "BLACK", label: "BLACK", level: 10, order: 5 },
 ];
 const activeGradeBenefits = computed(() => {
   const grades = productStore.gradeBenefits
     .filter((grade) => grade.isVisible)
     .sort((a, b) => a.level - b.level || a.order - b.order)
-    .map((grade) => ({ gradeCode: grade.gradeCode, label: grade.label }));
+    .map((grade) => ({
+      gradeCode: grade.gradeCode,
+      label: grade.label,
+      level: grade.level,
+      order: grade.order,
+    }));
   return grades.length ? grades : fallbackGrades;
 });
+const lowestGradeCode = computed(
+  () => activeGradeBenefits.value[0]?.gradeCode || "BASIC",
+);
+const accessGradeOptions = computed(() => [
+  { gradeCode: PUBLIC_ACCESS_GRADE, label: "전체 공개", level: 0, order: 0 },
+  ...activeGradeBenefits.value.map((grade) => ({
+    ...grade,
+    label: `${grade.label} 이상 (${grade.gradeCode})`,
+  })),
+]);
 
 const defaultOption = (): ProductOption => ({
   optionId: "default",
@@ -304,13 +374,14 @@ const createEmptyProduct = (): Product => ({
   badges: [],
   tags: [],
   flavorProfile: { sweetness: 0, coolness: 0, body: 0, mood: [], notes: [] },
-  deviceType: "none",
-  nicotineType: "not-applicable",
+  deviceType: "not_applicable",
+  nicotineType: "not_applicable",
   isNicotineFree: false,
   isAlternativeNicotine: false,
   isAdultOnly: true,
   isVisible: true,
-  minUserGradeToView: "BASIC",
+  minUserGradeToView: PUBLIC_ACCESS_GRADE,
+  displayMinUserGradeToView: PUBLIC_ACCESS_GRADE,
   minUserGradeToBuy: "BASIC",
   isPriceHiddenBeforeLogin: true,
   isPriceHiddenBeforeAdultVerification: true,
@@ -338,6 +409,8 @@ const detailImageUrlsText = ref((form.detailImageUrls || []).join("\n"));
 const badgesText = ref((form.badges || []).join(", "));
 const tagsText = ref((form.tags || []).join(", "));
 const seoKeywordsText = ref((form.seoKeywords || []).join(", "));
+const generatingSeoKeywords = ref(false);
+const generatingTags = ref(false);
 const compareAtPriceText = ref(
   form.compareAtPrice ? String(form.compareAtPrice) : "",
 );
@@ -375,6 +448,26 @@ const adultOnlyText = computed({
     form.isPriceHiddenBeforeAdultVerification = value === "true";
   },
 });
+const seoTitlePlaceholder = computed(() =>
+  form.name.trim() ? `${form.name.trim()} | ${brand.name}` : `상품명 | ${brand.name}`,
+);
+const categoryOptions = computed(() =>
+  buildCategoryTree(productStore.categories).map((category) => ({
+    ...category,
+    treeName: `${"— ".repeat(Math.max(0, category.depth - 1))}${category.name}`,
+  })),
+);
+const selectedCategories = computed(() =>
+  categoryOptions.value.filter((category) =>
+    form.categoryIds.includes(category.id),
+  ),
+);
+const categoryNameMap = computed(
+  () =>
+    new Map(
+      productStore.categories.map((category) => [category.id, category.name]),
+    ),
+);
 
 const splitLines = (value: string) =>
   value
@@ -403,6 +496,65 @@ const normalizeOptions = (options: ProductOption[]) =>
     };
   });
 
+const removeCategory = (categoryId: string) => {
+  form.categoryIds = form.categoryIds.filter((id) => id !== categoryId);
+};
+
+const generateProductKeywords = async (mode: KeywordMode) => {
+  if (!form.name.trim()) {
+    alert("상품명을 먼저 입력해 주세요.");
+    return;
+  }
+
+  const loadingText =
+    mode === "seo" ? "SEO 키워드를 생성하는 중" : "내부 검색 태그를 생성하는 중";
+  const loading = useGlobalLoading();
+  const firebase = useNuxtApp().$firebase;
+  const token = await firebase.auth?.currentUser?.getIdToken();
+  if (!token) {
+    alert("관리자 로그인이 필요합니다.");
+    return;
+  }
+
+  if (mode === "seo") generatingSeoKeywords.value = true;
+  else generatingTags.value = true;
+
+  try {
+    const result = await loading.withLoading(
+      () =>
+        $fetch<{ keywords: string }>("/api/admin/ai/product-keywords", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: {
+            mode,
+            product: {
+              name: form.name,
+              shortDescription: form.shortDescription,
+              description: form.description,
+              brandName: form.brandName,
+              categoryNames: form.categoryIds.map(
+                (id) => categoryNameMap.value.get(id) || id,
+              ),
+              deviceType: form.deviceType,
+              nicotineType: form.nicotineType,
+              badges: splitComma(badgesText.value),
+              tags: splitComma(tagsText.value),
+            },
+          },
+        }),
+      loadingText,
+    );
+
+    if (mode === "seo") seoKeywordsText.value = result.keywords;
+    else tagsText.value = result.keywords;
+  } catch (error) {
+    alert(toUserMessage(error, "키워드 자동완성에 실패했어요."));
+  } finally {
+    generatingSeoKeywords.value = false;
+    generatingTags.value = false;
+  }
+};
+
 const submit = async () => {
   const id = form.id || `product-${toSafeId(form.name)}`;
   const gradePrices: NonNullable<Product["gradePrices"]> = {};
@@ -426,9 +578,23 @@ const submit = async () => {
     badges: splitComma(badgesText.value),
     tags: splitComma(tagsText.value),
     seoKeywords: splitComma(seoKeywordsText.value),
+    seoTitle: (form.seoTitle || "").trim() || seoTitlePlaceholder.value,
+    seoDescription:
+      (form.seoDescription || "").trim() || form.shortDescription.trim(),
     options: normalizeOptions(form.options),
-    isNicotineFree: form.nicotineType === "nicotine-free",
-    isAlternativeNicotine: form.nicotineType === "alternative-nicotine",
+    isNicotineFree: form.nicotineType === "none",
+    isAlternativeNicotine:
+      form.nicotineType === "alternative" || form.nicotineType === "synthetic",
+    minUserGradeLevel:
+      form.minUserGradeToView === PUBLIC_ACCESS_GRADE
+        ? 0
+        : productStore.findGradeBenefit(form.minUserGradeToView)?.level || 1,
+    displayMinUserGradeToView:
+      form.displayMinUserGradeToView || form.minUserGradeToView,
+    minUserGradeToBuyLevel:
+      form.minUserGradeToBuy === PUBLIC_ACCESS_GRADE
+        ? 0
+        : productStore.findGradeBenefit(form.minUserGradeToBuy)?.level || 1,
     createdAt: form.createdAt || now,
     updatedAt: new Date().toISOString(),
   };
@@ -438,10 +604,16 @@ const submit = async () => {
 
 onMounted(async () => {
   await productStore.fetchCatalog();
-  if (!form.minUserGradeToView)
-    form.minUserGradeToView = activeGradeBenefits.value[0]?.gradeCode || "BASIC";
-  if (!form.minUserGradeToBuy)
-    form.minUserGradeToBuy = activeGradeBenefits.value[0]?.gradeCode || "BASIC";
+  if (!props.product) {
+    form.minUserGradeToView = PUBLIC_ACCESS_GRADE;
+    form.displayMinUserGradeToView = PUBLIC_ACCESS_GRADE;
+    form.minUserGradeToBuy = lowestGradeCode.value;
+    return;
+  }
+  if (!form.minUserGradeToView) form.minUserGradeToView = PUBLIC_ACCESS_GRADE;
+  if (!form.displayMinUserGradeToView)
+    form.displayMinUserGradeToView = form.minUserGradeToView;
+  if (!form.minUserGradeToBuy) form.minUserGradeToBuy = lowestGradeCode.value;
 });
 </script>
 
@@ -460,22 +632,51 @@ onMounted(async () => {
   grid-column: 1 / -1;
 }
 
-.check-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 8px;
-}
-
-.check-item {
-  display: flex;
-  min-height: 38px;
-  align-items: center;
-  gap: 8px;
+.multi-select {
+  min-height: 180px;
   border: 1px solid var(--color-line);
   border-radius: 8px;
   background: #fff;
-  padding: 0 10px;
+  padding: 8px;
+  color: var(--color-primary);
+  font: inherit;
+}
+
+.multi-select option {
+  padding: 8px;
+}
+
+.field-help {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.selected-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-chip {
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 7px 10px;
+  color: var(--color-primary);
+  cursor: pointer;
   font-weight: 800;
+}
+
+.selected-chip:hover {
+  border-color: var(--color-accent);
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .sticky-actions {

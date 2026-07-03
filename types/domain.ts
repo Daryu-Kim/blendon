@@ -1,17 +1,19 @@
 export type Role = "customer" | "staff" | "manager" | "admin" | "owner";
 export type GradeCode = string;
+export type AccessGradeCode = "PUBLIC" | GradeCode;
 export type ProductStatus =
   "draft" | "active" | "hidden" | "soldOut" | "deleted";
 export type NicotineType =
-  "none" | "nicotine-free" | "alternative-nicotine" | "not-applicable";
+  | "none"
+  | "alternative"
+  | "synthetic"
+  | "not_applicable";
 export type DeviceType =
-  | "starter"
-  | "compact"
-  | "high-power"
-  | "all-in-one"
-  | "replaceable"
-  | "consumable"
-  | "none";
+  | "mtl"
+  | "dtl"
+  | "disposable"
+  | "common"
+  | "not_applicable";
 export type PaymentStatus =
   "pending" | "ready" | "paid" | "failed" | "canceled" | "refunded";
 export type PaymentMethod =
@@ -106,8 +108,11 @@ export interface Product {
   isAlternativeNicotine: boolean;
   isAdultOnly: boolean;
   isVisible: boolean;
-  minUserGradeToView: GradeCode;
-  minUserGradeToBuy: GradeCode;
+  minUserGradeToView: AccessGradeCode;
+  minUserGradeLevel?: number;
+  displayMinUserGradeToView?: AccessGradeCode;
+  minUserGradeToBuy: AccessGradeCode;
+  minUserGradeToBuyLevel?: number;
   isPriceHiddenBeforeLogin: boolean;
   isPriceHiddenBeforeAdultVerification: boolean;
   status: ProductStatus;
@@ -151,6 +156,7 @@ export interface UserProfile {
   adultVerifiedAt: string | null;
   adultVerificationProvider: string | null;
   userGrade: GradeCode;
+  userGradeLevel?: number;
   role: Role;
   availablePoint: number;
   totalPurchaseAmount: number;
@@ -212,7 +218,9 @@ export interface Category {
   depth: number;
   order: number;
   isVisible: boolean;
-  minUserGradeToView: GradeCode;
+  minUserGradeToView: AccessGradeCode;
+  minUserGradeLevel?: number;
+  displayMinUserGradeToView?: AccessGradeCode;
   adultOnly: boolean;
 }
 

@@ -36,6 +36,7 @@ interface AuthSessionState {
   displayName: string;
   role: UserProfile["role"];
   userGrade: UserProfile["userGrade"];
+  userGradeLevel?: number;
   isAdultVerified: boolean;
   savedAt: string;
 }
@@ -63,19 +64,29 @@ const defaultTermsAgreement = (): TermsAgreement => ({
   agreedAt: null,
 });
 
-const defaultGradeCode = async () => {
+const defaultGrade = async () => {
   const firebase = useNuxtApp().$firebase;
-  if (!firebase.enabled || !firebase.db) return "BASIC";
+  if (!firebase.enabled || !firebase.db) return { gradeCode: "BASIC", level: 1 };
   try {
     const snap = await getDocs(
       query(collection(firebase.db, "gradeBenefits"), orderBy("level", "asc")),
     );
     const firstVisible = snap.docs
-      .map((item) => item.data() as { gradeCode?: string; isVisible?: boolean })
+      .map(
+        (item) =>
+          item.data() as {
+            gradeCode?: string;
+            level?: number;
+            isVisible?: boolean;
+          },
+      )
       .find((grade) => grade.isVisible !== false && grade.gradeCode);
-    return firstVisible?.gradeCode || "BASIC";
+    return {
+      gradeCode: firstVisible?.gradeCode || "BASIC",
+      level: Number(firstVisible?.level || 1),
+    };
   } catch {
-    return "BASIC";
+    return { gradeCode: "BASIC", level: 1 };
   }
 };
 
@@ -85,6 +96,7 @@ const createDefaultProfile = (
   displayName = "블렌드 고객",
   input?: Partial<SignUpProfileInput>,
   userGrade = "BASIC",
+  userGradeLevel = 1,
 ): UserProfile => {
   const now = new Date().toISOString();
   return {
@@ -98,6 +110,7 @@ const createDefaultProfile = (
     adultVerifiedAt: null,
     adultVerificationProvider: null,
     userGrade,
+    userGradeLevel,
     role: "customer",
     availablePoint: 0,
     totalPurchaseAmount: 0,
@@ -141,6 +154,7 @@ const normalizeTermsAgreement = (
 
 const normalizeProfile = (profile: UserProfile): UserProfile => ({
   ...profile,
+  userGradeLevel: Number(profile.userGradeLevel || 1),
   termsAgreement: normalizeTermsAgreement(profile.termsAgreement),
 });
 
@@ -151,6 +165,7 @@ const toSessionState = (profile: UserProfile): AuthSessionState => ({
   displayName: profile.displayName,
   role: profile.role,
   userGrade: profile.userGrade,
+  userGradeLevel: profile.userGradeLevel,
   isAdultVerified: profile.isAdultVerified,
   savedAt: new Date().toISOString(),
 });
@@ -204,12 +219,14 @@ export const useAuthStore = defineStore("auth", {
           if (snap.exists()) {
             this.profile = normalizeProfile(snap.data() as UserProfile);
           } else {
+            const defaultUserGrade = await defaultGrade();
             const profile = createDefaultProfile(
               user.uid,
               user.email || "",
               user.displayName || "블렌드 고객",
               undefined,
-              await defaultGradeCode(),
+              defaultUserGrade.gradeCode,
+              defaultUserGrade.level,
             );
             await setDoc(ref, {
               ...profile,
@@ -282,12 +299,14 @@ export const useAuthStore = defineStore("auth", {
               password,
             );
             await updateProfile(credential.user, { displayName });
+            const defaultUserGrade = await defaultGrade();
             const profile = createDefaultProfile(
               credential.user.uid,
               email,
               displayName,
               input,
-              await defaultGradeCode(),
+              defaultUserGrade.gradeCode,
+              defaultUserGrade.level,
             );
             await setDoc(doc(firebase.db, "users", credential.user.uid), {
               ...profile,

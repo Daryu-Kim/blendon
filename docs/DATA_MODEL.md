@@ -20,6 +20,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `adultVerifiedAt`               | timestamp/string/null | 성인 인증 완료 시각                              |
 | `adultVerificationProvider`     | string/null           | `portone`, `external` 등                         |
 | `userGrade`                     | string                | `gradeBenefits/{gradeCode}` 참조                 |
+| `userGradeLevel`                | number                | 현재 회원 등급 레벨. Rules/카테고리 접근 계산용 |
 | `role`                          | string                | `customer`, `staff`, `manager`, `admin`, `owner` |
 | `availablePoint`                | number                | 사용 가능 포인트                                 |
 | `totalPurchaseAmount`           | number                | 누적 구매액                                      |
@@ -66,7 +67,9 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `depth`              | number      | 1~3 권장           |
 | `order`              | number      | 정렬               |
 | `isVisible`          | boolean     | 노출 여부          |
-| `minUserGradeToView` | string      | 최소 열람 등급     |
+| `minUserGradeToView` | string      | 최소 열람 등급. `PUBLIC`이면 비회원/전체 공개 기준 |
+| `minUserGradeLevel`  | number      | 최소 열람 등급 레벨. `PUBLIC`은 0, 동적 등급 코드 사용 시 Rules/권한 계산용 |
+| `displayMinUserGradeToView` | string | 소비자 화면에 표시할 최소 등급. 실제 권한과 다르게 안내 문구를 제어할 때 사용 |
 | `adultOnly`          | boolean     | 성인 전용 카테고리 |
 
 ### `products/{productId}`
@@ -94,14 +97,17 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `badges`                               | string[]         | 카드 배지                                                                             |
 | `tags`                                 | string[]         | 검색/추천 태그                                                                        |
 | `flavorProfile`                        | map              | `sweetness`, `coolness`, `body`, `mood`, `notes`                                      |
-| `deviceType`                           | string           | `starter`, `compact`, `high-power`, `all-in-one`, `replaceable`, `consumable`, `none` |
-| `nicotineType`                         | string           | `nicotine-free`, `alternative-nicotine`, `none`, `not-applicable`                     |
+| `deviceType`                           | string           | `mtl` 입호흡, `dtl` 폐호흡, `disposable` 일회용, `common`, `not_applicable`           |
+| `nicotineType`                         | string           | `none` 무니코틴, `alternative` 대체 니코틴, `synthetic` 합성 니코틴, `not_applicable` |
 | `isNicotineFree`                       | boolean          | 니코틴 프리 여부                                                                      |
 | `isAlternativeNicotine`                | boolean          | 대체 니코틴 여부                                                                      |
 | `isAdultOnly`                          | boolean          | 성인 전용 여부                                                                        |
 | `isVisible`                            | boolean          | 목록 노출 여부                                                                        |
-| `minUserGradeToView`                   | string           | 최소 열람 등급                                                                        |
-| `minUserGradeToBuy`                    | string           | 최소 구매 등급                                                                        |
+| `minUserGradeToView`                   | string           | 최소 열람 등급. `PUBLIC`이면 비회원/전체 공개 기준                                    |
+| `minUserGradeLevel`                    | number           | 최소 열람 등급 레벨. `PUBLIC`은 0, 동적 등급 코드 사용 시 Rules/권한 계산용           |
+| `displayMinUserGradeToView`            | string           | 소비자 화면에 표시할 최소 등급. 실제 열람 권한과 분리된 안내용                        |
+| `minUserGradeToBuy`                    | string           | 최소 구매 등급. `PUBLIC`이면 등급 제한 없음                                           |
+| `minUserGradeToBuyLevel`               | number           | 최소 구매 등급 레벨. `PUBLIC`은 0, 서버 주문 검증/Rules 확장용                        |
 | `isPriceHiddenBeforeLogin`             | boolean          | 비로그인 가격 숨김                                                                    |
 | `isPriceHiddenBeforeAdultVerification` | boolean          | 성인 확인 전 가격 숨김                                                                |
 | `viewRoles`, `buyRoles`                | string[]         | 향후 staff/manager 전용 상품 확장                                                     |

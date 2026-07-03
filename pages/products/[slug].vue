@@ -75,7 +75,11 @@
 </template>
 
 <script setup lang="ts">
-import { canBuyProduct, maskRestrictedText } from "~/utils/access";
+import {
+  canBuyProduct,
+  canViewProductWithCategories,
+  maskRestrictedText,
+} from "~/utils/access";
 
 const route = useRoute();
 const productStore = useProductStore();
@@ -104,8 +108,19 @@ const { data: productSeo } = await useAsyncData(
   () => $fetch(`/api/products/seo/${String(route.params.slug)}`),
   { default: () => null },
 );
-const product = computed(() =>
+const rawProduct = computed(() =>
   productStore.findBySlug(String(route.params.slug)),
+);
+const product = computed(() =>
+  rawProduct.value &&
+  canViewProductWithCategories(
+    rawProduct.value,
+    productStore.categories,
+    auth.profile,
+    productStore.gradeBenefits,
+  )
+    ? rawProduct.value
+    : undefined,
 );
 const selectedImage = ref("");
 const optionId = ref("");
@@ -115,7 +130,7 @@ const selectedOption = computed(() =>
 );
 const canBuy = computed(() =>
   Boolean(
-    product.value &&
+      product.value &&
       canBuyProduct(product.value, auth.profile, productStore.gradeBenefits),
   ),
 );

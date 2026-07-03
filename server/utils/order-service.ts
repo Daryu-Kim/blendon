@@ -1,4 +1,8 @@
-import { canBuyProduct, currentUnitPrice } from "~/utils/access";
+import {
+  canBuyProduct,
+  canViewProductWithCategories,
+  currentUnitPrice,
+} from "~/utils/access";
 import { createOrderNo } from "~/utils/format";
 import type {
   Address,
@@ -7,6 +11,7 @@ import type {
   OrderItem,
   PaymentMethod,
   PickupType,
+  Category,
   GradeBenefit,
   Product,
   UserProfile,
@@ -27,6 +32,7 @@ export const buildPendingOrder = (
   cartItems: CartItem[],
   checkout: ServerCheckoutInput,
   products: Product[],
+  categories: Category[] = [],
   gradeBenefits: GradeBenefit[] = [],
 ): Order => {
   if (!user)
@@ -58,7 +64,10 @@ export const buildPendingOrder = (
         statusCode: 404,
         statusMessage: "상품을 찾을 수 없습니다.",
       });
-    if (!canBuyProduct(product, user, gradeBenefits))
+    if (
+      !canBuyProduct(product, user, gradeBenefits) ||
+      !canViewProductWithCategories(product, categories, user, gradeBenefits)
+    )
       throw createError({
         statusCode: 403,
         statusMessage: "상품 구매 권한을 확인해 주세요.",

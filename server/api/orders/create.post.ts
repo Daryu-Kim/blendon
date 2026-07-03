@@ -2,6 +2,7 @@ import { buildPendingOrder } from "~/server/utils/order-service";
 import { saveServerOrder } from "~/server/utils/order-store";
 import { getFirebaseAdmin } from "~/server/utils/firebase-admin";
 import type {
+  Category,
   CartItem,
   GradeBenefit,
   PaymentMethod,
@@ -52,12 +53,17 @@ export default defineEventHandler(async (event) => {
     const gradeBenefits = gradeSnap.docs.map(
       (snap) => ({ id: snap.id, ...snap.data() }) as GradeBenefit,
     );
+    const categorySnap = await admin.db.collection("categories").get();
+    const categories = categorySnap.docs.map(
+      (snap) => ({ id: snap.id, ...snap.data() }) as Category,
+    );
 
     const order = buildPendingOrder(
       user,
       body.cartItems,
       body.checkout,
       products,
+      categories,
       gradeBenefits,
     );
     return await saveServerOrder(order);

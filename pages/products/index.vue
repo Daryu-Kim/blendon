@@ -21,7 +21,14 @@
       </Select>
     </div>
 
-    <ProductGrid :products="productStore.filteredProducts" />
+    <EmptyState
+      v-if="selectedCategoryIsRestricted"
+      title="접근할 수 없는 카테고리입니다."
+      description="회원 등급 조건을 충족한 뒤 이용할 수 있어요."
+      action-label="전체 상품 보기"
+      action-to="/products"
+    />
+    <ProductGrid v-else :products="productStore.filteredProducts" />
   </main>
 </template>
 
@@ -32,6 +39,13 @@ const categoryId = computed({
   get: () => productStore.selectedCategoryId,
   set: (value) => productStore.setCategory(value),
 });
+const selectedCategoryIsRestricted = computed(
+  () =>
+    Boolean(productStore.selectedCategoryId) &&
+    !productStore.visibleCategories.some(
+      (category) => category.id === productStore.selectedCategoryId,
+    ),
+);
 
 onMounted(async () => {
   await productStore.fetchCatalog();
@@ -45,7 +59,7 @@ watch(
   (query) => {
     productStore.setQuery(query.q ? String(query.q) : productStore.query);
     productStore.setCategory(
-      query.category ? String(query.category) : productStore.selectedCategoryId,
+      query.category ? String(query.category) : "",
     );
   },
 );

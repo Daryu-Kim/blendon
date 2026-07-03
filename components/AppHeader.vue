@@ -57,10 +57,26 @@ import { LogIn, ShoppingBag, User } from "@lucide/vue";
 const { brand } = useAppConfig();
 const auth = useAuthStore();
 const cart = useCartStore();
+const productStore = useProductStore();
+
+const authCatalogKey = computed(() =>
+  [
+    auth.profile?.uid || "guest",
+    auth.profile?.role || "customer",
+    auth.profile?.userGrade || "PUBLIC",
+    auth.profile?.isAdultVerified ? "adult" : "unverified",
+  ].join(":"),
+);
 
 onMounted(async () => {
   await auth.init();
+  await productStore.fetchCatalog();
   cart.hydrate();
+});
+
+watch(authCatalogKey, async () => {
+  if (!auth.initialized) return;
+  await productStore.fetchCatalog(true);
 });
 </script>
 

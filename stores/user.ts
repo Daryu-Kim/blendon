@@ -34,6 +34,7 @@ const normalizeUser = (uid: string, data: Partial<UserProfile>): UserProfile =>
     adultVerifiedAt: data.adultVerifiedAt || null,
     adultVerificationProvider: data.adultVerificationProvider || null,
     userGrade: data.userGrade || "BASIC",
+    userGradeLevel: Number(data.userGradeLevel || 1),
     role: data.role || "customer",
     availablePoint: Number(data.availablePoint || 0),
     totalPurchaseAmount: Number(data.totalPurchaseAmount || 0),
@@ -108,7 +109,11 @@ export const useUserStore = defineStore("user", {
       return this.patchUser(uid, { role });
     },
     updateUserGrade(uid: string, userGrade: GradeCode) {
-      return this.patchUser(uid, { userGrade });
+      const grade = useProductStore().findGradeBenefit(userGrade);
+      return this.patchUser(uid, {
+        userGrade,
+        userGradeLevel: grade?.level || 1,
+      });
     },
     updateUserPoint(uid: string, availablePoint: number) {
       return this.patchUser(uid, { availablePoint });

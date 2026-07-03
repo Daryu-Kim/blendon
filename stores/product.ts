@@ -11,8 +11,20 @@ import {
   where,
 } from "firebase/firestore";
 import { defineStore } from "pinia";
-import { canViewProduct } from "~/utils/access";
-import type { Category, GradeBenefit, GradeCode, Product } from "~/types/domain";
+import {
+  canViewCategory,
+  canViewProductWithCategories,
+  gradeLevel,
+  PUBLIC_ACCESS_GRADE,
+} from "~/utils/access";
+import type {
+  Category,
+  DeviceType,
+  GradeBenefit,
+  GradeCode,
+  NicotineType,
+  Product,
+} from "~/types/domain";
 
 const timestampToIso = (value: unknown) => {
   if (
@@ -24,6 +36,30 @@ const timestampToIso = (value: unknown) => {
     return value.toDate().toISOString();
   }
   return typeof value === "string" ? value : new Date().toISOString();
+};
+
+const normalizeDeviceType = (value: unknown): DeviceType => {
+  if (value === "mtl" || value === "dtl" || value === "disposable" || value === "common")
+    return value;
+  if (value === "starter" || value === "compact" || value === "all-in-one")
+    return "mtl";
+  if (value === "high-power") return "dtl";
+  if (value === "replaceable" || value === "consumable" || value === "none")
+    return "common";
+  return "not_applicable";
+};
+
+const normalizeNicotineType = (value: unknown): NicotineType => {
+  if (
+    value === "none" ||
+    value === "alternative" ||
+    value === "synthetic" ||
+    value === "not_applicable"
+  )
+    return value;
+  if (value === "nicotine-free") return "none";
+  if (value === "alternative-nicotine") return "alternative";
+  return "not_applicable";
 };
 
 const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
@@ -51,14 +87,20 @@ const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
     mood: [],
     notes: [],
   },
-  deviceType: data.deviceType || "none",
-  nicotineType: data.nicotineType || "not-applicable",
+  deviceType: normalizeDeviceType(data.deviceType),
+  nicotineType: normalizeNicotineType(data.nicotineType),
   isNicotineFree: Boolean(data.isNicotineFree),
   isAlternativeNicotine: Boolean(data.isAlternativeNicotine),
   isAdultOnly: Boolean(data.isAdultOnly),
   isVisible: data.isVisible ?? true,
-  minUserGradeToView: data.minUserGradeToView || "BASIC",
-  minUserGradeToBuy: data.minUserGradeToBuy || "BASIC",
+  minUserGradeToView: data.minUserGradeToView || PUBLIC_ACCESS_GRADE,
+  minUserGradeLevel: Number(data.minUserGradeLevel || 0),
+  displayMinUserGradeToView:
+    data.displayMinUserGradeToView ||
+    data.minUserGradeToView ||
+    PUBLIC_ACCESS_GRADE,
+  minUserGradeToBuy: data.minUserGradeToBuy || PUBLIC_ACCESS_GRADE,
+  minUserGradeToBuyLevel: Number(data.minUserGradeToBuyLevel || 0),
   isPriceHiddenBeforeLogin: data.isPriceHiddenBeforeLogin ?? true,
   isPriceHiddenBeforeAdultVerification:
     data.isPriceHiddenBeforeAdultVerification ?? Boolean(data.isAdultOnly),
@@ -111,6 +153,29 @@ const normalizeGradeBenefit = (id: string, data: Partial<GradeBenefit>) =>
     updatedAt: timestampToIso(data.updatedAt),
   }) satisfies GradeBenefit;
 
+const normalizeCategory = (
+  id: string,
+  data: Partial<Category>,
+  gradeBenefits: GradeBenefit[] = [],
+): Category => ({
+  id,
+  name: data.name || "",
+  slug: data.slug || id,
+  parentId: data.parentId ?? null,
+  depth: Number(data.depth || 1),
+  order: Number(data.order || 0),
+  isVisible: data.isVisible ?? true,
+  minUserGradeToView: data.minUserGradeToView || PUBLIC_ACCESS_GRADE,
+  minUserGradeLevel:
+    Number(data.minUserGradeLevel || 0) ||
+    gradeLevel(data.minUserGradeToView || PUBLIC_ACCESS_GRADE, gradeBenefits),
+  displayMinUserGradeToView:
+    data.displayMinUserGradeToView ||
+    data.minUserGradeToView ||
+    PUBLIC_ACCESS_GRADE,
+  adultOnly: Boolean(data.adultOnly),
+});
+
 const allowedGradesFor = (
   grade?: GradeCode | null,
   gradeBenefits: GradeBenefit[] = [],
@@ -125,7 +190,7 @@ const allowedGradesFor = (
   const allowed = grades
     .filter((item) => item.level <= currentLevel)
     .map((item) => item.gradeCode);
-  return allowed.length ? allowed.slice(0, 30) : ["BASIC"];
+  return [PUBLIC_ACCESS_GRADE, ...allowed].slice(0, 30);
 };
 
 export const useProductStore = defineStore("product", {
@@ -136,13 +201,19 @@ export const useProductStore = defineStore("product", {
     query: "",
     selectedCategoryId: "",
     initialized: false,
+    catalogAccessKey: "",
     loading: false,
   }),
   getters: {
     visibleProducts: (state) => {
       const user = useAuthStore().profile;
       return state.products.filter((product) =>
-        canViewProduct(product, user, state.gradeBenefits),
+        canViewProductWithCategories(
+          product,
+          state.categories,
+          user,
+          state.gradeBenefits,
+        ),
       );
     },
     filteredProducts(): Product[] {
@@ -159,10 +230,22 @@ export const useProductStore = defineStore("product", {
         return matchesCategory && matchesQuery;
       });
     },
-    rootCategories: (state) =>
-      state.categories
-        .filter((category) => !category.parentId && category.isVisible)
-        .sort((a, b) => a.order - b.order),
+    visibleCategories: (state) => {
+      const auth = useAuthStore();
+      if (auth.isAdmin) {
+        return state.categories
+          .filter((category) => category.isVisible)
+          .sort((a, b) => a.order - b.order);
+      }
+      return state.categories
+        .filter((category) =>
+          canViewCategory(category, auth.profile, state.gradeBenefits),
+        )
+        .sort((a, b) => a.order - b.order);
+    },
+    rootCategories(): Category[] {
+      return this.visibleCategories.filter((category) => !category.parentId);
+    },
     lowStockProducts: (state) =>
       state.products.filter(
         (product) => product.stock > 0 && product.stock <= 10,
@@ -170,7 +253,6 @@ export const useProductStore = defineStore("product", {
   },
   actions: {
     async fetchCatalog(force = false) {
-      if (this.initialized && !force) return;
       const firebase = useNuxtApp().$firebase;
       const auth = useAuthStore();
       const loading = useGlobalLoading();
@@ -179,6 +261,14 @@ export const useProductStore = defineStore("product", {
         await loading.withLoading(async () => {
           if (firebase.enabled && firebase.db) {
             await auth.init();
+            const accessKey = [
+              auth.profile?.uid || "guest",
+              auth.profile?.role || "customer",
+              auth.profile?.userGrade || PUBLIC_ACCESS_GRADE,
+              auth.profile?.isAdultVerified ? "adult" : "unverified",
+            ].join(":");
+            if (this.initialized && this.catalogAccessKey === accessKey && !force)
+              return;
             const isAdmin = auth.isAdmin;
             const gradeSnap = await getDocs(
               query(
@@ -231,14 +321,20 @@ export const useProductStore = defineStore("product", {
             this.products = productSnap.docs.map((item) =>
               normalizeProduct(item.id, item.data() as Partial<Product>),
             );
-            this.categories = categorySnap.docs.map(
-              (item) => ({ id: item.id, ...item.data() }) as Category,
+            this.categories = categorySnap.docs.map((item) =>
+              normalizeCategory(
+                item.id,
+                item.data() as Partial<Category>,
+                gradeBenefits,
+              ),
             );
             this.gradeBenefits = gradeBenefits;
+            this.catalogAccessKey = accessKey;
           } else {
             this.products = [];
             this.categories = [];
             this.gradeBenefits = [];
+            this.catalogAccessKey = "disabled";
           }
           this.initialized = true;
         }, "카탈로그를 불러오는 중");
@@ -295,17 +391,27 @@ export const useProductStore = defineStore("product", {
       await this.upsertProduct({ ...product, isVisible: !product.isVisible });
     },
     async upsertCategory(category: Category) {
+      const payload = {
+        ...category,
+        minUserGradeLevel:
+          Number(category.minUserGradeLevel || 0) ||
+          gradeLevel(category.minUserGradeToView, this.gradeBenefits),
+      };
       const index = this.categories.findIndex(
-        (item) => item.id === category.id,
+        (item) => item.id === payload.id,
       );
-      if (index >= 0) this.categories[index] = category;
-      else this.categories.push(category);
+      if (index >= 0) this.categories[index] = payload;
+      else this.categories.push(payload);
       const firebase = useNuxtApp().$firebase;
       if (firebase.enabled && firebase.db) {
         await useGlobalLoading().withLoading(async () => {
-          await setDoc(doc(firebase.db!, "categories", category.id), category, {
-            merge: true,
-          });
+          await setDoc(
+            doc(firebase.db!, "categories", payload.id),
+            payload,
+            {
+              merge: true,
+            },
+          );
         }, "카테고리를 저장하는 중");
       }
     },
