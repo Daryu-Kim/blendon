@@ -8,8 +8,12 @@ import {
   updateProfile,
 } from "firebase/auth";
 import {
+  collection,
   doc,
   getDoc,
+  getDocs,
+  orderBy,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -59,11 +63,28 @@ const defaultTermsAgreement = (): TermsAgreement => ({
   agreedAt: null,
 });
 
+const defaultGradeCode = async () => {
+  const firebase = useNuxtApp().$firebase;
+  if (!firebase.enabled || !firebase.db) return "BASIC";
+  try {
+    const snap = await getDocs(
+      query(collection(firebase.db, "gradeBenefits"), orderBy("level", "asc")),
+    );
+    const firstVisible = snap.docs
+      .map((item) => item.data() as { gradeCode?: string; isVisible?: boolean })
+      .find((grade) => grade.isVisible !== false && grade.gradeCode);
+    return firstVisible?.gradeCode || "BASIC";
+  } catch {
+    return "BASIC";
+  }
+};
+
 const createDefaultProfile = (
   uid: string,
   email: string,
   displayName = "블렌드 고객",
   input?: Partial<SignUpProfileInput>,
+  userGrade = "BASIC",
 ): UserProfile => {
   const now = new Date().toISOString();
   return {
@@ -76,7 +97,7 @@ const createDefaultProfile = (
     isAdultVerified: false,
     adultVerifiedAt: null,
     adultVerificationProvider: null,
-    userGrade: "BASIC",
+    userGrade,
     role: "customer",
     availablePoint: 0,
     totalPurchaseAmount: 0,
@@ -187,6 +208,8 @@ export const useAuthStore = defineStore("auth", {
               user.uid,
               user.email || "",
               user.displayName || "블렌드 고객",
+              undefined,
+              await defaultGradeCode(),
             );
             await setDoc(ref, {
               ...profile,
@@ -264,6 +287,7 @@ export const useAuthStore = defineStore("auth", {
               email,
               displayName,
               input,
+              await defaultGradeCode(),
             );
             await setDoc(doc(firebase.db, "users", credential.user.uid), {
               ...profile,

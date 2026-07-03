@@ -22,8 +22,12 @@
               users.updateUserGrade(row.uid, $event as typeof row.userGrade)
             "
           >
-            <option v-for="grade in grades" :key="grade" :value="grade">
-              {{ grade }}
+            <option
+              v-for="grade in activeGrades"
+              :key="grade.gradeCode"
+              :value="grade.gradeCode"
+            >
+              {{ grade.label }} ({{ grade.gradeCode }})
             </option>
           </Select>
           <Select
@@ -46,11 +50,18 @@
 
 <script setup lang="ts">
 import { formatCurrency } from "~/utils/format";
-import type { GradeCode } from "~/types/domain";
 
 definePageMeta({ layout: "admin", middleware: "admin" });
 const users = useUserStore();
-const grades: GradeCode[] = ["BASIC", "PLUS", "PRO", "VIP", "BLACK"];
+const productStore = useProductStore();
+const activeGrades = computed(() => {
+  const grades = productStore.gradeBenefits
+    .filter((grade) => grade.isVisible)
+    .sort((a, b) => a.level - b.level || a.order - b.order);
+  return grades.length
+    ? grades
+    : [{ gradeCode: "BASIC", label: "BASIC", level: 1, order: 1 }];
+});
 const columns = [
   { key: "email", label: "이메일" },
   { key: "displayName", label: "이름" },
@@ -61,7 +72,7 @@ const columns = [
 ] as const;
 
 onMounted(async () => {
-  await users.fetchUsers(true);
+  await Promise.all([users.fetchUsers(true), productStore.fetchCatalog(true)]);
 });
 
 useHead({ title: "관리자 회원 관리" });

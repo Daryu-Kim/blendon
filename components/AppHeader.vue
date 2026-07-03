@@ -46,9 +46,6 @@
     <div class="nav-band">
       <div class="page-shell nav-row">
         <CategoryNav />
-        <NuxtLink class="nav-promo" to="/products?category=lounge-pick"
-          >라운지 픽</NuxtLink
-        >
       </div>
     </div>
   </header>

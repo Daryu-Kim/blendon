@@ -2,13 +2,12 @@
   <footer class="app-footer">
     <div class="page-shell footer-grid">
       <section>
-        <h2>{{ brand.name }}</h2>
-        <p>{{ brand.description }}</p>
-        <p class="muted">{{ brand.businessInfoPlaceholder }}</p>
+        <h2>{{ globalSettings?.mallName || brand.name }}</h2>
+        <p>{{ globalSettings?.mallDescription || brand.description }}</p>
+        <p class="muted">{{ businessSummary }}</p>
       </section>
       <nav aria-label="하단 메뉴">
         <NuxtLink to="/guide">이용안내</NuxtLink>
-        <NuxtLink to="/products">상품 보기</NuxtLink>
         <NuxtLink to="/support">고객센터</NuxtLink>
         <NuxtLink to="/notices">공지사항</NuxtLink>
       </nav>
@@ -20,8 +19,8 @@
       </nav>
       <section>
         <h3>고객센터</h3>
-        <p>{{ brand.supportPhone }}</p>
-        <p>{{ brand.supportEmail }}</p>
+        <p>{{ globalSettings?.customerCenterPhone || brand.supportPhone }}</p>
+        <p>{{ globalSettings?.customerCenterEmail || brand.supportEmail }}</p>
       </section>
     </div>
   </footer>
@@ -29,6 +28,25 @@
 
 <script setup lang="ts">
 const { brand } = useAppConfig();
+const { data: globalSettings } = await useAsyncData(
+  "site-global-settings",
+  () => $fetch("/api/site-settings/global"),
+);
+
+const businessSummary = computed(() => {
+  const settings = globalSettings.value;
+  if (!settings?.businessName) return brand.businessInfoPlaceholder;
+  return [
+    settings.businessName,
+    settings.representativeName && `대표 ${settings.representativeName}`,
+    settings.businessRegistrationNumber &&
+      `사업자등록번호 ${settings.businessRegistrationNumber}`,
+    settings.mailOrderSalesNumber &&
+      `통신판매업 ${settings.mailOrderSalesNumber}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+});
 </script>
 
 <style scoped>

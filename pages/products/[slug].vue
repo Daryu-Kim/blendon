@@ -81,7 +81,29 @@ const route = useRoute();
 const productStore = useProductStore();
 const cart = useCartStore();
 const auth = useAuthStore();
-const settingsStore = useSiteSettingsStore();
+const { data: seoSettings } = await useAsyncData(
+  "site-seo-settings",
+  () => $fetch("/api/site-settings/seo"),
+  {
+    default: () => ({
+      defaultTitle: "BLEND ON",
+      titleTemplate: "%s | BLEND ON",
+      defaultDescription:
+        "성인 취향을 쉽고 깔끔하게 고르는 라이프스타일 편집샵",
+      defaultKeywords: ["성인 라이프스타일", "편집샵", "디바이스", "플레이버"],
+      ogTitle: "BLEND ON",
+      ogDescription: "성인 취향을 쉽고 깔끔하게 고르는 라이프스타일 편집샵",
+      ogImageUrl: "/og-image.svg",
+      canonicalBaseUrl: "",
+      robots: "index,follow",
+    }),
+  },
+);
+const { data: productSeo } = await useAsyncData(
+  () => `product-seo-${route.params.slug}`,
+  () => $fetch(`/api/products/seo/${String(route.params.slug)}`),
+  { default: () => null },
+);
 const product = computed(() =>
   productStore.findBySlug(String(route.params.slug)),
 );
@@ -92,17 +114,17 @@ const selectedOption = computed(() =>
   product.value?.options.find((option) => option.optionId === optionId.value),
 );
 const canBuy = computed(() =>
-  Boolean(product.value && canBuyProduct(product.value, auth.profile)),
+  Boolean(
+    product.value &&
+      canBuyProduct(product.value, auth.profile, productStore.gradeBenefits),
+  ),
 );
 const description = computed(() =>
   product.value ? maskRestrictedText(product.value, auth.profile) : "",
 );
 
 onMounted(async () => {
-  await Promise.all([
-    productStore.fetchCatalog(),
-    settingsStore.fetchSettings(),
-  ]);
+  await productStore.fetchCatalog();
 });
 
 watchEffect(() => {
@@ -120,7 +142,7 @@ const addToCart = () => {
 };
 
 const absoluteUrl = (path: string | undefined) => {
-  const base = settingsStore.seo.canonicalBaseUrl.replace(/\/$/, "");
+  const base = seoSettings.value.canonicalBaseUrl.replace(/\/$/, "");
   if (!path) return undefined;
   if (/^https?:\/\//.test(path)) return path;
   return base ? `${base}${path.startsWith("/") ? path : `/${path}`}` : path;
@@ -128,15 +150,26 @@ const absoluteUrl = (path: string | undefined) => {
 
 useHead(() => {
   const item = product.value;
-  if (!item) return { title: "상품 상세" };
-  const title = item.seoTitle || item.name;
-  const descriptionText = item.seoDescription || item.shortDescription;
-  const ogImage = item.ogImageUrl || item.thumbnailUrl;
+  const seo = productSeo.value;
+  if (!item && !seo) return { title: "상품 상세" };
+  const title = seo?.title || item?.seoTitle || item?.name || "상품 상세";
+  const descriptionText =
+    seo?.description ||
+    item?.seoDescription ||
+    item?.shortDescription ||
+    seoSettings.value.defaultDescription;
+  const keywords = seo?.keywords?.length
+    ? seo.keywords
+    : item?.seoKeywords?.length
+      ? item.seoKeywords
+      : item?.tags || seoSettings.value.defaultKeywords;
+  const ogImage = seo?.ogImageUrl || item?.ogImageUrl || item?.thumbnailUrl;
+  const canonicalPath = seo?.canonicalUrl || (item ? `/products/${item.slug}` : "");
   return {
     title,
     meta: [
       { name: "description", content: descriptionText },
-      { name: "keywords", content: (item.seoKeywords || item.tags).join(", ") },
+      { name: "keywords", content: keywords.join(", ") },
       { property: "og:title", content: title },
       { property: "og:description", content: descriptionText },
       { property: "og:image", content: absoluteUrl(ogImage) },
@@ -144,10 +177,7 @@ useHead(() => {
     link: [
       {
         rel: "canonical",
-        href:
-          item.canonicalUrl ||
-          absoluteUrl(`/products/${item.slug}`) ||
-          `/products/${item.slug}`,
+        href: absoluteUrl(canonicalPath) || canonicalPath,
       },
     ],
   };

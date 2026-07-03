@@ -32,7 +32,8 @@ export const useCartStore = defineStore("cart", {
           );
           if (!product || !option) return null;
           const unitPrice =
-            currentUnitPrice(product, auth.profile) + option.additionalPrice;
+            currentUnitPrice(product, auth.profile, productStore.gradeBenefits) +
+            option.additionalPrice;
           return {
             ...item,
             product,
@@ -63,8 +64,12 @@ export const useCartStore = defineStore("cart", {
     },
     add(productId: string, optionId: string, quantity = 1) {
       const auth = useAuthStore();
-      const product = useProductStore().findById(productId);
-      if (!product || !canBuyProduct(product, auth.profile)) {
+      const productStore = useProductStore();
+      const product = productStore.findById(productId);
+      if (
+        !product ||
+        !canBuyProduct(product, auth.profile, productStore.gradeBenefits)
+      ) {
         throw new Error("구매 권한 또는 재고를 확인해 주세요.");
       }
       const option = product.options.find((item) => item.optionId === optionId);

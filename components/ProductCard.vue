@@ -39,7 +39,10 @@ import { canBuyProduct } from "~/utils/access";
 
 const props = defineProps<{ product: Product }>();
 const auth = useAuthStore();
-const canBuy = computed(() => canBuyProduct(props.product, auth.profile));
+const productStore = useProductStore();
+const canBuy = computed(() =>
+  canBuyProduct(props.product, auth.profile, productStore.gradeBenefits),
+);
 </script>
 
 <style scoped>

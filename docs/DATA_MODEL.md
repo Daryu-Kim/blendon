@@ -19,7 +19,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `isAdultVerified`               | boolean               | 서버 인증 결과만 반영                            |
 | `adultVerifiedAt`               | timestamp/string/null | 성인 인증 완료 시각                              |
 | `adultVerificationProvider`     | string/null           | `portone`, `external` 등                         |
-| `userGrade`                     | string                | `BASIC`, `PLUS`, `PRO`, `VIP`, `BLACK`           |
+| `userGrade`                     | string                | `gradeBenefits/{gradeCode}` 참조                 |
 | `role`                          | string                | `customer`, `staff`, `manager`, `admin`, `owner` |
 | `availablePoint`                | number                | 사용 가능 포인트                                 |
 | `totalPurchaseAmount`           | number                | 누적 구매액                                      |
@@ -36,14 +36,14 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 ### `gradeBenefits/{gradeCode}`
 
-회원 등급 메뉴와 혜택가 계산 기준을 Firestore에서 관리한다.
+회원 등급 메뉴와 혜택가 계산 기준을 Firestore에서 관리한다. `BASIC`, `VIP` 같은 코드는 예시일 뿐이며, 운영자가 관리자에서 새 등급 코드를 직접 생성한다.
 
 | Field                    | Type             | Notes                 |
 | ------------------------ | ---------------- | --------------------- |
 | `id`                     | string           | 문서 ID와 동일        |
-| `gradeCode`              | string           | `BASIC`~`BLACK`       |
-| `internalCode`           | string           | `G1`~`G10` 확장 코드  |
-| `level`                  | number           | 권한 비교용 숫자      |
+| `gradeCode`              | string           | 운영자가 생성하는 등급 코드 |
+| `internalCode`           | string           | 내부 운영 코드             |
+| `level`                  | number           | 권한 비교용 숫자. 높을수록 상위 등급 |
 | `label`                  | string           | 화면 표시명           |
 | `discountRate`           | number           | 회원가 기준 할인율    |
 | `pointRate`              | number           | 적립률                |
@@ -88,7 +88,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `basePrice`                            | number           | 비회원 기준가                                                                         |
 | `memberPrice`                          | number           | 회원 기준가                                                                           |
 | `compareAtPrice`                       | number/null      | 정가/할인 전 가격                                                                     |
-| `gradePrices`                          | map              | 등급별 고정가, 예: `{ VIP: 21000 }`                                                   |
+| `gradePrices`                          | map              | 등급별 고정가, 예: `{ VIP_2026: 21000 }`                                              |
 | `stock`                                | number           | 총 재고                                                                               |
 | `options`                              | array            | `optionId`, `optionName`, `optionCode`, `additionalPrice`, `stock`, `isActive`        |
 | `badges`                               | string[]         | 카드 배지                                                                             |

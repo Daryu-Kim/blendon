@@ -2,16 +2,17 @@
   <form class="grade-form" @submit.prevent="submit">
     <AdminFormSection
       title="등급 기본 정보"
-      description="회원에게 노출되는 등급명과 내부 운영 코드를 설정합니다."
+      description="새 등급을 생성하고 회원에게 노출되는 이름과 내부 운영 코드를 설정합니다."
     >
       <div class="form-grid">
         <div class="form-row">
           <label>등급 코드</label>
-          <Select v-model="form.gradeCode" :disabled="Boolean(grade)">
-            <option v-for="code in gradeCodes" :key="code" :value="code">
-              {{ code }}
-            </option>
-          </Select>
+          <Input
+            v-model="form.gradeCode"
+            :disabled="Boolean(grade)"
+            placeholder="예: BASIC, SILVER, VIP_2026"
+            required
+          />
         </div>
         <div class="form-row">
           <label>노출명</label>
@@ -71,21 +72,21 @@
 </template>
 
 <script setup lang="ts">
-import type { GradeBenefit, GradeCode } from "~/types/domain";
+import type { GradeBenefit } from "~/types/domain";
+import { toSafeId } from "~/utils/format";
 
 const props = defineProps<{ grade?: GradeBenefit | null }>();
 const emit = defineEmits<{ saved: [grade: GradeBenefit] }>();
 
 const productStore = useProductStore();
-const gradeCodes: GradeCode[] = ["BASIC", "PLUS", "PRO", "VIP", "BLACK"];
 const now = new Date().toISOString();
 
 const createEmptyGrade = (): GradeBenefit => ({
-  id: "BASIC",
-  gradeCode: "BASIC",
+  id: "",
+  gradeCode: "",
   internalCode: "G1",
   level: 1,
-  label: "BASIC",
+  label: "",
   discountRate: 0,
   pointRate: 1,
   minPurchaseAmount: 0,
@@ -110,9 +111,14 @@ const visibleText = computed({
 });
 
 const submit = async () => {
+  const gradeCode = form.gradeCode.trim().toUpperCase();
+  const id = form.id || gradeCode || toSafeId(form.label);
   const grade: GradeBenefit = {
     ...form,
-    id: form.gradeCode,
+    id,
+    gradeCode: gradeCode || id,
+    label: form.label.trim() || gradeCode || id,
+    internalCode: form.internalCode.trim(),
     level: Number(form.level || 1),
     discountRate: Number(form.discountRate || 0),
     pointRate: Number(form.pointRate || 0),

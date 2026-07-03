@@ -160,12 +160,6 @@ const categoryTiles = [
     description: "팟, 카트리지, 케이블",
     to: "/products?category=consumable",
   },
-  {
-    kicker: "LOUNGE",
-    title: "라운지 픽",
-    description: "오프라인 확장 셀렉션",
-    to: "/products?category=lounge-pick",
-  },
 ];
 
 const bestTabs = [
@@ -173,7 +167,6 @@ const bestTabs = [
   { label: "디바이스", to: "/products?category=device" },
   { label: "니코틴 프리", to: "/products?category=nicotine-free" },
   { label: "리필/소모품", to: "/products?category=consumable" },
-  { label: "라운지 픽", to: "/products?category=lounge-pick" },
 ];
 
 const sections = computed(() => [

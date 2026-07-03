@@ -1,5 +1,5 @@
 export type Role = "customer" | "staff" | "manager" | "admin" | "owner";
-export type GradeCode = "BASIC" | "PLUS" | "PRO" | "VIP" | "BLACK";
+export type GradeCode = string;
 export type ProductStatus =
   "draft" | "active" | "hidden" | "soldOut" | "deleted";
 export type NicotineType =
@@ -94,7 +94,7 @@ export interface Product {
   basePrice: number;
   memberPrice: number;
   compareAtPrice: number | null;
-  gradePrices?: Partial<Record<GradeCode, number>>;
+  gradePrices?: Record<GradeCode, number>;
   stock: number;
   options: ProductOption[];
   badges: string[];
@@ -298,11 +298,14 @@ export interface Notice {
 export interface Inquiry {
   id: string;
   userId: string;
+  userName?: string;
+  userEmail?: string;
   title: string;
   content: string;
   status: InquiryStatus;
   answer: string | null;
   createdAt: string;
+  updatedAt?: string;
   answeredAt: string | null;
 }
 

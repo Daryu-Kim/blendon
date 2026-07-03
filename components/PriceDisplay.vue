@@ -23,9 +23,14 @@ import {
 import { formatCurrency } from "~/utils/format";
 
 const props = defineProps<{ product: Product; user?: UserProfile | null }>();
+const productStore = useProductStore();
 const hidden = computed(() => shouldHidePrice(props.product, props.user));
-const price = computed(() => currentUnitPrice(props.product, props.user));
-const rate = computed(() => discountRate(props.product, props.user));
+const price = computed(() =>
+  currentUnitPrice(props.product, props.user, productStore.gradeBenefits),
+);
+const rate = computed(() =>
+  discountRate(props.product, props.user, productStore.gradeBenefits),
+);
 const message = computed(() => {
   if (!props.user) return "로그인 후 혜택가 확인";
   if (props.product.isAdultOnly && !props.user.isAdultVerified)

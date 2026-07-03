@@ -15,28 +15,41 @@ const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const globalLoading = useGlobalLoading();
-const settingsStore = useSiteSettingsStore();
+const { data: seoSettings } = await useAsyncData(
+  "site-seo-settings",
+  () => $fetch("/api/site-settings/seo"),
+  {
+    default: () => ({
+      defaultTitle: "BLEND ON",
+      titleTemplate: "%s | BLEND ON",
+      defaultDescription:
+        "성인 취향을 쉽고 깔끔하게 고르는 라이프스타일 편집샵",
+      defaultKeywords: ["성인 라이프스타일", "편집샵", "디바이스", "플레이버"],
+      ogTitle: "BLEND ON",
+      ogDescription: "성인 취향을 쉽고 깔끔하게 고르는 라이프스타일 편집샵",
+      ogImageUrl: "/og-image.svg",
+      canonicalBaseUrl: "",
+      robots: "index,follow",
+    }),
+  },
+);
 
 const absoluteUrl = (path: string) => {
-  const base = settingsStore.seo.canonicalBaseUrl.replace(/\/$/, "");
+  const base = seoSettings.value.canonicalBaseUrl.replace(/\/$/, "");
   if (!base || !path) return path || undefined;
   if (/^https?:\/\//.test(path)) return path;
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 };
 
-onMounted(async () => {
-  await settingsStore.fetchSettings();
-});
-
 useHead(() => ({
-  titleTemplate: settingsStore.seo.titleTemplate || "%s | BLEND ON",
+  titleTemplate: seoSettings.value.titleTemplate || "%s | BLEND ON",
   meta: [
-    { name: "description", content: settingsStore.seo.defaultDescription },
-    { name: "keywords", content: settingsStore.seo.defaultKeywords.join(", ") },
-    { name: "robots", content: settingsStore.seo.robots },
-    { property: "og:title", content: settingsStore.seo.ogTitle },
-    { property: "og:description", content: settingsStore.seo.ogDescription },
-    { property: "og:image", content: absoluteUrl(settingsStore.seo.ogImageUrl) },
+    { name: "description", content: seoSettings.value.defaultDescription },
+    { name: "keywords", content: seoSettings.value.defaultKeywords.join(", ") },
+    { name: "robots", content: seoSettings.value.robots },
+    { property: "og:title", content: seoSettings.value.ogTitle },
+    { property: "og:description", content: seoSettings.value.ogDescription },
+    { property: "og:image", content: absoluteUrl(seoSettings.value.ogImageUrl) },
   ],
 }));
 

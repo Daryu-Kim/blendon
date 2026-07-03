@@ -76,11 +76,56 @@ const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
   updatedAt: timestampToIso(data.updatedAt),
 });
 
-const orderedGrades: GradeCode[] = ["BASIC", "PLUS", "PRO", "VIP", "BLACK"];
+const fallbackGrades: GradeBenefit[] = ["BASIC", "PLUS", "PRO", "VIP", "BLACK"].map(
+  (gradeCode, index) => ({
+    id: gradeCode,
+    gradeCode,
+    internalCode: `G${index + 1}`,
+    level: index + 1,
+    label: gradeCode,
+    discountRate: 0,
+    pointRate: 0,
+    minPurchaseAmount: 0,
+    freeShippingThreshold: 0,
+    isVisible: true,
+    order: index + 1,
+    createdAt: new Date(0).toISOString(),
+    updatedAt: new Date(0).toISOString(),
+  }),
+);
 
-const allowedGradesFor = (grade?: GradeCode | null) => {
-  const index = Math.max(0, orderedGrades.indexOf(grade || "BASIC"));
-  return orderedGrades.slice(0, index + 1);
+const normalizeGradeBenefit = (id: string, data: Partial<GradeBenefit>) =>
+  ({
+    id,
+    gradeCode: data.gradeCode || id,
+    internalCode: data.internalCode || "",
+    level: Number(data.level || 1),
+    label: data.label || data.gradeCode || id,
+    discountRate: Number(data.discountRate || 0),
+    pointRate: Number(data.pointRate || 0),
+    minPurchaseAmount: Number(data.minPurchaseAmount || 0),
+    freeShippingThreshold: Number(data.freeShippingThreshold || 0),
+    isVisible: data.isVisible ?? true,
+    order: Number(data.order || 0),
+    createdAt: timestampToIso(data.createdAt),
+    updatedAt: timestampToIso(data.updatedAt),
+  }) satisfies GradeBenefit;
+
+const allowedGradesFor = (
+  grade?: GradeCode | null,
+  gradeBenefits: GradeBenefit[] = [],
+) => {
+  const grades = (gradeBenefits.length ? gradeBenefits : fallbackGrades)
+    .filter((item) => item.isVisible)
+    .sort((a, b) => a.level - b.level || a.order - b.order);
+  const current = grades.find(
+    (item) => item.gradeCode === grade || item.id === grade,
+  );
+  const currentLevel = current?.level ?? grades[0]?.level ?? 1;
+  const allowed = grades
+    .filter((item) => item.level <= currentLevel)
+    .map((item) => item.gradeCode);
+  return allowed.length ? allowed.slice(0, 30) : ["BASIC"];
 };
 
 export const useProductStore = defineStore("product", {
@@ -96,7 +141,9 @@ export const useProductStore = defineStore("product", {
   getters: {
     visibleProducts: (state) => {
       const user = useAuthStore().profile;
-      return state.products.filter((product) => canViewProduct(product, user));
+      return state.products.filter((product) =>
+        canViewProduct(product, user, state.gradeBenefits),
+      );
     },
     filteredProducts(): Product[] {
       const q = this.query.trim().toLowerCase();
@@ -133,7 +180,19 @@ export const useProductStore = defineStore("product", {
           if (firebase.enabled && firebase.db) {
             await auth.init();
             const isAdmin = auth.isAdmin;
-            const gradeFilter = allowedGradesFor(auth.profile?.userGrade);
+            const gradeSnap = await getDocs(
+              query(
+                collection(firebase.db, "gradeBenefits"),
+                orderBy("order", "asc"),
+              ),
+            );
+            const gradeBenefits = gradeSnap.docs.map((item) =>
+              normalizeGradeBenefit(item.id, item.data() as Partial<GradeBenefit>),
+            );
+            const gradeFilter = allowedGradesFor(
+              auth.profile?.userGrade,
+              gradeBenefits,
+            );
             const productConstraints = isAdmin
               ? [orderBy("updatedAt", "desc")]
               : [
@@ -155,7 +214,7 @@ export const useProductStore = defineStore("product", {
                   where("minUserGradeToView", "in", gradeFilter),
                   orderBy("order", "asc"),
                 ];
-            const [productSnap, categorySnap, gradeSnap] = await Promise.all([
+            const [productSnap, categorySnap] = await Promise.all([
               getDocs(
                 query(
                   collection(firebase.db, "products"),
@@ -168,12 +227,6 @@ export const useProductStore = defineStore("product", {
                   ...categoryConstraints,
                 ),
               ),
-              getDocs(
-                query(
-                  collection(firebase.db, "gradeBenefits"),
-                  orderBy("order", "asc"),
-                ),
-              ),
             ]);
             this.products = productSnap.docs.map((item) =>
               normalizeProduct(item.id, item.data() as Partial<Product>),
@@ -181,9 +234,7 @@ export const useProductStore = defineStore("product", {
             this.categories = categorySnap.docs.map(
               (item) => ({ id: item.id, ...item.data() }) as Category,
             );
-            this.gradeBenefits = gradeSnap.docs.map(
-              (item) => ({ id: item.id, ...item.data() }) as GradeBenefit,
-            );
+            this.gradeBenefits = gradeBenefits;
           } else {
             this.products = [];
             this.categories = [];
@@ -270,7 +321,7 @@ export const useProductStore = defineStore("product", {
       const now = new Date().toISOString();
       const payload = { ...benefit, updatedAt: now };
       const index = this.gradeBenefits.findIndex(
-        (item) => item.gradeCode === benefit.gradeCode,
+        (item) => item.id === benefit.id || item.gradeCode === benefit.gradeCode,
       );
       if (index >= 0) this.gradeBenefits[index] = payload;
       else this.gradeBenefits.push(payload);
@@ -278,7 +329,7 @@ export const useProductStore = defineStore("product", {
       if (firebase.enabled && firebase.db) {
         await useGlobalLoading().withLoading(async () => {
           await setDoc(
-            doc(firebase.db!, "gradeBenefits", payload.gradeCode),
+            doc(firebase.db!, "gradeBenefits", payload.id),
             { ...payload, updatedAt: serverTimestamp() },
             { merge: true },
           );

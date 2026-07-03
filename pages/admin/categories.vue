@@ -29,6 +29,18 @@
           <option value="true">예</option></Select
         >
       </div>
+      <div class="form-row">
+        <label>최소 열람 등급</label>
+        <Select v-model="minUserGradeToView">
+          <option
+            v-for="grade in activeGrades"
+            :key="grade.gradeCode"
+            :value="grade.gradeCode"
+          >
+            {{ grade.label }} ({{ grade.gradeCode }})
+          </option>
+        </Select>
+      </div>
       <Button @click="addCategory">추가</Button>
     </AdminFormSection>
 
@@ -49,6 +61,15 @@ const productStore = useProductStore();
 const name = ref("");
 const parentId = ref("");
 const adultOnly = ref("false");
+const minUserGradeToView = ref("BASIC");
+const activeGrades = computed(() => {
+  const grades = productStore.gradeBenefits
+    .filter((grade) => grade.isVisible)
+    .sort((a, b) => a.level - b.level || a.order - b.order);
+  return grades.length
+    ? grades
+    : [{ gradeCode: "BASIC", label: "BASIC", level: 1, order: 1 }];
+});
 const columns = [
   { key: "name", label: "이름" },
   { key: "slug", label: "슬러그" },
@@ -76,7 +97,7 @@ const addCategory = async () => {
     depth: parent ? parent.depth + 1 : 1,
     order: productStore.categories.length + 1,
     isVisible: true,
-    minUserGradeToView: adultOnly.value === "true" ? "PLUS" : "BASIC",
+    minUserGradeToView: minUserGradeToView.value,
     adultOnly: adultOnly.value === "true",
   });
   name.value = "";

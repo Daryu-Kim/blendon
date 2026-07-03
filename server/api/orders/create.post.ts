@@ -3,6 +3,7 @@ import { saveServerOrder } from "~/server/utils/order-store";
 import { getFirebaseAdmin } from "~/server/utils/firebase-admin";
 import type {
   CartItem,
+  GradeBenefit,
   PaymentMethod,
   Product,
   UserProfile,
@@ -47,12 +48,17 @@ export default defineEventHandler(async (event) => {
     const products = productDocs
       .filter((snap) => snap.exists)
       .map((snap) => ({ id: snap.id, ...snap.data() }) as Product);
+    const gradeSnap = await admin.db.collection("gradeBenefits").get();
+    const gradeBenefits = gradeSnap.docs.map(
+      (snap) => ({ id: snap.id, ...snap.data() }) as GradeBenefit,
+    );
 
     const order = buildPendingOrder(
       user,
       body.cartItems,
       body.checkout,
       products,
+      gradeBenefits,
     );
     return await saveServerOrder(order);
   } else {

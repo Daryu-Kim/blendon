@@ -8,7 +8,10 @@
       :speed="620"
       :autoplay="{ delay: 5200, disableOnInteraction: false }"
       :pagination="{ clickable: true }"
-      :navigation="true"
+      :navigation="{
+        prevEl: '.hero-nav--prev',
+        nextEl: '.hero-nav--next',
+      }"
     >
       <SwiperSlide v-for="slide in heroSlides" :key="slide.id">
         <div class="hero-stage" :class="`hero-stage--${slide.tone}`">
@@ -48,15 +51,29 @@
           </div>
         </div>
       </SwiperSlide>
+      <button
+        class="hero-nav hero-nav--prev"
+        type="button"
+        aria-label="이전 배너"
+      >
+        <ChevronLeft :size="22" aria-hidden="true" />
+      </button>
+      <button
+        class="hero-nav hero-nav--next"
+        type="button"
+        aria-label="다음 배너"
+      >
+        <ChevronRight :size="22" aria-hidden="true" />
+      </button>
     </Swiper>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ChevronLeft, ChevronRight } from "@lucide/vue";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
-import "swiper/css/navigation";
 import "swiper/css/pagination";
 
 const { brand } = useAppConfig();
@@ -176,21 +193,46 @@ const heroSlides = computed<HeroSlide[]>(() => {
   height: auto;
 }
 
-.hero-swiper :deep(.swiper-button-prev),
-.hero-swiper :deep(.swiper-button-next) {
+.hero-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 5;
   display: none;
   width: 38px;
   height: 38px;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(23, 23, 23, 0.14);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.82);
   color: var(--color-primary);
+  box-shadow: 0 10px 28px rgba(23, 23, 23, 0.08);
+  cursor: pointer;
+  transform: translateY(-50%);
   backdrop-filter: blur(10px);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
 }
 
-.hero-swiper :deep(.swiper-button-prev)::after,
-.hero-swiper :deep(.swiper-button-next)::after {
-  font-weight: 900;
+.hero-nav:hover {
+  border-color: rgba(23, 23, 23, 0.28);
+  background: #fff;
+  transform: translateY(-50%) scale(1.04);
+}
+
+.hero-nav--prev {
+  left: 18px;
+}
+
+.hero-nav--next {
+  right: 18px;
+}
+
+.hero-nav.swiper-button-disabled {
+  cursor: default;
+  opacity: 0.35;
 }
 
 .hero-swiper :deep(.swiper-pagination) {
@@ -315,8 +357,7 @@ const heroSlides = computed<HeroSlide[]>(() => {
     padding: 58px;
   }
 
-  .hero-swiper :deep(.swiper-button-prev),
-  .hero-swiper :deep(.swiper-button-next) {
+  .hero-nav {
     display: flex;
   }
 

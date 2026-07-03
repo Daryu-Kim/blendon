@@ -7,6 +7,7 @@ import type {
   OrderItem,
   PaymentMethod,
   PickupType,
+  GradeBenefit,
   Product,
   UserProfile,
 } from "~/types/domain";
@@ -26,6 +27,7 @@ export const buildPendingOrder = (
   cartItems: CartItem[],
   checkout: ServerCheckoutInput,
   products: Product[],
+  gradeBenefits: GradeBenefit[] = [],
 ): Order => {
   if (!user)
     throw createError({
@@ -56,7 +58,7 @@ export const buildPendingOrder = (
         statusCode: 404,
         statusMessage: "상품을 찾을 수 없습니다.",
       });
-    if (!canBuyProduct(product, user))
+    if (!canBuyProduct(product, user, gradeBenefits))
       throw createError({
         statusCode: 403,
         statusMessage: "상품 구매 권한을 확인해 주세요.",
@@ -77,7 +79,8 @@ export const buildPendingOrder = (
       });
     }
 
-    const unitPrice = currentUnitPrice(product, user) + option.additionalPrice;
+    const unitPrice =
+      currentUnitPrice(product, user, gradeBenefits) + option.additionalPrice;
     return {
       productId: product.id,
       productName: product.name,

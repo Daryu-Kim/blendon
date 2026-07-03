@@ -1,5 +1,11 @@
 import { gradePolicy } from "~/config/catalog";
-import type { GradeCode, Product, Role, UserProfile } from "~/types/domain";
+import type {
+  GradeBenefit,
+  GradeCode,
+  Product,
+  Role,
+  UserProfile,
+} from "~/types/domain";
 
 export const adminRoles: Role[] = ["manager", "admin", "owner"];
 
@@ -19,16 +25,33 @@ export const hasRoleAtLeast = (
   role: Role,
 ) => Boolean(user && roleRank[user.role] >= roleRank[role]);
 
-export const gradeLevel = (grade: GradeCode) => gradePolicy[grade]?.level ?? 0;
-export const gradeDiscountRate = (grade: GradeCode) =>
-  gradePolicy[grade]?.discountRate ?? 0;
+const findGrade = (grade: GradeCode | undefined, grades: GradeBenefit[] = []) =>
+  grades.find((item) => item.gradeCode === grade || item.id === grade);
+
+export const gradeLevel = (
+  grade: GradeCode | undefined,
+  grades: GradeBenefit[] = [],
+) => findGrade(grade, grades)?.level ?? gradePolicy[grade || ""]?.level ?? 0;
+
+export const gradeDiscountRate = (
+  grade: GradeCode | undefined,
+  grades: GradeBenefit[] = [],
+) =>
+  findGrade(grade, grades)?.discountRate ??
+  gradePolicy[grade || ""]?.discountRate ??
+  0;
 
 export const hasGradeAtLeast = (
   userGrade: GradeCode | undefined,
   minGrade: GradeCode,
-) => gradeLevel(userGrade || "BASIC") >= gradeLevel(minGrade);
+  grades: GradeBenefit[] = [],
+) => gradeLevel(userGrade || "BASIC", grades) >= gradeLevel(minGrade, grades);
 
-export const canViewProduct = (product: Product, user?: UserProfile | null) => {
+export const canViewProduct = (
+  product: Product,
+  user?: UserProfile | null,
+  grades: GradeBenefit[] = [],
+) => {
   if (
     !product.isVisible ||
     product.status === "deleted" ||
@@ -38,15 +61,19 @@ export const canViewProduct = (product: Product, user?: UserProfile | null) => {
   if (!user)
     return !product.isAdultOnly && product.minUserGradeToView === "BASIC";
   if (product.isAdultOnly && !user.isAdultVerified) return false;
-  return hasGradeAtLeast(user.userGrade, product.minUserGradeToView);
+  return hasGradeAtLeast(user.userGrade, product.minUserGradeToView, grades);
 };
 
-export const canBuyProduct = (product: Product, user?: UserProfile | null) => {
-  if (!canViewProduct(product, user)) return false;
+export const canBuyProduct = (
+  product: Product,
+  user?: UserProfile | null,
+  grades: GradeBenefit[] = [],
+) => {
+  if (!canViewProduct(product, user, grades)) return false;
   if (!user) return false;
   if (product.stock <= 0 || product.status === "soldOut") return false;
   if (product.isAdultOnly && !user.isAdultVerified) return false;
-  return hasGradeAtLeast(user.userGrade, product.minUserGradeToBuy);
+  return hasGradeAtLeast(user.userGrade, product.minUserGradeToBuy, grades);
 };
 
 export const shouldHidePrice = (
@@ -66,20 +93,25 @@ export const shouldHidePrice = (
 export const currentUnitPrice = (
   product: Product,
   user?: UserProfile | null,
+  grades: GradeBenefit[] = [],
 ) => {
   if (!user) return product.basePrice;
   const gradePrice = product.gradePrices?.[user.userGrade];
   if (typeof gradePrice === "number" && gradePrice > 0) return gradePrice;
   const memberBase = product.memberPrice || product.basePrice;
   const discounted = Math.round(
-    memberBase * (1 - gradeDiscountRate(user.userGrade) / 100),
+    memberBase * (1 - gradeDiscountRate(user.userGrade, grades) / 100),
   );
   return Math.max(0, Math.min(memberBase, discounted));
 };
 
-export const discountRate = (product: Product, user?: UserProfile | null) => {
+export const discountRate = (
+  product: Product,
+  user?: UserProfile | null,
+  grades: GradeBenefit[] = [],
+) => {
   if (!product.compareAtPrice) return 0;
-  const price = currentUnitPrice(product, user);
+  const price = currentUnitPrice(product, user, grades);
   return Math.max(
     0,
     Math.round(

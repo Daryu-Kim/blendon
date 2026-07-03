@@ -2,7 +2,7 @@
   <form class="product-form" @submit.prevent="submit">
     <AdminFormSection
       title="기본 정보"
-      description="상품명, 노출 문구, 브랜드와 카테고리를 설정합니다."
+      description="상품명, 노출 문구, 브랜드와 Toast UI Editor 기반 상세 설명을 설정합니다."
     >
       <div class="form-grid">
         <div class="form-row">
@@ -87,7 +87,7 @@
           ><Input v-model="form.stock" type="number" min="0" required />
         </div>
         <div
-          v-for="benefit in productStore.gradeBenefits"
+          v-for="benefit in activeGradeBenefits"
           :key="benefit.gradeCode"
           class="form-row"
         >
@@ -133,19 +133,27 @@
         </div>
         <div class="form-row">
           <label>최소 열람 등급</label
-          ><Select v-model="form.minUserGradeToView"
-            ><option v-for="grade in grades" :key="grade" :value="grade">
-              {{ grade }}
-            </option></Select
-          >
+          ><Select v-model="form.minUserGradeToView">
+            <option
+              v-for="grade in activeGradeBenefits"
+              :key="grade.gradeCode"
+              :value="grade.gradeCode"
+            >
+              {{ grade.label }} ({{ grade.gradeCode }})
+            </option>
+          </Select>
         </div>
         <div class="form-row">
           <label>최소 구매 등급</label
-          ><Select v-model="form.minUserGradeToBuy"
-            ><option v-for="grade in grades" :key="grade" :value="grade">
-              {{ grade }}
-            </option></Select
-          >
+          ><Select v-model="form.minUserGradeToBuy">
+            <option
+              v-for="grade in activeGradeBenefits"
+              :key="grade.gradeCode"
+              :value="grade.gradeCode"
+            >
+              {{ grade.label }} ({{ grade.gradeCode }})
+            </option>
+          </Select>
         </div>
         <div class="form-row">
           <label>로그인 전 가격 숨김</label
@@ -197,7 +205,7 @@
 
     <AdminFormSection
       title="속성/옵션"
-      description="옵션은 JSON 배열로 관리하며, 추후 전용 옵션 UI로 확장할 수 있습니다."
+      description="상품 속성과 구매 옵션을 관리합니다."
     >
       <div class="form-grid">
         <div class="form-row">
@@ -229,9 +237,7 @@
           <label>태그</label
           ><Input v-model="tagsText" placeholder="쉼표로 구분" />
         </div>
-        <div class="form-row wide">
-          <label>옵션 JSON</label><Textarea v-model="optionsText" rows="6" />
-        </div>
+        <AdminProductOptionsEditor v-model="form.options" class="wide" />
         <div class="form-row wide">
           <label>관리자 메모</label
           ><Textarea v-model="form.adminMemo" rows="3" />
@@ -247,15 +253,28 @@
 </template>
 
 <script setup lang="ts">
-import type { GradeCode, Product, ProductOption } from "~/types/domain";
+import type { Product, ProductOption } from "~/types/domain";
 import { toSafeId } from "~/utils/format";
 
 const props = defineProps<{ product?: Product | null }>();
 const emit = defineEmits<{ saved: [product: Product] }>();
 
 const productStore = useProductStore();
-const grades: GradeCode[] = ["BASIC", "PLUS", "PRO", "VIP", "BLACK"];
 const now = new Date().toISOString();
+const fallbackGrades = [
+  { gradeCode: "BASIC", label: "BASIC" },
+  { gradeCode: "PLUS", label: "PLUS" },
+  { gradeCode: "PRO", label: "PRO" },
+  { gradeCode: "VIP", label: "VIP" },
+  { gradeCode: "BLACK", label: "BLACK" },
+];
+const activeGradeBenefits = computed(() => {
+  const grades = productStore.gradeBenefits
+    .filter((grade) => grade.isVisible)
+    .sort((a, b) => a.level - b.level || a.order - b.order)
+    .map((grade) => ({ gradeCode: grade.gradeCode, label: grade.label }));
+  return grades.length ? grades : fallbackGrades;
+});
 
 const defaultOption = (): ProductOption => ({
   optionId: "default",
@@ -319,23 +338,17 @@ const detailImageUrlsText = ref((form.detailImageUrls || []).join("\n"));
 const badgesText = ref((form.badges || []).join(", "));
 const tagsText = ref((form.tags || []).join(", "));
 const seoKeywordsText = ref((form.seoKeywords || []).join(", "));
-const optionsText = ref(
-  JSON.stringify(
-    form.options?.length ? form.options : [defaultOption()],
-    null,
-    2,
-  ),
-);
 const compareAtPriceText = ref(
   form.compareAtPrice ? String(form.compareAtPrice) : "",
 );
-const gradePriceTexts = reactive<Record<GradeCode, string>>({
-  BASIC: String(form.gradePrices?.BASIC || ""),
-  PLUS: String(form.gradePrices?.PLUS || ""),
-  PRO: String(form.gradePrices?.PRO || ""),
-  VIP: String(form.gradePrices?.VIP || ""),
-  BLACK: String(form.gradePrices?.BLACK || ""),
-});
+const gradePriceTexts = ref<Record<string, string>>(
+  Object.fromEntries(
+    Object.entries(form.gradePrices || {}).map(([gradeCode, price]) => [
+      gradeCode,
+      String(price || ""),
+    ]),
+  ),
+);
 
 const visibleText = computed({
   get: () => String(form.isVisible),
@@ -360,8 +373,6 @@ const adultOnlyText = computed({
   set: (value) => {
     form.isAdultOnly = value === "true";
     form.isPriceHiddenBeforeAdultVerification = value === "true";
-    if (form.isAdultOnly && form.minUserGradeToView === "BASIC")
-      form.minUserGradeToView = "PLUS";
   },
 });
 
@@ -375,16 +386,29 @@ const splitComma = (value: string) =>
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+const normalizeOptions = (options: ProductOption[]) =>
+  (options.length ? options : [defaultOption()]).map((option, index) => {
+    const optionName =
+      String(option.optionName || "").trim() ||
+      (index === 0 ? "기본" : `옵션 ${index + 1}`);
+    const optionCode =
+      String(option.optionCode || "").trim() || toSafeId(optionName).toUpperCase();
+    return {
+      optionId: option.optionId || `option-${toSafeId(optionName)}-${index}`,
+      optionName,
+      optionCode,
+      additionalPrice: Math.max(0, Number(option.additionalPrice || 0)),
+      stock: Math.max(0, Number(option.stock || 0)),
+      isActive: option.isActive !== false,
+    };
+  });
 
 const submit = async () => {
   const id = form.id || `product-${toSafeId(form.name)}`;
-  const parsedOptions = JSON.parse(
-    optionsText.value || "[]",
-  ) as ProductOption[];
   const gradePrices: NonNullable<Product["gradePrices"]> = {};
-  grades.forEach((grade) => {
-    const value = Number(gradePriceTexts[grade] || 0);
-    if (value > 0) gradePrices[grade] = value;
+  activeGradeBenefits.value.forEach((grade) => {
+    const value = Number(gradePriceTexts.value[grade.gradeCode] || 0);
+    if (value > 0) gradePrices[grade.gradeCode] = value;
   });
   const product: Product = {
     ...form,
@@ -402,7 +426,7 @@ const submit = async () => {
     badges: splitComma(badgesText.value),
     tags: splitComma(tagsText.value),
     seoKeywords: splitComma(seoKeywordsText.value),
-    options: parsedOptions.length ? parsedOptions : [defaultOption()],
+    options: normalizeOptions(form.options),
     isNicotineFree: form.nicotineType === "nicotine-free",
     isAlternativeNicotine: form.nicotineType === "alternative-nicotine",
     createdAt: form.createdAt || now,
@@ -414,6 +438,10 @@ const submit = async () => {
 
 onMounted(async () => {
   await productStore.fetchCatalog();
+  if (!form.minUserGradeToView)
+    form.minUserGradeToView = activeGradeBenefits.value[0]?.gradeCode || "BASIC";
+  if (!form.minUserGradeToBuy)
+    form.minUserGradeToBuy = activeGradeBenefits.value[0]?.gradeCode || "BASIC";
 });
 </script>
 
