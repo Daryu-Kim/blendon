@@ -52,6 +52,18 @@ service cloud.firestore {
         : gradeLevel(data.minUserGradeToView);
     }
 
+    function displayRequiredGradeLevel(data) {
+      return gradeLevel(
+        data.displayMinUserGradeToView != null
+          ? data.displayMinUserGradeToView
+          : 'PUBLIC'
+      );
+    }
+
+    function isPublicCatalogDoc(data) {
+      return requiredGradeLevel(data) == 0;
+    }
+
     function isAdultVerified() {
       return signedIn() && myProfile().isAdultVerified == true;
     }
@@ -59,7 +71,7 @@ service cloud.firestore {
     function canViewCatalogDoc(data) {
       return data.isVisible == true
         && !(data.status in ['hidden', 'deleted'])
-        && (data.isAdultOnly != true || isAdultVerified())
+        && (data.isAdultOnly != true || isAdultVerified() || isPublicCatalogDoc(data))
         && userGradeLevel() >= requiredGradeLevel(data);
     }
 
@@ -79,8 +91,7 @@ service cloud.firestore {
 
     match /categories/{categoryId} {
       allow read: if isAdmin() || resource.data.isVisible == true
-        && (resource.data.adultOnly != true || isAdultVerified())
-        && userGradeLevel() >= requiredGradeLevel(resource.data);
+        && userGradeLevel() >= displayRequiredGradeLevel(resource.data);
       allow create, update, delete: if isAdmin();
     }
 

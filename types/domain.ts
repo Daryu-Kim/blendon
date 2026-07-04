@@ -97,6 +97,8 @@ export interface Product {
   memberPrice: number;
   compareAtPrice: number | null;
   gradePrices?: Record<GradeCode, number>;
+  isGradeDiscountExcluded?: boolean;
+  discountExcludedReason?: string;
   stock: number;
   options: ProductOption[];
   badges: string[];
@@ -157,6 +159,8 @@ export interface UserProfile {
   adultVerificationProvider: string | null;
   userGrade: GradeCode;
   userGradeLevel?: number;
+  gradeEvaluatedAt?: string | null;
+  gradePurchaseAmount6Months?: number;
   role: Role;
   availablePoint: number;
   totalPurchaseAmount: number;
@@ -174,6 +178,9 @@ export interface OrderItem {
   optionName: string;
   quantity: number;
   unitPrice: number;
+  regularUnitPrice?: number;
+  gradeDiscountAmount?: number;
+  isGradeDiscountExcluded?: boolean;
   totalPrice: number;
   thumbnailUrl: string;
   isAdultOnly: boolean;
@@ -207,6 +214,7 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   paidAt: string | null;
+  completedAt?: string | null;
   adminMemo?: string;
 }
 

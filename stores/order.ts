@@ -62,6 +62,7 @@ const normalizeOrder = (id: string, data: Partial<Order>): Order =>
     createdAt: timestampToIso(data.createdAt),
     updatedAt: timestampToIso(data.updatedAt),
     paidAt: data.paidAt || null,
+    completedAt: data.completedAt || null,
     adminMemo: data.adminMemo || "",
   }) satisfies Order;
 
@@ -200,7 +201,10 @@ export const useOrderStore = defineStore("order", {
       }, "주문 정보를 저장하는 중");
     },
     setOrderStatus(orderId: string, status: Order["orderStatus"]) {
-      return this.patchOrder(orderId, { orderStatus: status });
+      return this.patchOrder(orderId, {
+        orderStatus: status,
+        completedAt: status === "completed" ? new Date().toISOString() : null,
+      });
     },
     setDeliveryStatus(orderId: string, status: Order["deliveryStatus"]) {
       return this.patchOrder(orderId, { deliveryStatus: status });

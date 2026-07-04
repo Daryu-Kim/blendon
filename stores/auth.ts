@@ -111,6 +111,8 @@ const createDefaultProfile = (
     adultVerificationProvider: null,
     userGrade,
     userGradeLevel,
+    gradeEvaluatedAt: null,
+    gradePurchaseAmount6Months: 0,
     role: "customer",
     availablePoint: 0,
     totalPurchaseAmount: 0,
@@ -155,6 +157,8 @@ const normalizeTermsAgreement = (
 const normalizeProfile = (profile: UserProfile): UserProfile => ({
   ...profile,
   userGradeLevel: Number(profile.userGradeLevel || 1),
+  gradeEvaluatedAt: profile.gradeEvaluatedAt || null,
+  gradePurchaseAmount6Months: Number(profile.gradePurchaseAmount6Months || 0),
   termsAgreement: normalizeTermsAgreement(profile.termsAgreement),
 });
 

@@ -21,6 +21,8 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `adultVerificationProvider`     | string/null           | `portone`, `external` 등                         |
 | `userGrade`                     | string                | `gradeBenefits/{gradeCode}` 참조                 |
 | `userGradeLevel`                | number                | 현재 회원 등급 레벨. Rules/카테고리 접근 계산용 |
+| `gradeEvaluatedAt`              | timestamp/string/null | 등급 자동 갱신 평가 시각                         |
+| `gradePurchaseAmount6Months`    | number                | 최근 6개월 구매확정액. 자동 갱신 결과 스냅샷    |
 | `role`                          | string                | `customer`, `staff`, `manager`, `admin`, `owner` |
 | `availablePoint`                | number                | 사용 가능 포인트                                 |
 | `totalPurchaseAmount`           | number                | 누적 구매액                                      |
@@ -38,6 +40,8 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 ### `gradeBenefits/{gradeCode}`
 
 회원 등급 메뉴와 혜택가 계산 기준을 Firestore에서 관리한다. `BASIC`, `VIP` 같은 코드는 예시일 뿐이며, 운영자가 관리자에서 새 등급 코드를 직접 생성한다.
+등급 평가는 모든 등급에 공통으로 `최근 6개월 구매확정액`을 기준으로 하며, Firebase Functions 스케줄러가 매월 1일 자동 갱신한다.
+등급 할인 제외 여부는 등급이 아니라 `products/{productId}.isGradeDiscountExcluded`에서 상품별로 관리한다.
 
 | Field                    | Type             | Notes                 |
 | ------------------------ | ---------------- | --------------------- |
@@ -48,7 +52,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `label`                  | string           | 화면 표시명           |
 | `discountRate`           | number           | 회원가 기준 할인율    |
 | `pointRate`              | number           | 적립률                |
-| `minPurchaseAmount`      | number           | 승급 기준 구매액      |
+| `minPurchaseAmount`      | number           | 승급 기준 구매확정액. 최근 6개월 기준 |
 | `freeShippingThreshold`  | number           | 무료배송 기준         |
 | `isVisible`              | boolean          | 관리자/회원 화면 노출 |
 | `order`                  | number           | 정렬                  |
@@ -69,7 +73,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `isVisible`          | boolean     | 노출 여부          |
 | `minUserGradeToView` | string      | 최소 열람 등급. `PUBLIC`이면 비회원/전체 공개 기준 |
 | `minUserGradeLevel`  | number      | 최소 열람 등급 레벨. `PUBLIC`은 0, 동적 등급 코드 사용 시 Rules/권한 계산용 |
-| `displayMinUserGradeToView` | string | 소비자 화면에 표시할 최소 등급. 실제 권한과 다르게 안내 문구를 제어할 때 사용 |
+| `displayMinUserGradeToView` | string | 소비자 카테고리 메뉴 노출 기준. `adultOnly`와 실제 접근 등급과 별개로 이 값만 메뉴 표시 권한에 사용 |
 | `adultOnly`          | boolean     | 성인 전용 카테고리 |
 
 ### `products/{productId}`
@@ -92,6 +96,8 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `memberPrice`                          | number           | 회원 기준가                                                                           |
 | `compareAtPrice`                       | number/null      | 정가/할인 전 가격                                                                     |
 | `gradePrices`                          | map              | 등급별 고정가, 예: `{ VIP_2026: 21000 }`                                              |
+| `isGradeDiscountExcluded`               | boolean          | 등급 할인/등급 고정가 제외 여부. 특가, 세트, 법정가/정가 고정 상품 등에 사용          |
+| `discountExcludedReason`                | string           | 할인 제외 사유                                                                         |
 | `stock`                                | number           | 총 재고                                                                               |
 | `options`                              | array            | `optionId`, `optionName`, `optionCode`, `additionalPrice`, `stock`, `isActive`        |
 | `badges`                               | string[]         | 카드 배지                                                                             |
@@ -126,7 +132,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | Field                                            | Type                  | Notes                                                                   |
 | ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------- |
 | `id`, `orderNo`, `userId`                        | string                | 식별자                                                                  |
-| `items`                                          | array                 | `OrderItem` 스냅샷                                                      |
+| `items`                                          | array                 | `OrderItem` 스냅샷. `regularUnitPrice`, `gradeDiscountAmount`, `isGradeDiscountExcluded` 포함 |
 | `subtotalAmount`                                 | number                | 서버 계산 상품 합계                                                     |
 | `deliveryFee`                                    | number                | 배송 주문일 때만 부과                                                   |
 | `discountAmount`                                 | number                | 쿠폰/프로모션 확장용                                                    |
@@ -145,6 +151,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `pickupType`                                     | string                | `delivery`, `store-pickup`, `lounge-pickup`                             |
 | `adminMemo`                                      | string                | 관리자 메모                                                             |
 | `createdAt`, `updatedAt`, `paidAt`               | timestamp/string/null | 시각                                                                    |
+| `completedAt`                                    | timestamp/string/null | 구매확정 시각. 등급 자동 갱신의 최근 6개월 실적 기준                    |
 
 ### `cartItems/{cartItemId}`
 

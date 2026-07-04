@@ -99,22 +99,38 @@
           ><Input v-model="compareAtPriceText" type="number" min="0" />
         </div>
         <div class="form-row">
+          <label>등급 할인 제외</label>
+          <Select v-model="gradeDiscountExcludedText">
+            <option value="false">아니오</option>
+            <option value="true">예</option>
+          </Select>
+        </div>
+        <div v-if="form.isGradeDiscountExcluded" class="form-row wide">
+          <label>할인 제외 사유</label>
+          <Input
+            v-model="form.discountExcludedReason"
+            placeholder="예: 특가, 세트, 정가 고정 상품"
+          />
+        </div>
+        <div class="form-row">
           <label>재고</label
           ><Input v-model="form.stock" type="number" min="0" required />
         </div>
-        <div
-          v-for="benefit in activeGradeBenefits"
-          :key="benefit.gradeCode"
-          class="form-row"
-        >
-          <label>{{ benefit.label }} 고정가</label>
-          <Input
-            v-model="gradePriceTexts[benefit.gradeCode]"
-            type="number"
-            min="0"
-            placeholder="자동 할인"
-          />
-        </div>
+        <template v-if="!form.isGradeDiscountExcluded">
+          <div
+            v-for="benefit in activeGradeBenefits"
+            :key="benefit.gradeCode"
+            class="form-row"
+          >
+            <label>{{ benefit.label }} 고정가</label>
+            <Input
+              v-model="gradePriceTexts[benefit.gradeCode]"
+              type="number"
+              min="0"
+              placeholder="자동 할인"
+            />
+          </div>
+        </template>
       </div>
     </AdminFormSection>
 
@@ -369,6 +385,8 @@ const createEmptyProduct = (): Product => ({
   memberPrice: 0,
   compareAtPrice: null,
   gradePrices: {},
+  isGradeDiscountExcluded: false,
+  discountExcludedReason: "",
   stock: 0,
   options: [defaultOption()],
   badges: [],
@@ -446,6 +464,13 @@ const adultOnlyText = computed({
   set: (value) => {
     form.isAdultOnly = value === "true";
     form.isPriceHiddenBeforeAdultVerification = value === "true";
+  },
+});
+const gradeDiscountExcludedText = computed({
+  get: () => String(Boolean(form.isGradeDiscountExcluded)),
+  set: (value) => {
+    form.isGradeDiscountExcluded = value === "true";
+    if (!form.isGradeDiscountExcluded) form.discountExcludedReason = "";
   },
 });
 const seoTitlePlaceholder = computed(() =>
@@ -571,7 +596,11 @@ const submit = async () => {
     compareAtPrice: compareAtPriceText.value
       ? Number(compareAtPriceText.value)
       : null,
-    gradePrices,
+    gradePrices: form.isGradeDiscountExcluded ? {} : gradePrices,
+    isGradeDiscountExcluded: Boolean(form.isGradeDiscountExcluded),
+    discountExcludedReason: form.isGradeDiscountExcluded
+      ? (form.discountExcludedReason || "").trim()
+      : "",
     stock: Number(form.stock || 0),
     imageUrls: splitLines(imageUrlsText.value || form.thumbnailUrl),
     detailImageUrls: splitLines(detailImageUrlsText.value),

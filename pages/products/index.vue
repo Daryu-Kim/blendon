@@ -9,14 +9,14 @@
 
     <div class="filters surface">
       <SearchBar />
-      <Select v-model="categoryId" aria-label="카테고리">
+      <Select v-model="categorySlug" aria-label="카테고리">
         <option value="">전체 카테고리</option>
         <option
-          v-for="category in productStore.rootCategories"
+          v-for="category in categoryOptions"
           :key="category.id"
-          :value="category.id"
+          :value="category.routeValue"
         >
-          {{ category.name }}
+          {{ category.label }}
         </option>
       </Select>
     </div>
@@ -33,12 +33,33 @@
 </template>
 
 <script setup lang="ts">
+import { buildCategoryTree } from "~/utils/category-tree";
+
 const route = useRoute();
+const router = useRouter();
 const productStore = useProductStore();
-const categoryId = computed({
-  get: () => productStore.selectedCategoryId,
-  set: (value) => productStore.setCategory(value),
+const categorySlug = computed({
+  get: () => {
+    const category = productStore.visibleCategories.find(
+      (item) => item.id === productStore.selectedCategoryId,
+    );
+    return category ? productStore.categoryRouteValue(category) : "";
+  },
+  set: async (value) => {
+    productStore.setCategoryFromRoute(value);
+    const nextQuery = { ...route.query };
+    if (value) nextQuery.category = value;
+    else delete nextQuery.category;
+    await router.push({ path: "/products", query: nextQuery });
+  },
 });
+const categoryOptions = computed(() =>
+  buildCategoryTree(productStore.visibleCategories).map((category) => ({
+    ...category,
+    label: `${"— ".repeat(Math.max(0, category.depth - 1))}${category.name}`,
+    routeValue: productStore.categoryRouteValue(category),
+  })),
+);
 const selectedCategoryIsRestricted = computed(
   () =>
     Boolean(productStore.selectedCategoryId) &&
@@ -51,14 +72,14 @@ onMounted(async () => {
   await productStore.fetchCatalog();
   if (route.query.q) productStore.setQuery(String(route.query.q));
   if (route.query.category)
-    productStore.setCategory(String(route.query.category));
+    productStore.setCategoryFromRoute(String(route.query.category));
 });
 
 watch(
   () => route.query,
   (query) => {
     productStore.setQuery(query.q ? String(query.q) : productStore.query);
-    productStore.setCategory(
+    productStore.setCategoryFromRoute(
       query.category ? String(query.category) : "",
     );
   },

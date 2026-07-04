@@ -14,7 +14,7 @@
           :key="item?.id"
           class="cart-item surface"
         >
-          <img :src="item?.product.thumbnailUrl" :alt="item?.product.name" />
+          <img :src="item?.product.thumbnailUrl" :alt="item?.product.name">
           <div>
             <h3>{{ item?.product.name }}</h3>
             <p>{{ item?.option.optionName }}</p>
@@ -23,6 +23,9 @@
               :product="item.product"
               :user="auth.profile"
             />
+            <p v-if="item?.product.isGradeDiscountExcluded" class="cart-note">
+              등급 할인 제외 상품
+            </p>
           </div>
           <div class="cart-actions">
             <QuantityStepper
@@ -99,6 +102,17 @@ onMounted(() => cart.hydrate());
 .cart-item p {
   margin-top: 4px;
   color: var(--color-muted);
+}
+
+.cart-note {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  background: #f7efe1;
+  padding: 4px 8px;
+  color: #8d6b28;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .cart-actions {

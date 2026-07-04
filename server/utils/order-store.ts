@@ -1,6 +1,10 @@
-import { FieldValue, type DocumentData } from "firebase-admin/firestore";
+import {
+  FieldValue,
+  type DocumentData,
+  type DocumentReference,
+} from "firebase-admin/firestore";
 import { getFirebaseAdmin } from "~/server/utils/firebase-admin";
-import type { Order } from "~/types/domain";
+import type { GradeBenefit, Order, UserProfile } from "~/types/domain";
 
 const toPlainOrder = (id: string, data: DocumentData) =>
   ({ id, ...data }) as Order;
@@ -65,6 +69,12 @@ export const confirmServerOrderPayment = async (
     const current = orderSnap.data() as Order;
     if (current.paymentStatus === "paid") return;
 
+    const productUpdates: Array<{
+      ref: DocumentReference;
+      nextOptions: unknown[];
+      quantity: number;
+    }> = [];
+
     for (const item of order.items) {
       const productRef = admin.db.collection("products").doc(item.productId);
       const productSnap = await tx.get(productRef);
@@ -81,7 +91,11 @@ export const confirmServerOrderPayment = async (
           )
         : -1;
       const option = optionIndex >= 0 ? product.options[optionIndex] : null;
-      if ((product.stock || 0) < item.quantity || !option || (option.stock || 0) < item.quantity) {
+      if (
+        (product.stock || 0) < item.quantity ||
+        !option ||
+        (option.stock || 0) < item.quantity
+      ) {
         throw createError({
           statusCode: 409,
           statusMessage: "재고가 부족합니다.",
@@ -93,16 +107,37 @@ export const confirmServerOrderPayment = async (
         ...option,
         stock: option.stock - item.quantity,
       };
-      tx.update(productRef, {
-        stock: FieldValue.increment(-item.quantity),
-        options: nextOptions,
-        updatedAt: now,
+      productUpdates.push({
+        ref: productRef,
+        nextOptions,
+        quantity: item.quantity,
       });
     }
 
+    const userRef = admin.db.collection("users").doc(order.userId);
+    const userSnap = await tx.get(userRef);
+    const user = userSnap.data() as UserProfile | undefined;
+    const gradeSnap = user?.userGrade
+      ? await tx.get(admin.db.collection("gradeBenefits").doc(user.userGrade))
+      : null;
+    const grade = gradeSnap?.exists
+      ? ({ id: gradeSnap.id, ...gradeSnap.data() } as GradeBenefit)
+      : null;
+    const earnedPoint = Math.max(
+      0,
+      Math.floor(order.totalAmount * (Number(grade?.pointRate || 0) / 100)),
+    );
+
+    productUpdates.forEach((update) => {
+      tx.update(update.ref, {
+        stock: FieldValue.increment(-update.quantity),
+        options: update.nextOptions,
+        updatedAt: now,
+      });
+    });
     tx.set(orderRef, confirmed, { merge: true });
-    tx.update(admin.db.collection("users").doc(order.userId), {
-      availablePoint: FieldValue.increment(-order.pointUsed),
+    tx.update(userRef, {
+      availablePoint: FieldValue.increment(earnedPoint - order.pointUsed),
       totalPurchaseAmount: FieldValue.increment(order.totalAmount),
       updatedAt: now,
     });

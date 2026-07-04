@@ -106,7 +106,7 @@
           </div>
         </dl>
         <p class="benefit-note">
-          회원 등급 혜택가는 상품 금액에 반영되어 표시됩니다.
+          회원 등급 혜택가는 상품 금액에 반영되며, 일부 특가/세트/정가 고정 상품은 제외됩니다.
         </p>
         <p v-if="error" class="error">{{ error }}</p>
         <Button

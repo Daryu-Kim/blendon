@@ -1,5 +1,10 @@
 import { defineStore } from "pinia";
-import { canBuyProduct, currentUnitPrice } from "~/utils/access";
+import {
+  canBuyProduct,
+  currentUnitPrice,
+  gradeDiscountAmount,
+  regularMemberUnitPrice,
+} from "~/utils/access";
 import type { CartItem } from "~/types/domain";
 
 const cartStorageKey = "blend-on-cart";
@@ -34,11 +39,19 @@ export const useCartStore = defineStore("cart", {
           const unitPrice =
             currentUnitPrice(product, auth.profile, productStore.gradeBenefits) +
             option.additionalPrice;
+          const regularUnitPrice =
+            regularMemberUnitPrice(product) + option.additionalPrice;
           return {
             ...item,
             product,
             option,
             unitPrice,
+            regularUnitPrice,
+            gradeDiscountAmount: gradeDiscountAmount(
+              product,
+              auth.profile,
+              productStore.gradeBenefits,
+            ),
             totalPrice: unitPrice * item.quantity,
           };
         })

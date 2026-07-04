@@ -2,6 +2,8 @@ import {
   canBuyProduct,
   canViewProductWithCategories,
   currentUnitPrice,
+  gradeDiscountAmount,
+  regularMemberUnitPrice,
 } from "~/utils/access";
 import { createOrderNo } from "~/utils/format";
 import type {
@@ -90,6 +92,13 @@ export const buildPendingOrder = (
 
     const unitPrice =
       currentUnitPrice(product, user, gradeBenefits) + option.additionalPrice;
+    const regularUnitPrice =
+      regularMemberUnitPrice(product) + option.additionalPrice;
+    const discountAmountPerUnit = gradeDiscountAmount(
+      product,
+      user,
+      gradeBenefits,
+    );
     return {
       productId: product.id,
       productName: product.name,
@@ -97,6 +106,9 @@ export const buildPendingOrder = (
       optionName: option.optionName,
       quantity: cartItem.quantity,
       unitPrice,
+      regularUnitPrice,
+      gradeDiscountAmount: discountAmountPerUnit * cartItem.quantity,
+      isGradeDiscountExcluded: Boolean(product.isGradeDiscountExcluded),
       totalPrice: unitPrice * cartItem.quantity,
       thumbnailUrl: product.thumbnailUrl,
       isAdultOnly: product.isAdultOnly,

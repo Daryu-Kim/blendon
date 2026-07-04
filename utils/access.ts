@@ -60,6 +60,9 @@ export const hasGradeAtLeast = (
   return gradeLevel(userGrade || "BASIC", grades) >= gradeLevel(minGrade, grades);
 };
 
+export const categoryDisplayGrade = (category: Category) =>
+  category.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE;
+
 export const canViewProduct = (
   product: Product,
   user?: UserProfile | null,
@@ -71,9 +74,13 @@ export const canViewProduct = (
     product.status === "hidden"
   )
     return false;
-  if (!user)
-    return !product.isAdultOnly && isPublicAccessGrade(product.minUserGradeToView);
-  if (product.isAdultOnly && !user.isAdultVerified) return false;
+  if (!user) return isPublicAccessGrade(product.minUserGradeToView);
+  if (
+    product.isAdultOnly &&
+    !user.isAdultVerified &&
+    !isPublicAccessGrade(product.minUserGradeToView)
+  )
+    return false;
   return hasGradeAtLeast(user.userGrade, product.minUserGradeToView, grades);
 };
 
@@ -83,10 +90,9 @@ export const canViewCategory = (
   grades: GradeBenefit[] = [],
 ) => {
   if (!category.isVisible) return false;
-  if (!user)
-    return !category.adultOnly && isPublicAccessGrade(category.minUserGradeToView);
-  if (category.adultOnly && !user.isAdultVerified) return false;
-  return hasGradeAtLeast(user.userGrade, category.minUserGradeToView, grades);
+  const minDisplayGrade = categoryDisplayGrade(category);
+  if (!user) return isPublicAccessGrade(minDisplayGrade);
+  return hasGradeAtLeast(user.userGrade, minDisplayGrade, grades);
 };
 
 export const canViewProductWithCategories = (
@@ -139,6 +145,8 @@ export const currentUnitPrice = (
   grades: GradeBenefit[] = [],
 ) => {
   if (!user) return product.basePrice;
+  if (product.isGradeDiscountExcluded)
+    return product.memberPrice || product.basePrice;
   const gradePrice = product.gradePrices?.[user.userGrade];
   if (typeof gradePrice === "number" && gradePrice > 0) return gradePrice;
   const memberBase = product.memberPrice || product.basePrice;
@@ -146,6 +154,21 @@ export const currentUnitPrice = (
     memberBase * (1 - gradeDiscountRate(user.userGrade, grades) / 100),
   );
   return Math.max(0, Math.min(memberBase, discounted));
+};
+
+export const regularMemberUnitPrice = (product: Product) =>
+  product.memberPrice || product.basePrice;
+
+export const gradeDiscountAmount = (
+  product: Product,
+  user?: UserProfile | null,
+  grades: GradeBenefit[] = [],
+) => {
+  if (!user || product.isGradeDiscountExcluded) return 0;
+  return Math.max(
+    0,
+    regularMemberUnitPrice(product) - currentUnitPrice(product, user, grades),
+  );
 };
 
 export const discountRate = (

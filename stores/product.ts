@@ -14,6 +14,7 @@ import { defineStore } from "pinia";
 import {
   canViewCategory,
   canViewProductWithCategories,
+  categoryDisplayGrade,
   gradeLevel,
   PUBLIC_ACCESS_GRADE,
 } from "~/utils/access";
@@ -76,6 +77,8 @@ const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
   memberPrice: Number(data.memberPrice || data.basePrice || 0),
   compareAtPrice: data.compareAtPrice ?? null,
   gradePrices: data.gradePrices || {},
+  isGradeDiscountExcluded: Boolean(data.isGradeDiscountExcluded),
+  discountExcludedReason: data.discountExcludedReason || "",
   stock: Number(data.stock || 0),
   options: data.options || [],
   badges: data.badges || [],
@@ -96,9 +99,7 @@ const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
   minUserGradeToView: data.minUserGradeToView || PUBLIC_ACCESS_GRADE,
   minUserGradeLevel: Number(data.minUserGradeLevel || 0),
   displayMinUserGradeToView:
-    data.displayMinUserGradeToView ||
-    data.minUserGradeToView ||
-    PUBLIC_ACCESS_GRADE,
+    data.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE,
   minUserGradeToBuy: data.minUserGradeToBuy || PUBLIC_ACCESS_GRADE,
   minUserGradeToBuyLevel: Number(data.minUserGradeToBuyLevel || 0),
   isPriceHiddenBeforeLogin: data.isPriceHiddenBeforeLogin ?? true,
@@ -170,9 +171,7 @@ const normalizeCategory = (
     Number(data.minUserGradeLevel || 0) ||
     gradeLevel(data.minUserGradeToView || PUBLIC_ACCESS_GRADE, gradeBenefits),
   displayMinUserGradeToView:
-    data.displayMinUserGradeToView ||
-    data.minUserGradeToView ||
-    PUBLIC_ACCESS_GRADE,
+    data.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE,
   adultOnly: Boolean(data.adultOnly),
 });
 
@@ -180,6 +179,7 @@ const allowedGradesFor = (
   grade?: GradeCode | null,
   gradeBenefits: GradeBenefit[] = [],
 ) => {
+  if (!grade) return [PUBLIC_ACCESS_GRADE];
   const grades = (gradeBenefits.length ? gradeBenefits : fallbackGrades)
     .filter((item) => item.isVisible)
     .sort((a, b) => a.level - b.level || a.order - b.order);
@@ -218,10 +218,28 @@ export const useProductStore = defineStore("product", {
     },
     filteredProducts(): Product[] {
       const q = this.query.trim().toLowerCase();
+      const categoryIds = new Set<string>();
+      if (this.selectedCategoryId) {
+        categoryIds.add(this.selectedCategoryId);
+        let changed = true;
+        while (changed) {
+          changed = false;
+          this.visibleCategories.forEach((category) => {
+            if (
+              category.parentId &&
+              categoryIds.has(category.parentId) &&
+              !categoryIds.has(category.id)
+            ) {
+              categoryIds.add(category.id);
+              changed = true;
+            }
+          });
+        }
+      }
       return this.visibleProducts.filter((product) => {
         const matchesCategory =
           !this.selectedCategoryId ||
-          product.categoryIds.includes(this.selectedCategoryId);
+          product.categoryIds.some((categoryId) => categoryIds.has(categoryId));
         const matchesQuery =
           !q ||
           product.name.toLowerCase().includes(q) ||
@@ -288,40 +306,91 @@ export const useProductStore = defineStore("product", {
               : [
                   where("isVisible", "==", true),
                   where("status", "==", "active"),
-                  ...(!auth.isAdultVerified
-                    ? [where("isAdultOnly", "==", false)]
-                    : []),
                   where("minUserGradeToView", "in", gradeFilter),
                   orderBy("updatedAt", "desc"),
                 ];
+            const legacyProductConstraints = [
+              where("isVisible", "==", true),
+              where("status", "==", "active"),
+              where("minUserGradeToView", "==", null),
+              orderBy("updatedAt", "desc"),
+            ];
             const categoryConstraints = isAdmin
               ? [orderBy("order", "asc")]
               : [
                   where("isVisible", "==", true),
-                  ...(!auth.isAdultVerified
-                    ? [where("adultOnly", "==", false)]
-                    : []),
-                  where("minUserGradeToView", "in", gradeFilter),
+                  where("displayMinUserGradeToView", "in", gradeFilter),
                   orderBy("order", "asc"),
                 ];
-            const [productSnap, categorySnap] = await Promise.all([
-              getDocs(
-                query(
-                  collection(firebase.db, "products"),
-                  ...productConstraints,
+            const legacyCategoryConstraints = [
+              where("isVisible", "==", true),
+              where("displayMinUserGradeToView", "==", null),
+              orderBy("order", "asc"),
+            ];
+            if (!auth.profile && !isAdmin) {
+              const publicCatalog = await $fetch<{
+                products: Array<Partial<Product> & { id: string }>;
+                categories: Array<Partial<Category> & { id: string }>;
+                gradeBenefits: Array<Partial<GradeBenefit> & { id: string }>;
+              }>("/api/catalog/public");
+              this.gradeBenefits = publicCatalog.gradeBenefits.map((item) =>
+                normalizeGradeBenefit(item.id, item),
+              );
+              this.products = publicCatalog.products.map((item) =>
+                normalizeProduct(item.id, item),
+              );
+              this.categories = publicCatalog.categories.map((item) =>
+                normalizeCategory(item.id, item, this.gradeBenefits),
+              );
+              this.catalogAccessKey = accessKey;
+              return;
+            }
+
+            const [productSnap, legacyProductSnap, categorySnap, legacyCategorySnap] =
+              await Promise.all([
+                getDocs(
+                  query(
+                    collection(firebase.db, "products"),
+                    ...productConstraints,
+                  ),
                 ),
-              ),
-              getDocs(
-                query(
-                  collection(firebase.db, "categories"),
-                  ...categoryConstraints,
+                isAdmin
+                  ? Promise.resolve(null)
+                  : getDocs(
+                      query(
+                        collection(firebase.db, "products"),
+                        ...legacyProductConstraints,
+                      ),
+                    ),
+                getDocs(
+                  query(
+                    collection(firebase.db, "categories"),
+                    ...categoryConstraints,
+                  ),
                 ),
+                isAdmin
+                  ? Promise.resolve(null)
+                  : getDocs(
+                      query(
+                        collection(firebase.db, "categories"),
+                        ...legacyCategoryConstraints,
+                      ),
+                    ),
+              ]);
+            const productDocs = new Map(
+              [...productSnap.docs, ...(legacyProductSnap?.docs || [])].map(
+                (item) => [item.id, item],
               ),
-            ]);
-            this.products = productSnap.docs.map((item) =>
+            );
+            const categoryDocs = new Map(
+              [...categorySnap.docs, ...(legacyCategorySnap?.docs || [])].map(
+                (item) => [item.id, item],
+              ),
+            );
+            this.products = [...productDocs.values()].map((item) =>
               normalizeProduct(item.id, item.data() as Partial<Product>),
             );
-            this.categories = categorySnap.docs.map((item) =>
+            this.categories = [...categoryDocs.values()].map((item) =>
               normalizeCategory(
                 item.id,
                 item.data() as Partial<Category>,
@@ -348,6 +417,14 @@ export const useProductStore = defineStore("product", {
     findById(id: string) {
       return this.products.find((product) => product.id === id);
     },
+    findCategoryBySlugOrId(value: string) {
+      return this.categories.find(
+        (category) => category.slug === value || category.id === value,
+      );
+    },
+    categoryRouteValue(category: Pick<Category, "id" | "slug">) {
+      return category.slug || category.id;
+    },
     findGradeBenefit(id: string) {
       return this.gradeBenefits.find(
         (benefit) => benefit.id === id || benefit.gradeCode === id,
@@ -358,6 +435,10 @@ export const useProductStore = defineStore("product", {
     },
     setCategory(categoryId: string) {
       this.selectedCategoryId = categoryId;
+    },
+    setCategoryFromRoute(value: string) {
+      const category = value ? this.findCategoryBySlugOrId(value) : null;
+      this.selectedCategoryId = category?.id || value || "";
     },
     async upsertProduct(product: Product) {
       const now = new Date().toISOString();
@@ -396,6 +477,7 @@ export const useProductStore = defineStore("product", {
         minUserGradeLevel:
           Number(category.minUserGradeLevel || 0) ||
           gradeLevel(category.minUserGradeToView, this.gradeBenefits),
+        displayMinUserGradeToView: categoryDisplayGrade(category),
       };
       const index = this.categories.findIndex(
         (item) => item.id === payload.id,

@@ -35,6 +35,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "isVisible", "order": "ASCENDING" },
+        { "fieldPath": "displayMinUserGradeToView", "order": "ASCENDING" },
+        { "fieldPath": "order", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "categories",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isVisible", "order": "ASCENDING" },
         { "fieldPath": "adultOnly", "order": "ASCENDING" },
         { "fieldPath": "minUserGradeToView", "order": "ASCENDING" },
         { "fieldPath": "order", "order": "ASCENDING" }
@@ -62,6 +71,14 @@
       "fields": [
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "paymentStatus", "order": "ASCENDING" }
       ]
     }
   ],

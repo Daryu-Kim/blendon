@@ -9,6 +9,7 @@
       <del v-if="product.compareAtPrice">{{
         formatCurrency(product.compareAtPrice)
       }}</del>
+      <small v-if="product.isGradeDiscountExcluded">등급 할인 제외</small>
     </template>
   </div>
 </template>
@@ -61,9 +62,14 @@ const message = computed(() => {
 }
 
 del,
-.hidden-price {
+.hidden-price,
+small {
   margin: 0;
   color: var(--color-muted);
   font-size: 14px;
+}
+
+small {
+  font-weight: 800;
 }
 </style>

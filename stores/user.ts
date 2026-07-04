@@ -35,6 +35,8 @@ const normalizeUser = (uid: string, data: Partial<UserProfile>): UserProfile =>
     adultVerificationProvider: data.adultVerificationProvider || null,
     userGrade: data.userGrade || "BASIC",
     userGradeLevel: Number(data.userGradeLevel || 1),
+    gradeEvaluatedAt: data.gradeEvaluatedAt || null,
+    gradePurchaseAmount6Months: Number(data.gradePurchaseAmount6Months || 0),
     role: data.role || "customer",
     availablePoint: Number(data.availablePoint || 0),
     totalPurchaseAmount: Number(data.totalPurchaseAmount || 0),
