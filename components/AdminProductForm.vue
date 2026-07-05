@@ -2,7 +2,7 @@
   <form class="product-form" @submit.prevent="submit">
     <AdminFormSection
       title="기본 정보"
-      description="상품명, 노출 문구, 브랜드와 Toast UI Editor 기반 상세 설명을 설정합니다."
+      description="상품명, 노출 문구, 브랜드와 md-editor-v3 기반 상세 설명을 설정합니다."
     >
       <div class="form-grid">
         <div class="form-row">
@@ -64,7 +64,7 @@
 
     <AdminFormSection
       title="이미지"
-      description="대표 이미지는 상품 카드에, 갤러리 이미지는 상품 상세 상단 이미지 목록에 사용합니다. 상세 본문 이미지는 Toast UI Editor에서 업로드합니다."
+      description="대표 이미지는 상품 카드에, 갤러리 이미지는 상품 상세 상단 이미지 목록에 사용합니다. 상세 본문 이미지는 md-editor-v3에서 업로드합니다."
     >
       <div class="form-grid">
         <div class="form-row">

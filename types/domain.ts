@@ -26,6 +26,16 @@ export type ClaimStatus =
   "none" | "requested" | "approved" | "rejected" | "completed";
 export type InquiryStatus = "waiting" | "answered" | "closed";
 export type PickupType = "delivery" | "store-pickup" | "lounge-pickup";
+export type PointLogType = "earn" | "use" | "adjust" | "expire" | "cancel";
+export type PointLogReason =
+  | "order-earned"
+  | "order-used"
+  | "admin-grant"
+  | "admin-deduct"
+  | "order-cancel"
+  | "expired"
+  | "migration"
+  | "other";
 
 export interface BrandConfig {
   name: string;
@@ -161,6 +171,10 @@ export interface UserProfile {
   userGradeLevel?: number;
   gradeEvaluatedAt?: string | null;
   gradePurchaseAmount6Months?: number;
+  isGradeLocked?: boolean;
+  gradeLockedAt?: string | null;
+  gradeLockedBy?: string | null;
+  gradeLockReason?: string;
   role: Role;
   availablePoint: number;
   totalPurchaseAmount: number;
@@ -169,6 +183,22 @@ export interface UserProfile {
   defaultAddress: Address | null;
   termsAgreement: TermsAgreement;
   adminMemo?: string;
+}
+
+export interface PointLog {
+  id: string;
+  userId: string;
+  type: PointLogType;
+  reason: PointLogReason;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  orderId?: string | null;
+  orderNo?: string | null;
+  adminId?: string | null;
+  adminEmail?: string | null;
+  memo: string;
+  createdAt: string;
 }
 
 export interface OrderItem {
@@ -229,6 +259,7 @@ export interface Category {
   minUserGradeToView: AccessGradeCode;
   minUserGradeLevel?: number;
   displayMinUserGradeToView?: AccessGradeCode;
+  displayMinUserGradeLevel?: number;
   adultOnly: boolean;
 }
 

@@ -43,7 +43,15 @@
       </template>
       <template #adultOnly="{ row }">{{ row.adultOnly ? "예" : "아니오" }}</template>
       <template #minUserGradeToView="{ row }">
-        {{ gradeLabel(row.minUserGradeToView) }}
+        {{ gradeLabel(row.minUserGradeToView, row.minUserGradeLevel) }}
+      </template>
+      <template #displayMinUserGradeToView="{ row }">
+        {{
+          gradeLabel(
+            row.displayMinUserGradeToView || "PUBLIC",
+            row.displayMinUserGradeLevel,
+          )
+        }}
       </template>
       <template #actions="{ row }">
         <div class="row-actions">
@@ -81,7 +89,8 @@ const columns = [
   { key: "order", label: "순서" },
   { key: "isVisible", label: "노출" },
   { key: "adultOnly", label: "성인 전용" },
-  { key: "minUserGradeToView", label: "최소 등급" },
+  { key: "displayMinUserGradeToView", label: "표시 등급" },
+  { key: "minUserGradeToView", label: "열람 등급" },
 ] as const;
 
 const categoryNameMap = computed(() =>
@@ -112,10 +121,15 @@ const restrictedCount = computed(
     ).length,
 );
 
-const gradeLabel = (gradeCode: string) => {
+const gradeLabel = (gradeCode: string, level?: number) => {
   if (gradeCode === PUBLIC_ACCESS_GRADE) return "전체 공개";
   const grade = productStore.findGradeBenefit(gradeCode);
-  return grade ? `${grade.label} 이상 (${grade.gradeCode})` : `${gradeCode} 이상`;
+  if (grade && (!level || grade.level === level)) {
+    return `${grade.label} 이상 (level ${grade.level})`;
+  }
+  if (level && level > 0) return `레벨 ${level} 이상`;
+  const matched = /^(?:G|LEVEL_)(\d+)$/.exec(gradeCode);
+  return matched ? `레벨 ${matched[1]} 이상` : `${gradeCode} 이상`;
 };
 
 const remove = async (id: string) => {

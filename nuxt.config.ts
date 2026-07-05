@@ -11,25 +11,48 @@ export default defineNuxtConfig({
   },
   modules: ["@pinia/nuxt", "@nuxt/eslint"],
   css: [
-    "@toast-ui/editor/dist/toastui-editor.css",
-    "@toast-ui/editor/dist/toastui-editor-viewer.css",
+    "md-editor-v3/lib/style.css",
     "~/assets/css/main.css",
   ],
-  ignore: ["functions/**", ".output/**", ".firebase/**"],
+  ignore: [
+    "functions/**",
+    ".output/**",
+    ".firebase/**",
+    ".nuxt/dist/**",
+    ".nuxt/analyze/**",
+  ],
   watchers: {
     chokidar: {
-      ignored: ["**/functions/**", "**/.output/**", "**/.firebase/**"],
+      ignored: [
+        "**/functions/**",
+        "**/.output/**",
+        "**/.firebase/**",
+        "**/.nuxt/dist/**",
+        "**/.nuxt/analyze/**",
+      ],
     },
   },
   nitro: {
     watchOptions: {
-      ignored: ["**/functions/**", "**/.output/**", "**/.firebase/**"],
+      ignored: [
+        "**/functions/**",
+        "**/.output/**",
+        "**/.firebase/**",
+        "**/.nuxt/dist/**",
+        "**/.nuxt/analyze/**",
+      ],
     },
   },
   vite: {
     server: {
       watch: {
-        ignored: ["**/functions/**", "**/.output/**", "**/.firebase/**"],
+        ignored: [
+          "**/functions/**",
+          "**/.output/**",
+          "**/.firebase/**",
+          "**/.nuxt/dist/**",
+          "**/.nuxt/analyze/**",
+        ],
       },
     },
   },

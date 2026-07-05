@@ -31,6 +31,26 @@ service cloud.firestore {
       return grade == 'PUBLIC' || grade == null ? 0
         : exists(/databases/$(database)/documents/gradeBenefits/$(grade))
         ? get(/databases/$(database)/documents/gradeBenefits/$(grade)).data.level
+        : grade == 'G10' ? 10
+        : grade == 'G9' ? 9
+        : grade == 'G8' ? 8
+        : grade == 'G7' ? 7
+        : grade == 'G6' ? 6
+        : grade == 'G5' ? 5
+        : grade == 'G4' ? 4
+        : grade == 'G3' ? 3
+        : grade == 'G2' ? 2
+        : grade == 'G1' ? 1
+        : grade == 'LEVEL_10' ? 10
+        : grade == 'LEVEL_9' ? 9
+        : grade == 'LEVEL_8' ? 8
+        : grade == 'LEVEL_7' ? 7
+        : grade == 'LEVEL_6' ? 6
+        : grade == 'LEVEL_5' ? 5
+        : grade == 'LEVEL_4' ? 4
+        : grade == 'LEVEL_3' ? 3
+        : grade == 'LEVEL_2' ? 2
+        : grade == 'LEVEL_1' ? 1
         : grade == 'BLACK' ? 10
         : grade == 'VIP' ? 8
         : grade == 'PRO' ? 5
@@ -53,7 +73,9 @@ service cloud.firestore {
     }
 
     function displayRequiredGradeLevel(data) {
-      return gradeLevel(
+      return data.displayMinUserGradeLevel is number
+        ? data.displayMinUserGradeLevel
+        : gradeLevel(
         data.displayMinUserGradeToView != null
           ? data.displayMinUserGradeToView
           : 'PUBLIC'
@@ -147,6 +169,11 @@ service cloud.firestore {
     }
 
     match /adultVerificationLogs/{logId} {
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update, delete: if false;
+    }
+
+    match /pointLogs/{logId} {
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create, update, delete: if false;
     }

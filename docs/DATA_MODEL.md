@@ -23,6 +23,10 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `userGradeLevel`                | number                | 현재 회원 등급 레벨. Rules/카테고리 접근 계산용 |
 | `gradeEvaluatedAt`              | timestamp/string/null | 등급 자동 갱신 평가 시각                         |
 | `gradePurchaseAmount6Months`    | number                | 최근 6개월 구매확정액. 자동 갱신 결과 스냅샷    |
+| `isGradeLocked`                 | boolean               | 관리자 수동 등급 고정 여부                       |
+| `gradeLockedAt`                 | timestamp/string/null | 등급 고정 처리 시각                              |
+| `gradeLockedBy`                 | string/null           | 등급 고정 처리 관리자 UID                        |
+| `gradeLockReason`               | string                | 등급 고정 사유                                   |
 | `role`                          | string                | `customer`, `staff`, `manager`, `admin`, `owner` |
 | `availablePoint`                | number                | 사용 가능 포인트                                 |
 | `totalPurchaseAmount`           | number                | 누적 구매액                                      |
@@ -71,9 +75,10 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `depth`              | number      | 1~3 권장           |
 | `order`              | number      | 정렬               |
 | `isVisible`          | boolean     | 노출 여부          |
-| `minUserGradeToView` | string      | 최소 열람 등급. `PUBLIC`이면 비회원/전체 공개 기준 |
-| `minUserGradeLevel`  | number      | 최소 열람 등급 레벨. `PUBLIC`은 0, 동적 등급 코드 사용 시 Rules/권한 계산용 |
+| `minUserGradeToView` | string      | 최소 열람 기준 코드. 특정 등급은 `gradeCode`, 레벨 기준은 `LEVEL_7`처럼 저장 |
+| `minUserGradeLevel`  | number      | 실제 최소 열람 등급 레벨. 권한 비교의 기준값 |
 | `displayMinUserGradeToView` | string | 소비자 카테고리 메뉴 노출 기준. `adultOnly`와 실제 접근 등급과 별개로 이 값만 메뉴 표시 권한에 사용 |
+| `displayMinUserGradeLevel`  | number | 소비자 카테고리 메뉴 노출 기준 레벨. `PUBLIC`은 0, 권한 비교의 기준값 |
 | `adultOnly`          | boolean     | 성인 전용 카테고리 |
 
 ### `products/{productId}`
@@ -187,7 +192,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 | Field                    | Type                         | Notes                                  |
 | ------------------------ | ---------------------------- | -------------------------------------- |
-| `id`, `title`, `content` | string                       | 식별자, 제목, Toast UI Markdown 본문   |
+| `id`, `title`, `content` | string                       | 식별자, 제목, md-editor-v3 Markdown 본문 |
 | `imageUrl`               | string                       | 팝업 상단 이미지                       |
 | `linkUrl`, `buttonText`  | string                       | 연결 링크와 버튼 문구                  |
 | `placement`              | `main`, `all`                | 메인 접속 또는 전체 페이지             |
@@ -218,6 +223,27 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `birthDate`                 | string                            |
 | `requestedAt`, `verifiedAt` | timestamp/string/null             |
 | `reason`                    | string                            |
+
+### `pointLogs/{logId}`
+
+포인트 원장이다. `users.availablePoint`는 화면 표시와 한도 계산을 위한 현재 잔액이고, 적립/사용/관리자 조정/소멸 이력은 반드시 이 컬렉션에 남긴다.
+클라이언트 직접 쓰기는 금지하며, 서버 API 또는 Firebase Functions 트랜잭션으로만 생성한다.
+
+| Field           | Type             | Notes                                                              |
+| --------------- | ---------------- | ------------------------------------------------------------------ |
+| `id`            | string           | 문서 ID                                                            |
+| `userId`        | string           | 대상 회원 UID                                                      |
+| `type`          | string           | `earn`, `use`, `adjust`, `expire`, `cancel`                        |
+| `reason`        | string           | `order-earned`, `order-used`, `admin-grant`, `admin-deduct`, `order-cancel`, `expired`, `migration`, `other` |
+| `amount`        | number           | 증감액. 지급/적립은 양수, 사용/차감은 음수                         |
+| `balanceBefore` | number           | 처리 전 잔액                                                       |
+| `balanceAfter`  | number           | 처리 후 잔액                                                       |
+| `orderId`       | string/null      | 주문 관련 포인트일 때 주문 ID                                      |
+| `orderNo`       | string/null      | 주문 관련 포인트일 때 주문번호                                     |
+| `adminId`       | string/null      | 관리자 조정 시 처리 관리자 UID                                     |
+| `adminEmail`    | string/null      | 관리자 조정 시 처리 관리자 이메일                                  |
+| `memo`          | string           | 처리 사유/CS 메모                                                  |
+| `createdAt`     | timestamp/string | 생성 시각                                                          |
 
 ### `siteSettings/global`
 

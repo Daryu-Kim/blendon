@@ -7,7 +7,7 @@
         <h1>{{ notice.title }}</h1>
         <time>{{ formatDate(notice.createdAt) }}</time>
       </div>
-      <MarkdownContent :content="notice.content" />
+      <MarkdownContent class="notice-body" :content="notice.content" />
       <div class="notice-actions">
         <Button to="/notices" variant="ghost">목록</Button>
       </div>
@@ -43,6 +43,11 @@ useHead(() => ({ title: notice.value?.title || "공지사항" }));
   padding-bottom: 18px;
 }
 
+.notice-head .pill {
+  justify-self: start;
+  width: fit-content;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(24px, 5vw, 34px);
@@ -50,6 +55,10 @@ h1 {
 
 time {
   color: var(--color-muted);
+}
+
+.notice-body {
+  min-height: 120px;
 }
 
 .notice-actions {

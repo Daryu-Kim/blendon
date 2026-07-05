@@ -57,11 +57,11 @@
         </div>
         <div class="form-row">
           <label>최소 열람 등급</label>
-          <Select v-model="form.minUserGradeToView">
+          <Select v-model="minViewAccessValue">
             <option
               v-for="grade in accessGradeOptions"
-              :key="grade.gradeCode"
-              :value="grade.gradeCode"
+              :key="grade.value"
+              :value="grade.value"
             >
               {{ grade.label }}
             </option>
@@ -69,11 +69,11 @@
         </div>
         <div class="form-row">
           <label>표시 최소 등급</label>
-          <Select v-model="form.displayMinUserGradeToView">
+          <Select v-model="displayAccessValue">
             <option
               v-for="grade in accessGradeOptions"
-              :key="grade.gradeCode"
-              :value="grade.gradeCode"
+              :key="grade.value"
+              :value="grade.value"
             >
               {{ grade.label }}
             </option>
@@ -90,10 +90,10 @@
 </template>
 
 <script setup lang="ts">
-import type { Category } from "~/types/domain";
+import type { AccessGradeCode, Category, GradeBenefit } from "~/types/domain";
 import { buildCategoryTree } from "~/utils/category-tree";
 import { toSafeId } from "~/utils/format";
-import { PUBLIC_ACCESS_GRADE } from "~/utils/access";
+import { gradeLevel, PUBLIC_ACCESS_GRADE } from "~/utils/access";
 
 const props = defineProps<{ category?: Category | null }>();
 const emit = defineEmits<{ saved: [category: Category] }>();
@@ -111,6 +111,7 @@ const createEmptyCategory = (): Category => ({
   minUserGradeToView: PUBLIC_ACCESS_GRADE,
   minUserGradeLevel: 0,
   displayMinUserGradeToView: PUBLIC_ACCESS_GRADE,
+  displayMinUserGradeLevel: 0,
   adultOnly: true,
 });
 
@@ -147,21 +148,118 @@ const activeGrades = computed(() => {
     .sort((a, b) => a.level - b.level || a.order - b.order);
   return grades.length
     ? grades
-    : [{ gradeCode: "BASIC", label: "BASIC", level: 1, order: 1 }];
+    : ([
+        {
+          id: "BASIC",
+          gradeCode: "BASIC",
+          internalCode: "G1",
+          level: 1,
+          label: "BASIC",
+          discountRate: 0,
+          pointRate: 0,
+          minPurchaseAmount: 0,
+          freeShippingThreshold: 0,
+          isVisible: true,
+          order: 1,
+          createdAt: new Date(0).toISOString(),
+          updatedAt: new Date(0).toISOString(),
+        },
+      ] satisfies GradeBenefit[]);
 });
-const accessGradeOptions = computed(() => [
-  { gradeCode: PUBLIC_ACCESS_GRADE, label: "전체 공개", level: 0, order: 0 },
-  ...activeGrades.value.map((grade) => ({
-    ...grade,
-    label: `${grade.label} 이상 (${grade.gradeCode})`,
-  })),
-]);
+const accessGradeOptions = computed(() => {
+  const options = [
+    { value: PUBLIC_ACCESS_GRADE, label: "전체 공개", level: 0, order: 0 },
+    ...activeGrades.value.map((grade) => ({
+      ...grade,
+      value: `GRADE:${grade.gradeCode}`,
+      label: `${grade.label} 이상 (level ${grade.level}, ${grade.internalCode || grade.gradeCode})`,
+    })),
+  ];
+  return [...new Map(options.map((option) => [option.value, option])).values()]
+    .sort((a, b) => a.level - b.level || a.order - b.order);
+});
+
+const gradeByCode = (gradeCode?: string) =>
+  productStore.gradeBenefits.find(
+    (grade) =>
+      grade.gradeCode === gradeCode ||
+      grade.id === gradeCode ||
+      grade.internalCode === gradeCode,
+  );
+
+const accessValueFrom = (gradeCode?: string, level?: number) => {
+  if (!gradeCode || gradeCode === PUBLIC_ACCESS_GRADE) return PUBLIC_ACCESS_GRADE;
+  const grade = gradeByCode(gradeCode);
+  if (grade && (!level || grade.level === level)) return `GRADE:${grade.gradeCode}`;
+  const levelGrade = productStore.gradeBenefits.find(
+    (item) => item.isVisible && item.level === level,
+  );
+  if (levelGrade) return `GRADE:${levelGrade.gradeCode}`;
+  return grade ? `GRADE:${grade.gradeCode}` : gradeCode;
+};
+
+const applyAccessValue = (value: string, target: "view" | "display") => {
+  let gradeCode: AccessGradeCode = PUBLIC_ACCESS_GRADE;
+  let level = 0;
+
+  if (value.startsWith("GRADE:")) {
+    const grade = gradeByCode(value.replace(/^GRADE:/, ""));
+    gradeCode = grade?.gradeCode || PUBLIC_ACCESS_GRADE;
+    level = grade?.level || 0;
+  }
+
+  if (target === "view") {
+    form.minUserGradeToView = gradeCode;
+    form.minUserGradeLevel = level;
+  } else {
+    form.displayMinUserGradeToView = gradeCode;
+    form.displayMinUserGradeLevel = level;
+  }
+};
+
+const minViewAccessValue = computed({
+  get: () => accessValueFrom(form.minUserGradeToView, form.minUserGradeLevel),
+  set: (value: string) => applyAccessValue(value, "view"),
+});
+
+const displayAccessValue = computed({
+  get: () =>
+    accessValueFrom(
+      form.displayMinUserGradeToView,
+      form.displayMinUserGradeLevel,
+    ),
+  set: (value: string) => applyAccessValue(value, "display"),
+});
 
 const sortedCategories = computed(() => buildCategoryTree(productStore.categories));
+const descendantIds = computed(() => {
+  if (!form.id) return new Set<string>();
+  const result = new Set<string>();
+  let changed = true;
+  while (changed) {
+    changed = false;
+    productStore.categories.forEach((category) => {
+      if (
+        category.parentId &&
+        (category.parentId === form.id || result.has(category.parentId)) &&
+        !result.has(category.id)
+      ) {
+        result.add(category.id);
+        changed = true;
+      }
+    });
+  }
+  return result;
+});
 
 const parentOptions = computed(() =>
   sortedCategories.value
-    .filter((category) => category.id !== form.id && category.depth < 3)
+    .filter(
+      (category) =>
+        category.id !== form.id &&
+        !descendantIds.value.has(category.id) &&
+        category.depth < 4,
+    )
     .map((category) => ({
       ...category,
       treeName: `${"— ".repeat(Math.max(0, category.depth - 1))}${category.name}`,
@@ -173,8 +271,9 @@ const submit = async () => {
   const parent = productStore.categories.find(
     (category) => category.id === form.parentId,
   );
-  const grade = productStore.findGradeBenefit(form.minUserGradeToView);
   const id = form.id || toSafeId(form.name);
+  const displayGradeCode =
+    form.displayMinUserGradeToView || form.minUserGradeToView;
   const category: Category = {
     ...form,
     id,
@@ -184,9 +283,18 @@ const submit = async () => {
     depth: parent ? parent.depth + 1 : 1,
     order: Number(form.order || productStore.categories.length + 1),
     minUserGradeLevel:
-      form.minUserGradeToView === PUBLIC_ACCESS_GRADE ? 0 : grade?.level || 1,
-    displayMinUserGradeToView:
-      form.displayMinUserGradeToView || form.minUserGradeToView,
+      form.minUserGradeToView === PUBLIC_ACCESS_GRADE
+        ? 0
+        : Number(form.minUserGradeLevel || 0) ||
+          gradeLevel(form.minUserGradeToView, productStore.gradeBenefits) ||
+          1,
+    displayMinUserGradeToView: displayGradeCode,
+    displayMinUserGradeLevel:
+      displayGradeCode === PUBLIC_ACCESS_GRADE
+        ? 0
+        : Number(form.displayMinUserGradeLevel || 0) ||
+          gradeLevel(displayGradeCode, productStore.gradeBenefits) ||
+          1,
   };
   await productStore.upsertCategory(category);
   emit("saved", category);

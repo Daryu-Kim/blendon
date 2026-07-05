@@ -1,6 +1,16 @@
 <template>
   <ClientOnly>
-    <div ref="viewerEl" class="markdown-content" />
+    <MdPreview
+      v-if="hasContent"
+      :id="previewId"
+      :model-value="viewerContent"
+      editor-id="customer-content-viewer"
+      theme="light"
+      preview-theme="github"
+      code-theme="github"
+      class="markdown-content"
+    />
+    <p v-else class="markdown-content empty">등록된 본문이 없습니다.</p>
     <template #fallback>
       <div class="markdown-content fallback">
         {{ content }}
@@ -10,36 +20,13 @@
 </template>
 
 <script setup lang="ts">
-type ToastViewerInstance = {
-  setMarkdown: (value: string) => void;
-  destroy: () => void;
-};
+import { MdPreview } from "md-editor-v3";
 
 const props = defineProps<{ content: string }>();
-const viewerEl = ref<HTMLElement | null>(null);
-const viewer = shallowRef<ToastViewerInstance | null>(null);
 
-onMounted(async () => {
-  if (!viewerEl.value) return;
-  const { default: Viewer } = await import("@toast-ui/editor/dist/toastui-editor-viewer");
-  viewer.value = new Viewer({
-    el: viewerEl.value,
-    initialValue: props.content,
-    usageStatistics: false,
-  }) as ToastViewerInstance;
-});
-
-watch(
-  () => props.content,
-  (value) => {
-    viewer.value?.setMarkdown(value);
-  },
-);
-
-onBeforeUnmount(() => {
-  viewer.value?.destroy();
-  viewer.value = null;
-});
+const previewId = `md-preview-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+const hasContent = computed(() => props.content.trim().length > 0);
+const viewerContent = computed(() => preserveMarkdownBlankLines(props.content));
 </script>
 
 <style scoped>
@@ -53,20 +40,35 @@ onBeforeUnmount(() => {
   white-space: pre-wrap;
 }
 
-.markdown-content :deep(.toastui-editor-contents) {
+.empty {
+  margin: 0;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.markdown-content :deep(.md-editor-preview-wrapper) {
+  padding: 0;
+  background: transparent;
+}
+
+.markdown-content :deep(.md-editor-preview) {
   color: var(--color-primary);
   font-family: inherit;
   font-size: 15px;
 }
 
-.markdown-content :deep(.toastui-editor-contents img) {
+.markdown-content :deep(.md-editor-preview p) {
+  margin: 0 0 1em;
+}
+
+.markdown-content :deep(.md-editor-preview img) {
   max-width: 100%;
   border: 1px solid var(--color-line);
   border-radius: 8px;
   background: #fff;
 }
 
-.markdown-content :deep(.toastui-editor-contents a) {
+.markdown-content :deep(.md-editor-preview a) {
   color: #8d6b28;
   font-weight: 800;
 }

@@ -136,8 +136,47 @@ export const confirmServerOrderPayment = async (
       });
     });
     tx.set(orderRef, confirmed, { merge: true });
+    const balanceBefore = Number(user?.availablePoint || 0);
+    let nextBalance = balanceBefore;
+    if (order.pointUsed > 0) {
+      const usedLogRef = admin.db.collection("pointLogs").doc();
+      nextBalance -= order.pointUsed;
+      tx.set(usedLogRef, {
+        userId: order.userId,
+        type: "use",
+        reason: "order-used",
+        amount: -order.pointUsed,
+        balanceBefore,
+        balanceAfter: nextBalance,
+        orderId: order.id,
+        orderNo: order.orderNo,
+        adminId: null,
+        adminEmail: null,
+        memo: `주문 ${order.orderNo} 포인트 사용`,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
+    if (earnedPoint > 0) {
+      const earnedLogRef = admin.db.collection("pointLogs").doc();
+      const earnedBefore = nextBalance;
+      nextBalance += earnedPoint;
+      tx.set(earnedLogRef, {
+        userId: order.userId,
+        type: "earn",
+        reason: "order-earned",
+        amount: earnedPoint,
+        balanceBefore: earnedBefore,
+        balanceAfter: nextBalance,
+        orderId: order.id,
+        orderNo: order.orderNo,
+        adminId: null,
+        adminEmail: null,
+        memo: `주문 ${order.orderNo} 등급 적립`,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
     tx.update(userRef, {
-      availablePoint: FieldValue.increment(earnedPoint - order.pointUsed),
+      availablePoint: nextBalance,
       totalPurchaseAmount: FieldValue.increment(order.totalAmount),
       updatedAt: now,
     });

@@ -16,7 +16,7 @@
       >
         <span v-if="notice.isPinned" class="pill">고정</span>
         <strong>{{ notice.title }}</strong>
-        <p>{{ excerpt(notice.content) }}</p>
+        <p class="notice-excerpt">{{ excerpt(notice.content) }}</p>
         <time>{{ formatDate(notice.createdAt) }}</time>
       </NuxtLink>
     </div>
@@ -29,7 +29,13 @@ import { formatDate } from "~/utils/format";
 
 const noticeStore = useNoticeStore();
 
-const excerpt = (content: string) => content.replace(/[#>*_`!()[\]]/g, "").replace(/\s+/g, " ").trim().slice(0, 110);
+const excerpt = (content: string) =>
+  content
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/[#>*_`()[\]-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 onMounted(async () => {
   await noticeStore.fetchNotices();
@@ -46,8 +52,9 @@ useHead({ title: "공지사항" });
 
 .notice-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 6px 10px;
+  align-items: center;
   border-bottom: 1px solid var(--color-line);
   padding: 16px;
 }
@@ -56,23 +63,40 @@ useHead({ title: "공지사항" });
   border-bottom: 0;
 }
 
-.notice-row strong,
-.notice-row p,
-.notice-row time {
-  grid-column: 1 / -1;
+.notice-row strong {
+  min-width: 0;
+  font-size: 17px;
 }
 
-.notice-row p,
-.notice-row time {
+.notice-row p {
+  grid-column: 1 / -1;
   margin: 0;
   color: var(--color-muted);
 }
 
-.notice-row strong {
-  font-size: 17px;
+.notice-excerpt {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .notice-row time {
+  grid-column: 3;
+  grid-row: 1;
+  margin: 0;
+  color: var(--color-muted);
   font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .notice-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .notice-row time {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
 }
 </style>

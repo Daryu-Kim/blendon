@@ -113,6 +113,10 @@ const createDefaultProfile = (
     userGradeLevel,
     gradeEvaluatedAt: null,
     gradePurchaseAmount6Months: 0,
+    isGradeLocked: false,
+    gradeLockedAt: null,
+    gradeLockedBy: null,
+    gradeLockReason: "",
     role: "customer",
     availablePoint: 0,
     totalPurchaseAmount: 0,
@@ -159,6 +163,10 @@ const normalizeProfile = (profile: UserProfile): UserProfile => ({
   userGradeLevel: Number(profile.userGradeLevel || 1),
   gradeEvaluatedAt: profile.gradeEvaluatedAt || null,
   gradePurchaseAmount6Months: Number(profile.gradePurchaseAmount6Months || 0),
+  isGradeLocked: Boolean(profile.isGradeLocked),
+  gradeLockedAt: profile.gradeLockedAt || null,
+  gradeLockedBy: profile.gradeLockedBy || null,
+  gradeLockReason: profile.gradeLockReason || "",
   termsAgreement: normalizeTermsAgreement(profile.termsAgreement),
 });
 

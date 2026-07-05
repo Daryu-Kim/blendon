@@ -172,6 +172,9 @@ const normalizeCategory = (
     gradeLevel(data.minUserGradeToView || PUBLIC_ACCESS_GRADE, gradeBenefits),
   displayMinUserGradeToView:
     data.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE,
+  displayMinUserGradeLevel:
+    Number(data.displayMinUserGradeLevel || 0) ||
+    gradeLevel(data.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE, gradeBenefits),
   adultOnly: Boolean(data.adultOnly),
 });
 
@@ -184,13 +187,20 @@ const allowedGradesFor = (
     .filter((item) => item.isVisible)
     .sort((a, b) => a.level - b.level || a.order - b.order);
   const current = grades.find(
-    (item) => item.gradeCode === grade || item.id === grade,
+    (item) =>
+      item.gradeCode === grade || item.id === grade || item.internalCode === grade,
   );
-  const currentLevel = current?.level ?? grades[0]?.level ?? 1;
+  const currentLevel = (current?.level ?? gradeLevel(grade, grades)) || 1;
   const allowed = grades
     .filter((item) => item.level <= currentLevel)
-    .map((item) => item.gradeCode);
-  return [PUBLIC_ACCESS_GRADE, ...allowed].slice(0, 30);
+    .flatMap((item) => [item.gradeCode, item.internalCode].filter(Boolean));
+  const numericGrades = Array.from(
+    { length: Math.min(Math.max(currentLevel, 0), 10) },
+    (_, index) => [`G${index + 1}`, `LEVEL_${index + 1}`],
+  );
+  return [
+    ...new Set([PUBLIC_ACCESS_GRADE, ...allowed, ...numericGrades.flat()]),
+  ].slice(0, 30);
 };
 
 export const useProductStore = defineStore("product", {
@@ -427,7 +437,10 @@ export const useProductStore = defineStore("product", {
     },
     findGradeBenefit(id: string) {
       return this.gradeBenefits.find(
-        (benefit) => benefit.id === id || benefit.gradeCode === id,
+        (benefit) =>
+          benefit.id === id ||
+          benefit.gradeCode === id ||
+          benefit.internalCode === id,
       );
     },
     setQuery(query: string) {
@@ -478,6 +491,9 @@ export const useProductStore = defineStore("product", {
           Number(category.minUserGradeLevel || 0) ||
           gradeLevel(category.minUserGradeToView, this.gradeBenefits),
         displayMinUserGradeToView: categoryDisplayGrade(category),
+        displayMinUserGradeLevel:
+          Number(category.displayMinUserGradeLevel || 0) ||
+          gradeLevel(categoryDisplayGrade(category), this.gradeBenefits),
       };
       const index = this.categories.findIndex(
         (item) => item.id === payload.id,

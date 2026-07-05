@@ -29,15 +29,30 @@
             {{ child.name }}
           </NuxtLink>
           <div v-if="child.children.length" class="sub-links">
-            <NuxtLink
+            <div
               v-for="grandchild in child.children"
               :key="grandchild.id"
-              class="dropdown-link"
-              :to="categoryTo(grandchild)"
-              :class="{ active: activeCategoryId === grandchild.id }"
+              class="sub-group"
             >
-              {{ grandchild.name }}
-            </NuxtLink>
+              <NuxtLink
+                class="dropdown-link"
+                :to="categoryTo(grandchild)"
+                :class="{ active: isActiveTree(grandchild) }"
+              >
+                {{ grandchild.name }}
+              </NuxtLink>
+              <div v-if="grandchild.children.length" class="sub-links nested">
+                <NuxtLink
+                  v-for="greatGrandchild in grandchild.children"
+                  :key="greatGrandchild.id"
+                  class="dropdown-link leaf"
+                  :to="categoryTo(greatGrandchild)"
+                  :class="{ active: activeCategoryId === greatGrandchild.id }"
+                >
+                  {{ greatGrandchild.name }}
+                </NuxtLink>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -144,13 +159,33 @@ const isActiveTree = (category: NavCategory): boolean =>
   left: 0;
   z-index: 30;
   display: none;
+  max-height: min(640px, calc(100vh - 140px));
   min-width: 220px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   gap: 8px;
   border: 1px solid var(--color-line);
   border-radius: 8px;
   background: #fff;
   padding: 12px;
   box-shadow: 0 18px 38px rgba(23, 23, 23, 0.12);
+  scrollbar-color: rgba(23, 23, 23, 0.28) transparent;
+  scrollbar-width: thin;
+}
+
+.dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: rgba(23, 23, 23, 0.28);
 }
 
 .nav-item:hover .dropdown,
@@ -191,5 +226,18 @@ const isActiveTree = (category: NavCategory): boolean =>
   border-left: 1px solid var(--color-line);
   margin-left: 10px;
   padding-left: 8px;
+}
+
+.sub-group {
+  display: grid;
+  gap: 4px;
+}
+
+.sub-links.nested {
+  margin-left: 16px;
+}
+
+.dropdown-link.leaf {
+  font-weight: 700;
 }
 </style>

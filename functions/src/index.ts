@@ -184,10 +184,48 @@ export const verifyPortOnePayment = onCall(async (request) => {
           updatedAt: FieldValue.serverTimestamp(),
         });
       }
+      const pointUsed = Number(order.pointUsed || 0);
+      const balanceBefore = Number(user?.availablePoint || 0);
+      let nextBalance = balanceBefore;
+      if (pointUsed > 0) {
+        const usedLogRef = db.collection("pointLogs").doc();
+        nextBalance -= pointUsed;
+        tx.set(usedLogRef, {
+          userId: auth.uid,
+          type: "use",
+          reason: "order-used",
+          amount: -pointUsed,
+          balanceBefore,
+          balanceAfter: nextBalance,
+          orderId,
+          orderNo: order.orderNo || null,
+          adminId: null,
+          adminEmail: null,
+          memo: `주문 ${order.orderNo || orderId} 포인트 사용`,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+      if (earnedPoint > 0) {
+        const earnedLogRef = db.collection("pointLogs").doc();
+        const earnedBefore = nextBalance;
+        nextBalance += earnedPoint;
+        tx.set(earnedLogRef, {
+          userId: auth.uid,
+          type: "earn",
+          reason: "order-earned",
+          amount: earnedPoint,
+          balanceBefore: earnedBefore,
+          balanceAfter: nextBalance,
+          orderId,
+          orderNo: order.orderNo || null,
+          adminId: null,
+          adminEmail: null,
+          memo: `주문 ${order.orderNo || orderId} 등급 적립`,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
       tx.update(userRef, {
-        availablePoint: FieldValue.increment(
-          earnedPoint - Number(order.pointUsed || 0),
-        ),
+        availablePoint: nextBalance,
         totalPurchaseAmount: FieldValue.increment(order.totalAmount),
         updatedAt: FieldValue.serverTimestamp(),
       });
@@ -231,6 +269,8 @@ export const refreshMonthlyUserGrades = onSchedule(
     const now = FieldValue.serverTimestamp();
 
     for (const userDoc of userSnap.docs) {
+      if (userDoc.data().isGradeLocked === true) continue;
+
       const amount = await calculateRecentConfirmedAmount(userDoc.id, since);
       const nextGrade =
         grades.find(

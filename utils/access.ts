@@ -33,14 +33,27 @@ export const isPublicAccessGrade = (grade?: AccessGradeCode | null) =>
   !grade || grade === PUBLIC_ACCESS_GRADE;
 
 const findGrade = (grade: GradeCode | undefined, grades: GradeBenefit[] = []) =>
-  grades.find((item) => item.gradeCode === grade || item.id === grade);
+  grades.find(
+    (item) =>
+      item.gradeCode === grade || item.id === grade || item.internalCode === grade,
+  );
+
+const numericGradeLevel = (grade?: string) => {
+  const matched = /^(?:G|LEVEL_)(\d+)$/.exec(grade || "");
+  return matched ? Number(matched[1]) : 0;
+};
 
 export const gradeLevel = (
   grade: AccessGradeCode | undefined,
   grades: GradeBenefit[] = [],
 ) => {
   if (isPublicAccessGrade(grade)) return 0;
-  return findGrade(grade, grades)?.level ?? gradePolicy[grade || ""]?.level ?? 0;
+  return (
+    findGrade(grade, grades)?.level ??
+    gradePolicy[grade || ""]?.level ??
+    numericGradeLevel(grade) ??
+    0
+  );
 };
 
 export const gradeDiscountRate = (
@@ -62,6 +75,13 @@ export const hasGradeAtLeast = (
 
 export const categoryDisplayGrade = (category: Category) =>
   category.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE;
+
+const categoryDisplayGradeLevel = (
+  category: Category,
+  grades: GradeBenefit[] = [],
+) =>
+  Number(category.displayMinUserGradeLevel ?? 0) ||
+  gradeLevel(categoryDisplayGrade(category), grades);
 
 export const canViewProduct = (
   product: Product,
@@ -92,7 +112,10 @@ export const canViewCategory = (
   if (!category.isVisible) return false;
   const minDisplayGrade = categoryDisplayGrade(category);
   if (!user) return isPublicAccessGrade(minDisplayGrade);
-  return hasGradeAtLeast(user.userGrade, minDisplayGrade, grades);
+  return (
+    gradeLevel(user.userGrade || "BASIC", grades) >=
+    categoryDisplayGradeLevel(category, grades)
+  );
 };
 
 export const canViewProductWithCategories = (

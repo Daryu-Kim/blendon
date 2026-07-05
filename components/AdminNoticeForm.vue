@@ -16,7 +16,7 @@
       </div>
     </AdminFormSection>
 
-    <AdminFormSection title="본문" description="Toast UI Editor로 작성하며 이미지는 Firebase Storage에 업로드해 삽입합니다.">
+    <AdminFormSection title="본문" description="md-editor-v3로 작성하며 이미지는 Firebase Storage에 업로드해 삽입합니다.">
       <MarkdownEditor v-model="form.content" path-prefix="notices" />
     </AdminFormSection>
 
