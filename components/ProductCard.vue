@@ -1,22 +1,35 @@
 <template>
   <article class="product-card surface">
     <NuxtLink :to="`/products/${product.slug}`" class="image-link">
-      <img :src="product.thumbnailUrl" :alt="product.name" loading="lazy" />
+      <img
+        v-if="product.thumbnailUrl"
+        :src="product.thumbnailUrl"
+        :alt="product.name"
+        loading="lazy"
+      >
+      <div v-else class="image-placeholder">
+        {{ product.name }}
+      </div>
       <span v-if="product.stock <= 10" class="stock-label">품절 임박</span>
     </NuxtLink>
     <div class="product-body">
-      <span class="brand-name">{{ product.brandName }}</span>
-      <div class="badge-row">
+      <div class="product-heading">
+        <span v-if="product.brandName" class="brand-name">
+          {{ product.brandName }}
+        </span>
+        <NuxtLink :to="`/products/${product.slug}`" class="name-link">
+          <h3>{{ product.name }}</h3>
+        </NuxtLink>
+      </div>
+      <ProductRatingSummary class="card-rating" :product-id="product.id" />
+      <div v-if="product.badges.length" class="badge-row">
         <ProductBadge
-          v-for="badge in product.badges.slice(0, 2)"
+          v-for="badge in product.badges"
           :key="badge"
           :label="badge"
         />
       </div>
-      <NuxtLink :to="`/products/${product.slug}`">
-        <h3>{{ product.name }}</h3>
-      </NuxtLink>
-      <p>{{ product.shortDescription }}</p>
+      <p v-if="product.shortDescription">{{ product.shortDescription }}</p>
       <div class="card-footer">
         <PriceDisplay :product="product" :user="auth.profile" />
         <Button
@@ -48,6 +61,8 @@ const canBuy = computed(() =>
 <style scoped>
 .product-card {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
   overflow: hidden;
   border-color: #efe6d8;
   box-shadow: none;
@@ -74,6 +89,20 @@ const canBuy = computed(() =>
   object-fit: cover;
 }
 
+.image-placeholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  padding: 16px;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+  text-align: center;
+  word-break: keep-all;
+}
+
 .stock-label {
   position: absolute;
   right: 10px;
@@ -88,44 +117,92 @@ const canBuy = computed(() =>
 
 .product-body {
   display: grid;
-  gap: 8px;
-  padding: 13px;
+  align-content: start;
+  gap: 9px;
+  padding: 12px;
+}
+
+.product-heading {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
 }
 
 .brand-name {
   color: #8d6b28;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
+  line-height: 1.2;
+}
+
+.name-link {
+  min-width: 0;
 }
 
 .badge-row {
   display: flex;
-  min-height: 24px;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
+}
+
+.card-rating {
+  margin-top: -2px;
+}
+
+.badge-row :deep(.product-badge) {
+  min-height: 22px;
+  padding: 3px 7px;
+  font-size: 11px;
 }
 
 h3 {
+  display: -webkit-box;
   margin: 0;
+  overflow: hidden;
   font-size: 16px;
-  line-height: 1.25;
+  line-height: 1.28;
+  overflow-wrap: break-word;
+  word-break: keep-all;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 p {
   display: -webkit-box;
-  min-height: 38px;
   margin: 0;
   overflow: hidden;
   color: var(--color-muted);
   font-size: 14px;
-  line-height: 1.35;
+  line-height: 1.38;
+  word-break: keep-all;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
 .card-footer {
   display: grid;
-  gap: 10px;
-  padding-top: 4px;
+  gap: 8px;
+  padding-top: 1px;
+}
+
+.card-footer :deep(.price-display) {
+  gap: 2px;
+}
+
+.card-footer :deep(.price-row strong) {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.card-footer :deep(.hidden-price) {
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
+@media (min-width: 760px) {
+  .card-footer {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
 }
 </style>

@@ -147,6 +147,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `paymentMethod`                                  | string                | `card`, `transfer`, `virtual-account`, `mobile`, `kakaopay`, `naverpay` |
 | `orderStatus`                                    | string                | 주문 처리 상태                                                          |
 | `deliveryStatus`                                 | string                | 배송/픽업 상태                                                          |
+| `deliveryCompany`, `trackingNumber`, `shippedAt` | string/string/date    | 택배사, 송장번호, 출고 처리 시각                                         |
 | `claimStatus`                                    | string                | 취소/교환/환불 상태                                                     |
 | `paymentProvider`                                | string                | 현재 `portone`                                                          |
 | `portonePaymentId`, `portoneImpUid`, `paymentId` | string/null           | 결제 식별자                                                             |
@@ -170,12 +171,12 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 ### `banners/{bannerId}`
 
-| Field                                                          | Type                                  |
-| -------------------------------------------------------------- | ------------------------------------- |
-| `id`, `title`, `subtitle`, `imageUrl`, `buttonText`, `linkUrl` | string                                |
-| `isActive`                                                     | boolean                               |
-| `order`                                                        | number                                |
-| `placement`                                                    | `home-main`, `home-section`, `notice` |
+| Field                                                                         | Type                                  |
+| ----------------------------------------------------------------------------- | ------------------------------------- |
+| `id`, `slug`, `title`, `subtitle`, `imageUrl`, `buttonText`, `linkUrl`, `productId` | string                                |
+| `isActive`                                                                    | boolean                               |
+| `order`                                                                       | number                                |
+| `placement`                                                                   | `home-main`, `home-section`, `notice` |
 
 ### `notices/{noticeId}`
 
@@ -210,6 +211,22 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `status`                           | `waiting`, `answered`, `closed` |
 | `answer`                           | string/null                     |
 | `createdAt`, `answeredAt`          | timestamp/string/null           |
+
+### `productReviews/{reviewId}`
+
+상품 상세 리뷰다. 소비자는 본인 계정으로 리뷰를 생성할 수 있고, 관리자만 답변과 노출 상태를 수정한다.
+
+| Field                              | Type                  |
+| ---------------------------------- | --------------------- |
+| `id`, `productId`, `productSlug`, `productName` | string |
+| `userId`, `userName`               | string                |
+| `rating`                           | number, 1~5           |
+| `content`                          | string                |
+| `media`                            | `{ url, type, name }[]`, type은 `image` 또는 `video` |
+| `adminReply`                       | string                |
+| `adminReplyAt`, `adminReplyBy`      | string/null           |
+| `isVisible`                        | boolean               |
+| `createdAt`, `updatedAt`            | timestamp/string      |
 
 ### `adultVerificationLogs/{logId}`
 
@@ -260,6 +277,8 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `mailOrderSalesNumber`                     | string  |
 | `businessAddress`                          | string  |
 | `customerCenterPhone`, `customerCenterEmail` | string |
+| `productDetailTopBannerImageUrl`           | string  |
+| `productDetailBottomBannerImageUrl`        | string  |
 | `updatedAt`                                | timestamp/string |
 
 ### `siteSettings/seo`
@@ -295,6 +314,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `notices/*`             | 공지사항 본문 이미지 | 관리자만 업로드, 공개 읽기 |
 | `notice-popups/*`       | 공지 팝업 이미지/본문 이미지 | 관리자만 업로드, 공개 읽기 |
 | `seo/*`                 | 사이트 공통 SEO 이미지 | 관리자만 업로드, 공개 읽기 |
+| `reviews/{userId}/*`    | 리뷰 사진/동영상 | 작성 회원 업로드, 공개 읽기 |
 | `uploads/*`             | 임시/공통 이미지 | 관리자만 업로드, 공개 읽기 |
 
 ## Server Boundaries

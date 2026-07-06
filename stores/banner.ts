@@ -13,11 +13,13 @@ import type { Banner } from "~/types/domain";
 
 const normalizeBanner = (id: string, data: Partial<Banner>): Banner => ({
   id,
+  slug: data.slug || id,
   title: data.title || "",
   subtitle: data.subtitle || "",
   imageUrl: data.imageUrl || "",
   buttonText: data.buttonText || "바로가기",
-  linkUrl: data.linkUrl || "/products",
+  linkUrl: data.linkUrl || "",
+  productId: data.productId || "",
   isActive: data.isActive ?? true,
   order: Number(data.order || 0),
   placement: data.placement || "home-main",

@@ -60,6 +60,13 @@ export default defineNuxtConfig({
     typeCheck: true,
     strict: true,
   },
+  routeRules: {
+    "/products/**": { headers: { "cache-control": "no-store" } },
+    "/api/products/**": { headers: { "cache-control": "no-store" } },
+    "/api/site-settings/**": { headers: { "cache-control": "no-store" } },
+    "/sitemap.xml": { headers: { "cache-control": "no-store" } },
+    "/robots.txt": { headers: { "cache-control": "no-store" } },
+  },
   runtimeConfig: {
     portoneApiSecret: process.env.PORTONE_API_SECRET,
     firebaseServiceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,

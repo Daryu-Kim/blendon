@@ -18,7 +18,19 @@
 <script setup lang="ts">
 import type { Product } from "~/types/domain";
 
-defineProps<{ products: Product[] }>();
+const props = defineProps<{ products: Product[] }>();
+const reviewStore = useProductReviewStore();
+const productIds = computed(() =>
+  props.products.map((product) => product.id).filter(Boolean),
+);
+
+watch(
+  productIds,
+  (ids) => {
+    void reviewStore.fetchReviewSummaries(ids);
+  },
+  { immediate: true },
+);
 </script>
 
 <style scoped>

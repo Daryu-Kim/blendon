@@ -97,6 +97,23 @@ service cloud.firestore {
         && userGradeLevel() >= requiredGradeLevel(data);
     }
 
+    function validReviewCreate() {
+      return signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.productId is string
+        && request.resource.data.productSlug is string
+        && request.resource.data.productName is string
+        && request.resource.data.content is string
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.media is list
+        && request.resource.data.isVisible == true
+        && request.resource.data.adminReply == ''
+        && request.resource.data.adminReplyAt == null
+        && request.resource.data.adminReplyBy == null;
+    }
+
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
       allow create: if signedIn() && request.auth.uid == uid && request.resource.data.role == 'customer';
@@ -147,6 +164,14 @@ service cloud.firestore {
     match /banners/{bannerId} {
       allow read: if resource.data.isActive == true || isAdmin();
       allow create, update, delete: if isAdmin();
+    }
+
+    match /productReviews/{reviewId} {
+      allow read: if resource.data.isVisible == true
+        || isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if validReviewCreate();
+      allow update, delete: if isAdmin();
     }
 
     match /notices/{noticeId} {

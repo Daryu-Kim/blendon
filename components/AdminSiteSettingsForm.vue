@@ -72,6 +72,28 @@
     </AdminFormSection>
 
     <AdminFormSection
+      title="상품 상세 배너"
+      description="상품 상세 페이지의 상단과 하단에 노출할 배너 이미지를 설정합니다."
+    >
+      <div class="form-grid">
+        <div class="form-row">
+          <label>상단 배너 이미지</label>
+          <ImageUploader
+            v-model="globalForm.productDetailTopBannerImageUrl"
+            path-prefix="products/detail-banners"
+          />
+        </div>
+        <div class="form-row">
+          <label>하단 배너 이미지</label>
+          <ImageUploader
+            v-model="globalForm.productDetailBottomBannerImageUrl"
+            path-prefix="products/detail-banners"
+          />
+        </div>
+      </div>
+    </AdminFormSection>
+
+    <AdminFormSection
       title="SEO 기본 설정"
       description="카페24 관리자처럼 사이트 기본 메타 정보를 관리합니다."
     >

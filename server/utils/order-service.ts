@@ -162,6 +162,9 @@ export const buildPendingOrder = (
     deliveryMemo:
       checkout.pickupType === "delivery" ? checkout.deliveryMemo : "",
     pickupType: checkout.pickupType,
+    deliveryCompany: "",
+    trackingNumber: "",
+    shippedAt: null,
     createdAt: now,
     updatedAt: now,
     paidAt: null,

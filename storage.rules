@@ -43,6 +43,14 @@ service firebase.storage {
       allow write: if isAdmin() && request.resource.size < 10 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
     }
 
+    match /reviews/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.size < 50 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*') || request.resource.contentType.matches('video/.*'));
+    }
+
     match /admin/{allPaths=**} {
       allow read, write: if isAdmin();
     }

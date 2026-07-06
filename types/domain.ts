@@ -241,6 +241,9 @@ export interface Order {
   address: Address;
   deliveryMemo: string;
   pickupType: PickupType;
+  deliveryCompany?: string;
+  trackingNumber?: string;
+  shippedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   paidAt: string | null;
@@ -273,13 +276,41 @@ export interface CartItem {
   updatedAt: string;
 }
 
+export type ReviewMediaType = "image" | "video";
+
+export interface ReviewMedia {
+  url: string;
+  type: ReviewMediaType;
+  name: string;
+}
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  productSlug: string;
+  productName: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  content: string;
+  media: ReviewMedia[];
+  adminReply: string;
+  adminReplyAt: string | null;
+  adminReplyBy: string | null;
+  isVisible: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Banner {
   id: string;
+  slug: string;
   title: string;
   subtitle: string;
   imageUrl: string;
   buttonText: string;
   linkUrl: string;
+  productId: string;
   isActive: boolean;
   order: number;
   placement: "home-main" | "home-section" | "notice";
@@ -299,6 +330,8 @@ export interface SiteGlobalSettings {
   businessAddress: string;
   customerCenterPhone: string;
   customerCenterEmail: string;
+  productDetailTopBannerImageUrl: string;
+  productDetailBottomBannerImageUrl: string;
   updatedAt: string;
 }
 

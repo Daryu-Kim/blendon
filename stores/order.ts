@@ -59,6 +59,9 @@ const normalizeOrder = (id: string, data: Partial<Order>): Order =>
     address: data.address || { zipCode: "", address1: "", address2: "" },
     deliveryMemo: data.deliveryMemo || "",
     pickupType: data.pickupType || "delivery",
+    deliveryCompany: data.deliveryCompany || "",
+    trackingNumber: data.trackingNumber || "",
+    shippedAt: data.shippedAt || null,
     createdAt: timestampToIso(data.createdAt),
     updatedAt: timestampToIso(data.updatedAt),
     paidAt: data.paidAt || null,
@@ -208,6 +211,22 @@ export const useOrderStore = defineStore("order", {
     },
     setDeliveryStatus(orderId: string, status: Order["deliveryStatus"]) {
       return this.patchOrder(orderId, { deliveryStatus: status });
+    },
+    saveTrackingInfo(
+      orderId: string,
+      payload: Pick<Order, "deliveryCompany" | "trackingNumber">,
+    ) {
+      const order = this.orders.find((item) => item.id === orderId);
+      const trackingNumber = payload.trackingNumber?.trim() || "";
+      const deliveryCompany = payload.deliveryCompany?.trim() || "";
+      const shippedAt = trackingNumber
+        ? order?.shippedAt || new Date().toISOString()
+        : null;
+      return this.patchOrder(orderId, {
+        deliveryCompany,
+        trackingNumber,
+        shippedAt,
+      });
     },
   },
 });

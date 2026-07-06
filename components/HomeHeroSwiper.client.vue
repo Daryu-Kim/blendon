@@ -14,7 +14,13 @@
       }"
     >
       <SwiperSlide v-for="slide in heroSlides" :key="slide.id">
-        <div class="hero-stage" :class="`hero-stage--${slide.tone}`">
+        <div
+          class="hero-stage"
+          :class="[
+            `hero-stage--${slide.tone}`,
+            { 'hero-stage--has-visual': slide.visualImageUrl },
+          ]"
+        >
           <div class="hero-copy">
             <p class="eyebrow">{{ slide.kicker }}</p>
             <h1>{{ slide.title }}</h1>
@@ -34,19 +40,15 @@
             </div>
           </div>
 
-          <div class="hero-visual" aria-hidden="true">
+          <div v-if="slide.visualImageUrl" class="hero-visual" aria-hidden="true">
             <img
-              :src="slide.imageUrl || slide.product?.thumbnailUrl || featured?.thumbnailUrl"
-              :alt="slide.product?.name || featured?.name || ''"
-            />
-            <div class="hero-product">
+              :src="slide.visualImageUrl"
+              :alt="slide.product?.name || slide.title"
+            >
+            <div v-if="slide.product" class="hero-product">
               <span>{{ slide.productKicker }}</span>
-              <strong>{{ slide.product?.name || featured?.name }}</strong>
-              <p>
-                {{
-                  slide.product?.shortDescription || featured?.shortDescription
-                }}
-              </p>
+              <strong>{{ slide.product.name }}</strong>
+              <p>{{ slide.product.shortDescription }}</p>
             </div>
           </div>
         </div>
@@ -75,6 +77,7 @@ import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import "swiper/css/pagination";
+import type { Product } from "~/types/domain";
 
 const { brand } = useAppConfig();
 const productStore = useProductStore();
@@ -92,6 +95,15 @@ const firstByCategory = (categoryId: string) =>
   products.value.find((product) => product.categoryIds.includes(categoryId)) ||
   featured.value;
 
+const findVisibleProductById = (productId: string) =>
+  products.value.find((product) => product.id === productId);
+
+const productImageUrl = (product?: Product) =>
+  product?.thumbnailUrl || product?.imageUrls?.[0] || "";
+
+const productRoute = (product?: Product) =>
+  product ? `/products/${product.slug}` : "";
+
 interface HeroSlide {
   id: string;
   kicker: string;
@@ -102,8 +114,9 @@ interface HeroSlide {
   secondaryLabel?: string;
   secondaryTo?: string;
   productKicker: string;
-  product?: typeof featured.value;
+  product?: Product;
   imageUrl?: string;
+  visualImageUrl: string;
   tone: "cream" | "green" | "amber";
 }
 
@@ -124,6 +137,7 @@ const defaultSlides = computed<HeroSlide[]>(() => [
     secondaryTo: "/products?category=starter-pick",
     productKicker: "LOUNGE PICK",
     product: firstByCategory("lounge-pick"),
+    visualImageUrl: productImageUrl(firstByCategory("lounge-pick")),
     tone: "cream",
   },
   {
@@ -138,6 +152,7 @@ const defaultSlides = computed<HeroSlide[]>(() => [
     secondaryTo: "/products?category=starter-pick",
     productKicker: "ZERO FLAVOR",
     product: firstByCategory("nicotine-free"),
+    visualImageUrl: productImageUrl(firstByCategory("nicotine-free")),
     tone: "green",
   },
   {
@@ -152,27 +167,34 @@ const defaultSlides = computed<HeroSlide[]>(() => [
     secondaryTo: "/products",
     productKicker: "DAILY REFILL",
     product: firstByCategory("consumable"),
+    visualImageUrl: productImageUrl(firstByCategory("consumable")),
     tone: "amber",
   },
 ]);
 
 const heroSlides = computed<HeroSlide[]>(() => {
   if (!bannerStore.activeHomeMainBanners.length) return defaultSlides.value;
-  return bannerStore.activeHomeMainBanners.map((banner, index) => ({
-    id: banner.id,
-    kicker: brand.slogan,
-    title: banner.title,
-    description: banner.subtitle,
-    primaryLabel: banner.buttonText || "바로가기",
-    primaryTo: banner.linkUrl || "/products",
-    productKicker: "BLEND ON PICK",
-    product: firstByCategory(index === 0 ? "lounge-pick" : "starter-pick"),
-    imageUrl: banner.imageUrl,
-    tone: (["cream", "green", "amber"][index % 3] || "cream") as
-      | "cream"
-      | "green"
-      | "amber",
-  }));
+  return bannerStore.activeHomeMainBanners.map((banner, index) => {
+    const product = banner.productId
+      ? findVisibleProductById(banner.productId)
+      : undefined;
+    return {
+      id: banner.id,
+      kicker: brand.slogan,
+      title: banner.title,
+      description: banner.subtitle,
+      primaryLabel: banner.buttonText || "바로가기",
+      primaryTo: banner.linkUrl || productRoute(product) || "/products",
+      productKicker: "BLEND ON PICK",
+      product,
+      imageUrl: banner.imageUrl,
+      visualImageUrl: productImageUrl(product) || banner.imageUrl,
+      tone: (["cream", "green", "amber"][index % 3] || "cream") as
+        | "cream"
+        | "green"
+        | "amber",
+    };
+  });
 });
 </script>
 
@@ -256,6 +278,8 @@ const heroSlides = computed<HeroSlide[]>(() => {
   display: grid;
   min-height: 390px;
   overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: keep-all;
   background:
     radial-gradient(
       circle at 82% 28%,
@@ -349,7 +373,7 @@ const heroSlides = computed<HeroSlide[]>(() => {
 }
 
 @media (min-width: 900px) {
-  .hero-stage {
+  .hero-stage--has-visual {
     grid-template-columns: minmax(0, 1fr) 42%;
   }
 

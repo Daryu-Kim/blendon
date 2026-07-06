@@ -23,6 +23,8 @@ export interface PublicGlobalSettings {
   businessAddress: string;
   customerCenterPhone: string;
   customerCenterEmail: string;
+  productDetailTopBannerImageUrl: string;
+  productDetailBottomBannerImageUrl: string;
 }
 
 export interface PublicProductSeo {
@@ -56,6 +58,8 @@ export const defaultPublicGlobalSettings = (): PublicGlobalSettings => ({
   businessAddress: "사업장 주소 입력 예정",
   customerCenterPhone: "0000-0000",
   customerCenterEmail: "support@example.com",
+  productDetailTopBannerImageUrl: "",
+  productDetailBottomBannerImageUrl: "",
 });
 
 export const getServerGlobalSettings =
@@ -92,6 +96,9 @@ export const getServerGlobalSettings =
       customerCenterEmail:
         data.customerCenterEmail ||
         defaultPublicGlobalSettings().customerCenterEmail,
+      productDetailTopBannerImageUrl: data.productDetailTopBannerImageUrl || "",
+      productDetailBottomBannerImageUrl:
+        data.productDetailBottomBannerImageUrl || "",
     };
   };
 

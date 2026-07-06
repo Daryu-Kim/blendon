@@ -11,9 +11,19 @@
     </div>
 
     <AdminTable :rows="orders.orders" :columns="columns" row-key="id">
-      <template #totalAmount="{ row }">{{
-        formatCurrency(row.totalAmount)
-      }}</template>
+      <template #totalAmount="{ row }">
+        {{ formatCurrency(row.totalAmount) }}
+      </template>
+
+      <template #trackingNumber="{ row }">
+        <div class="tracking-readonly">
+          <strong v-if="row.trackingNumber">
+            {{ row.deliveryCompany || "택배" }}
+          </strong>
+          <span>{{ row.trackingNumber || "-" }}</span>
+        </div>
+      </template>
+
       <template #actions="{ row }">
         <div class="row-actions">
           <Select
@@ -44,6 +54,19 @@
             <option value="pickup-ready">pickup-ready</option>
             <option value="picked-up">picked-up</option>
           </Select>
+          <div v-if="trackingDrafts[row.id]" class="tracking-controls">
+            <Input
+              v-model="trackingDrafts[row.id].deliveryCompany"
+              placeholder="택배사"
+            />
+            <Input
+              v-model="trackingDrafts[row.id].trackingNumber"
+              placeholder="송장번호"
+            />
+            <Button size="sm" variant="ghost" @click="saveTracking(row)">
+              저장
+            </Button>
+          </div>
         </div>
       </template>
     </AdminTable>
@@ -51,19 +74,57 @@
 </template>
 
 <script setup lang="ts">
+import type { Order } from "~/types/domain";
 import { formatCurrency } from "~/utils/format";
 
 definePageMeta({ layout: "admin", middleware: "admin" });
+
 const orders = useOrderStore();
+
+interface TrackingDraft {
+  deliveryCompany: string;
+  trackingNumber: string;
+}
+
+const trackingDrafts = reactive<Record<string, TrackingDraft>>({});
+
+const syncTrackingDrafts = () => {
+  orders.orders.forEach((order) => {
+    trackingDrafts[order.id] = {
+      deliveryCompany: order.deliveryCompany || "",
+      trackingNumber: order.trackingNumber || "",
+    };
+  });
+};
+
+const saveTracking = async (order: Order) => {
+  const draft = trackingDrafts[order.id];
+  if (!draft) return;
+  await orders.saveTrackingInfo(order.id, draft);
+};
+
 onMounted(async () => {
   await orders.fetchOrders(true);
+  syncTrackingDrafts();
 });
+
+watch(
+  () =>
+    orders.orders.map(
+      (order) =>
+        `${order.id}:${order.deliveryCompany || ""}:${order.trackingNumber || ""}`,
+    ),
+  syncTrackingDrafts,
+  { immediate: true },
+);
+
 const columns = [
   { key: "orderNo", label: "주문번호" },
   { key: "recipientName", label: "수령인" },
   { key: "paymentStatus", label: "결제상태" },
   { key: "orderStatus", label: "주문상태" },
   { key: "deliveryStatus", label: "배송상태" },
+  { key: "trackingNumber", label: "송장" },
   { key: "totalAmount", label: "금액" },
 ] as const;
 
@@ -73,7 +134,26 @@ useHead({ title: "관리자 주문 관리" });
 <style scoped>
 .row-actions {
   display: grid;
-  grid-template-columns: 140px 160px;
+  grid-template-columns: 140px 160px minmax(320px, 1fr);
   gap: 8px;
+}
+
+.tracking-controls {
+  display: grid;
+  grid-template-columns: 120px minmax(150px, 1fr) auto;
+  gap: 8px;
+}
+
+.tracking-readonly {
+  display: grid;
+  gap: 3px;
+}
+
+.tracking-readonly strong {
+  font-size: 12px;
+}
+
+.tracking-readonly span {
+  color: var(--color-muted);
 }
 </style>

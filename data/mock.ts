@@ -452,6 +452,9 @@ export const mockOrders: Order[] = [
     },
     deliveryMemo: "문 앞에 놓아주세요.",
     pickupType: "delivery",
+    deliveryCompany: "",
+    trackingNumber: "",
+    shippedAt: null,
     createdAt: now,
     updatedAt: now,
     paidAt: now,
@@ -461,11 +464,13 @@ export const mockOrders: Order[] = [
 export const mockBanners: Banner[] = [
   {
     id: "home-main",
+    slug: "home-main",
     title: "취향을 블렌딩하다, BLEND ON",
     subtitle: "향, 맛, 무드를 쉽고 깔끔하게 고르는 성인 라이프스타일 편집샵.",
     imageUrl: "",
     buttonText: "인기 상품 보기",
     linkUrl: "/products",
+    productId: "product-lounge-pick-cartridge",
     isActive: true,
     order: 1,
     placement: "home-main",

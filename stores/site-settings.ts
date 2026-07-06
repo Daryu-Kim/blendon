@@ -28,6 +28,8 @@ const defaultGlobalSettings = (): SiteGlobalSettings => ({
   businessAddress: "",
   customerCenterPhone: "0000-0000",
   customerCenterEmail: "support@example.com",
+  productDetailTopBannerImageUrl: "",
+  productDetailBottomBannerImageUrl: "",
   updatedAt: new Date().toISOString(),
 });
 

@@ -30,7 +30,19 @@
           class="thumb"
           :src="row.imageUrl"
           :alt="row.title"
-        />
+        >
+        <span v-else>-</span>
+      </template>
+      <template #productId="{ row }">
+        <div v-if="productById(row.productId)" class="product-cell">
+          <img
+            v-if="productById(row.productId)?.thumbnailUrl"
+            class="product-thumb"
+            :src="productById(row.productId)?.thumbnailUrl"
+            :alt="productById(row.productId)?.name"
+          >
+          <span>{{ productById(row.productId)?.name }}</span>
+        </div>
         <span v-else>-</span>
       </template>
       <template #isActive="{ row }">{{ row.isActive ? "활성" : "비활성" }}</template>
@@ -52,13 +64,16 @@
 definePageMeta({ layout: "admin", middleware: "admin" });
 
 const bannerStore = useBannerStore();
+const productStore = useProductStore();
 const keyword = ref("");
 const placement = ref("");
 const active = ref("");
 const columns = [
   { key: "imageUrl", label: "이미지" },
+  { key: "slug", label: "슬러그" },
   { key: "title", label: "제목" },
   { key: "subtitle", label: "부제목" },
+  { key: "productId", label: "연결 상품" },
   { key: "buttonText", label: "버튼" },
   { key: "linkUrl", label: "링크" },
   { key: "placement", label: "위치" },
@@ -66,14 +81,20 @@ const columns = [
   { key: "isActive", label: "상태" },
 ] as const;
 
+const productById = (productId?: string) =>
+  productId ? productStore.findById(productId) : null;
+
 const filteredBanners = computed(() => {
   const q = keyword.value.trim().toLowerCase();
   return bannerStore.banners.filter((banner) => {
+    const product = productById(banner.productId);
     const matchesKeyword =
       !q ||
+      banner.slug.toLowerCase().includes(q) ||
       banner.title.toLowerCase().includes(q) ||
       banner.subtitle.toLowerCase().includes(q) ||
-      banner.linkUrl.toLowerCase().includes(q);
+      banner.linkUrl.toLowerCase().includes(q) ||
+      Boolean(product?.name.toLowerCase().includes(q));
     const matchesPlacement =
       !placement.value || banner.placement === placement.value;
     const matchesActive =
@@ -88,7 +109,10 @@ const remove = async (id: string) => {
 };
 
 onMounted(async () => {
-  await bannerStore.fetchBanners(true);
+  await Promise.all([
+    bannerStore.fetchBanners(true),
+    productStore.fetchCatalog(),
+  ]);
 });
 
 useHead({ title: "관리자 배너 관리" });
@@ -114,6 +138,27 @@ useHead({ title: "관리자 배너 관리" });
   border: 1px solid var(--color-line);
   border-radius: 8px;
   object-fit: cover;
+}
+
+.product-cell {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 180px;
+}
+
+.product-thumb {
+  width: 38px;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.product-cell span {
+  font-weight: 800;
+  word-break: keep-all;
 }
 
 @media (min-width: 960px) {
