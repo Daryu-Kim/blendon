@@ -1,11 +1,9 @@
 import {
   browserSessionPersistence,
-  createUserWithEmailAndPassword,
   onAuthStateChanged,
   setPersistence,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
-  updateProfile,
 } from "firebase/auth";
 import {
   collection,
@@ -15,7 +13,6 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { defineStore } from "pinia";
@@ -46,7 +43,7 @@ export interface SignUpProfileInput {
   email: string;
   displayName: string;
   phoneNumber: string;
-  birthDate: string;
+  birthDate?: string;
   termsAgreement: TermsAgreement;
 }
 
@@ -232,7 +229,7 @@ export const useAuthStore = defineStore("auth", {
             this.profile = normalizeProfile(snap.data() as UserProfile);
           } else {
             const defaultUserGrade = await defaultGrade();
-            const profile = createDefaultProfile(
+            this.profile = createDefaultProfile(
               user.uid,
               user.email || "",
               user.displayName || "블렌드 고객",
@@ -240,12 +237,6 @@ export const useAuthStore = defineStore("auth", {
               defaultUserGrade.gradeCode,
               defaultUserGrade.level,
             );
-            await setDoc(ref, {
-              ...profile,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-            this.profile = profile;
           }
           writeStoredProfile(this.profile);
           this.initialized = true;
@@ -297,40 +288,25 @@ export const useAuthStore = defineStore("auth", {
       password: string,
       displayName: string,
       input?: Partial<SignUpProfileInput>,
+      verificationToken?: string,
     ) {
       this.loading = true;
       this.error = "";
       try {
         return await useGlobalLoading().withLoading(async () => {
-          const firebase = useNuxtApp().$firebase;
-          if (firebase.enabled && firebase.auth && firebase.db) {
-            await setPersistence(firebase.auth, browserSessionPersistence);
-            const credential = await createUserWithEmailAndPassword(
-              firebase.auth,
+          await $fetch("/api/auth/signup", {
+            method: "POST",
+            body: {
               email,
               password,
-            );
-            await updateProfile(credential.user, { displayName });
-            const defaultUserGrade = await defaultGrade();
-            const profile = createDefaultProfile(
-              credential.user.uid,
-              email,
+              loginId: input?.loginId || "",
               displayName,
-              input,
-              defaultUserGrade.gradeCode,
-              defaultUserGrade.level,
-            );
-            await setDoc(doc(firebase.db, "users", credential.user.uid), {
-              ...profile,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-            });
-            this.profile = profile;
-            writeStoredProfile(profile);
-            return profile;
-          }
-
-          throw new Error("Firebase Authentication 설정이 필요합니다.");
+              phoneNumber: input?.phoneNumber || "",
+              termsAgreement: input?.termsAgreement,
+              verificationToken,
+            },
+          });
+          return await this.signIn(email, password);
         }, "회원가입 처리 중");
       } catch (error) {
         this.error = toUserMessage(

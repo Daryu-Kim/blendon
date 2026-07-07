@@ -15,7 +15,7 @@
       <div class="section-title center-title">
         <div>
           <h2>SHOP BY CATEGORY</h2>
-          <p>필요한 카테고리로 빠르게 이동하세요.</p>
+          <p>디바이스, 무니코틴 액상, 소모품을 카테고리별로 살펴보세요.</p>
         </div>
       </div>
       <div class="category-tile-grid">
@@ -36,25 +36,31 @@
       <div class="section-title center-title">
         <div>
           <h2>BEST PRODUCT</h2>
-          <p>지금 가장 먼저 확인하기 좋은 셀렉션입니다.</p>
+          <p>많이 찾는 상품을 카테고리별로 빠르게 확인하세요.</p>
         </div>
       </div>
-      <nav class="best-tabs" aria-label="베스트 상품 바로가기">
-        <NuxtLink v-for="tab in bestTabs" :key="tab.label" :to="tab.to">{{
-          tab.label
-        }}</NuxtLink>
+      <nav class="best-tabs" aria-label="베스트 상품 카테고리 선택">
+        <button
+          v-for="tab in bestTabs"
+          :key="tab.categoryId || 'all'"
+          type="button"
+          :class="{ active: activeBestCategoryId === tab.categoryId }"
+          @click="activeBestCategoryId = tab.categoryId"
+        >
+          {{ tab.label }}
+        </button>
       </nav>
-      <ProductGrid :products="products.slice(0, 5)" />
+      <ProductGrid :products="bestProducts" />
     </section>
 
     <section class="page-shell promo-banner">
       <div>
         <p class="eyebrow">NICOTINE FREE</p>
-        <h2>니코틴 없이 즐기는 향의 선택</h2>
-        <p>부담은 낮추고, 취향은 더 선명하게.</p>
+        <h2>무니코틴 액상으로 선명하게 고르는 취향</h2>
+        <p>니코틴 없이 향과 쿨링감 중심으로 선택하세요.</p>
       </div>
       <Button to="/products?category=nicotine-free" variant="secondary"
-        >니코틴 프리 보기</Button
+        >무니코틴 액상 보기</Button
       >
     </section>
 
@@ -88,8 +94,8 @@
           <span>02</span>
           <h2>배송/픽업 안내</h2>
           <p>
-            기본 배송부터 추후 매장 픽업과 라운지 픽업까지 확장할 수 있게
-            설계합니다.
+            배송 주문과 매장 픽업 주문을 선택할 수 있으며, 주문 내역에서
+            진행 상태를 확인할 수 있습니다.
           </p>
           <NuxtLink to="/guide">이용안내 보기</NuxtLink>
         </article>
@@ -105,11 +111,15 @@
 </template>
 
 <script setup lang="ts">
+import type { Category } from "~/types/domain";
+
 const productStore = useProductStore();
+const settingsStore = useSiteSettingsStore();
 const products = computed(() => productStore.visibleProducts);
+const activeBestCategoryId = ref("");
 
 onMounted(async () => {
-  await productStore.fetchCatalog();
+  await Promise.all([productStore.fetchCatalog(), settingsStore.fetchSettings()]);
 });
 
 const byCategory = (categoryId: string) =>
@@ -120,116 +130,151 @@ const byCategory = (categoryId: string) =>
 const noticeItems = [
   {
     title: "ADULT ONLY",
-    description: "성인 회원 전용 카테고리 운영",
+    description: "성인 인증 후 이용 가능한 안전한 구매 환경",
     to: "/guide",
   },
   {
-    title: "PICKUP READY",
-    description: "매장 픽업 확장 준비 중",
+    title: "STORE PICKUP",
+    description: "원하는 방식으로 선택하는 배송과 매장 픽업",
     to: "/guide",
   },
   {
     title: "MEMBERSHIP",
-    description: "등급별 혜택가 구조 적용",
+    description: "회원 등급별 혜택가와 적립 혜택 제공",
     to: "/mypage",
   },
 ];
 
-const categoryAllowed = (categoryId: string) =>
-  productStore.visibleCategories.some((category) => category.id === categoryId);
-
-const categoryTileItems = [
-  {
+const categoryMeta: Record<string, { kicker: string; description: string }> = {
+  device: {
     kicker: "DEVICE",
-    title: "디바이스",
-    description: "입문용부터 교체형까지",
-    categoryId: "device",
-    to: "/products?category=device",
+    description: "기기 타입과 사용 방식에 맞춰 고르기",
   },
-  {
+  flavor: {
     kicker: "FLAVOR",
-    title: "플레이버",
-    description: "향과 무드로 고르는 선택",
-    categoryId: "flavor",
-    to: "/products?category=flavor",
+    description: "향과 쿨링감 중심으로 살펴보기",
   },
-  {
+  "nicotine-free": {
     kicker: "ZERO",
-    title: "니코틴 프리",
-    description: "니코틴 없이 즐기는 향",
-    categoryId: "nicotine-free",
-    to: "/products?category=nicotine-free",
+    description: "니코틴 없이 즐기는 무니코틴 액상",
   },
-  {
+  consumable: {
     kicker: "REFILL",
-    title: "리필/소모품",
-    description: "팟, 카트리지, 케이블",
-    categoryId: "consumable",
-    to: "/products?category=consumable",
+    description: "팟, 카트리지, 코일 등 소모품",
   },
-];
-const categoryTiles = computed(() =>
-  categoryTileItems.filter((tile) => categoryAllowed(tile.categoryId)),
+  brand: {
+    kicker: "BRAND",
+    description: "브랜드별 대표 상품 모아보기",
+  },
+  "starter-pick": {
+    kicker: "STARTER",
+    description: "처음 고르는 분을 위한 추천 구성",
+  },
+};
+
+const findVisibleCategory = (categoryId: string) =>
+  productStore.visibleCategories.find((category) => category.id === categoryId);
+
+const categoryTo = (category: Category) =>
+  `/products?category=${encodeURIComponent(productStore.categoryRouteValue(category))}`;
+
+const categoryKicker = (category: Category) =>
+  categoryMeta[category.id]?.kicker ||
+  (category.slug || category.id).replace(/-/g, " ").toUpperCase();
+
+const categoryDescription = (category: Category) =>
+  categoryMeta[category.id]?.description ||
+  (category.parentId
+    ? "세부 카테고리별 상품을 빠르게 확인하세요."
+    : "카테고리별 상품을 한눈에 확인하세요.");
+
+const configuredHomeCategoryIds = computed(
+  () => settingsStore.global.homeCategoryTileIds,
+);
+const configuredBestCategoryIds = computed(
+  () => settingsStore.global.homeBestCategoryIds,
 );
 
-const bestTabItems = [
-  { label: "전체", to: "/products" },
-  { label: "디바이스", categoryId: "device", to: "/products?category=device" },
-  {
-    label: "니코틴 프리",
-    categoryId: "nicotine-free",
-    to: "/products?category=nicotine-free",
+const categoryTiles = computed(() =>
+  configuredHomeCategoryIds.value
+    .map((categoryId) => findVisibleCategory(categoryId))
+    .filter((category): category is Category => Boolean(category))
+    .map((category) => ({
+      kicker: categoryKicker(category),
+      title: category.name,
+      description: categoryDescription(category),
+      categoryId: category.id,
+      to: categoryTo(category),
+    })),
+);
+
+const bestTabs = computed(() => {
+  const categoryTabs = configuredBestCategoryIds.value
+    .map((categoryId) => findVisibleCategory(categoryId))
+    .filter((category): category is Category => Boolean(category))
+    .map((category) => ({
+      label: category.name,
+      categoryId: category.id,
+    }));
+  return [{ label: "전체", categoryId: "" }, ...categoryTabs];
+});
+
+watch(
+  bestTabs,
+  (tabs) => {
+    if (!tabs.some((tab) => tab.categoryId === activeBestCategoryId.value)) {
+      activeBestCategoryId.value = "";
+    }
   },
-  {
-    label: "리필/소모품",
-    categoryId: "consumable",
-    to: "/products?category=consumable",
-  },
-];
-const bestTabs = computed(() =>
-  bestTabItems.filter((tab) => !tab.categoryId || categoryAllowed(tab.categoryId)),
+  { immediate: true },
+);
+
+const bestProducts = computed(() =>
+  activeBestCategoryId.value
+    ? byCategory(activeBestCategoryId.value)
+    : products.value.slice(0, 5),
 );
 
 const sections = computed(() => [
   {
     title: "오늘의 인기 상품",
-    description: "지금 많이 확인하는 셀렉션입니다.",
+    description: "지금 많이 찾는 디바이스와 액상, 소모품을 모았습니다.",
     to: "/products",
     products: products.value.slice(0, 5),
   },
   {
     title: "처음이라면 이 상품부터",
-    description: "구성, 호환성, 사용 흐름이 쉬운 상품을 모았어요.",
+    description: "구성과 호환성을 쉽게 확인할 수 있는 입문 추천 상품입니다.",
     to: "/products?category=starter-pick",
     products: byCategory("starter-pick"),
   },
   {
-    title: "니코틴 프리 플레이버",
-    description: "니코틴 없이 즐기는 향의 선택.",
+    title: "무니코틴 액상",
+    description: "니코틴 없이 향과 쿨링감 중심으로 고르는 셀렉션입니다.",
     to: "/products?category=nicotine-free",
     products: byCategory("nicotine-free"),
   },
   {
     title: "리필/소모품",
-    description: "팟, 카트리지, 케이블 등 필요한 구성입니다.",
+    description: "팟, 카트리지, 코일 등 필요한 소모품을 모았습니다.",
     to: "/products?category=consumable",
     products: byCategory("consumable"),
   },
   {
-    title: "라운지 픽",
-    description: "오프라인 라운지 확장을 염두에 둔 큐레이션입니다.",
+    title: "매장 픽업 추천",
+    description: "매장에서 직접 수령하기 좋은 상품을 확인하세요.",
     to: "/products?category=lounge-pick",
     products: byCategory("lounge-pick"),
   },
   {
     title: "새로 들어온 상품",
-    description: "최근 등록된 더미 상품 기준으로 보여줍니다.",
+    description: "새롭게 입고된 상품을 가장 먼저 확인하세요.",
     to: "/products",
     products: [...products.value].reverse().slice(0, 5),
   },
   {
     title: "브랜드관",
-    description: "가상 브랜드 셀렉션으로 구성된 초기 브랜드관입니다.",
+    description: "브랜드별 취향과 대표 상품을 비교해 보세요.",
     to: "/products?category=brand",
     products: products.value.slice(0, 5),
   },
@@ -295,8 +340,8 @@ useHead({ title: "홈" });
 
 .category-tile {
   display: grid;
-  min-height: 138px;
-  align-content: end;
+  min-height: 112px;
+  align-content: center;
   gap: 6px;
   border: 1px solid #eadfcd;
   border-radius: 8px;
@@ -338,14 +383,23 @@ useHead({ title: "홈" });
   margin: -4px 0 18px;
 }
 
-.best-tabs a {
+.best-tabs button {
   flex: 0 0 auto;
   border: 1px solid var(--color-line);
   border-radius: 999px;
   background: #fff;
   padding: 9px 14px;
+  color: var(--color-primary);
+  cursor: pointer;
+  font: inherit;
   font-size: 13px;
   font-weight: 900;
+}
+
+.best-tabs button.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
 }
 
 .promo-banner {

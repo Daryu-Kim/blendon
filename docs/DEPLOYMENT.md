@@ -26,8 +26,8 @@ firebase deploy --only functions
 ## 운영 전 체크리스트
 
 - 실제 사업자 정보 입력
-- 성인 인증 provider 연결
-- PortOne live channel 설정
+- `APICK_AUTH_KEY` 설정과 APick 주민등록증 진위확인 API 운영 상태 확인
+- 결제 안내 문자 발송/입금 확인 운영 절차 확정
 - 환불/취소 API 검증
 - Firestore Rules emulator 테스트
 - 관리자 custom claim 부여 절차 확정

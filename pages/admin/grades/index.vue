@@ -19,7 +19,7 @@
         {{
           row.freeShippingThreshold > 0
             ? formatCurrency(row.freeShippingThreshold)
-            : "조건 없음"
+            : "항상 무료배송"
         }}
       </template>
       <template #actions="{ row }">

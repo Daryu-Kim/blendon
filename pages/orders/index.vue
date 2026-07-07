@@ -17,9 +17,9 @@
             <strong>{{ order.orderNo }}</strong>
             <p>{{ formatDate(order.createdAt) }}</p>
           </div>
-          <div>
-            <span class="pill">{{ order.paymentStatus }}</span>
-            <span class="pill">{{ order.deliveryStatus }}</span>
+          <div class="status-pills">
+            <span class="pill">{{ paymentStatusLabel(order.paymentStatus) }}</span>
+            <span class="pill">{{ deliveryStatusLabel(order) }}</span>
           </div>
           <strong>{{ formatCurrency(order.totalAmount) }}</strong>
         </div>
@@ -30,6 +30,28 @@
             {{ order.deliveryCompany || "택배" }}
             {{ order.trackingNumber }}
           </strong>
+        </div>
+
+        <div v-if="order.paymentGuide" class="payment-guide">
+          <strong>{{ paymentMethodLabel(order.paymentMethod) }}</strong>
+          <p>{{ order.paymentGuide }}</p>
+          <dl v-if="order.paymentMethod === 'transfer'">
+            <div>
+              <dt>은행</dt>
+              <dd>{{ order.depositBankName || "-" }}</dd>
+            </div>
+            <div>
+              <dt>계좌번호</dt>
+              <dd>{{ order.depositAccountNumber || "-" }}</dd>
+            </div>
+            <div>
+              <dt>예금주</dt>
+              <dd>{{ order.depositAccountHolder || "-" }}</dd>
+            </div>
+          </dl>
+          <p v-if="order.paymentDueAt" class="deadline">
+            결제 기한: {{ formatDate(order.paymentDueAt) }}
+          </p>
         </div>
 
         <div class="order-items">
@@ -86,13 +108,55 @@
 </template>
 
 <script setup lang="ts">
-import type { Order, OrderItem } from "~/types/domain";
+import type { Order, OrderItem, PaymentMethod } from "~/types/domain";
 import { formatCurrency, formatDate } from "~/utils/format";
 
 definePageMeta({ middleware: "auth" });
 const orderStore = useOrderStore();
 const productStore = useProductStore();
 const activeReviewKey = ref("");
+
+const paymentMethodLabel = (method: PaymentMethod) =>
+  method === "transfer" ? "계좌이체 안내" : "신용/체크카드 안내";
+
+const paymentStatusLabels: Record<Order["paymentStatus"], string> = {
+  pending: "결제 대기",
+  ready: "결제 대기",
+  paid: "결제 완료",
+  failed: "결제 실패",
+  canceled: "결제 취소",
+  refunded: "환불 완료",
+};
+
+const deliveryStatusLabels: Record<Order["deliveryStatus"], string> = {
+  none: "배송 준비 전",
+  ready: "배송 준비중",
+  shipping: "배송중",
+  delivered: "배송 완료",
+  "pickup-ready": "픽업 준비 완료",
+  "picked-up": "픽업 완료",
+};
+
+const claimStatusLabels: Record<Order["claimStatus"], string> = {
+  none: "",
+  requested: "처리 요청 접수",
+  approved: "처리 승인",
+  rejected: "처리 반려",
+  completed: "처리 완료",
+};
+
+const paymentStatusLabel = (status: Order["paymentStatus"]) =>
+  paymentStatusLabels[status] || status;
+
+const deliveryStatusLabel = (order: Order) => {
+  if (order.orderStatus === "canceled") return "주문 취소";
+  if (order.claimStatus !== "none") return claimStatusLabels[order.claimStatus];
+  if (order.deliveryStatus === "none") {
+    if (order.paymentStatus !== "paid") return "결제 확인 대기";
+    return order.pickupType === "store-pickup" ? "픽업 준비 전" : "배송 준비 전";
+  }
+  return deliveryStatusLabels[order.deliveryStatus] || order.deliveryStatus;
+};
 
 const canWriteReview = (order: Order) =>
   order.paymentStatus === "paid" &&
@@ -145,6 +209,13 @@ useHead({ title: "주문 내역" });
   color: var(--color-muted);
 }
 
+.status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
 .tracking-info {
   display: flex;
   flex-wrap: wrap;
@@ -164,6 +235,49 @@ useHead({ title: "주문 내역" });
 
 .tracking-info strong {
   word-break: keep-all;
+}
+
+.payment-guide {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: #fbf8f1;
+  padding: 12px;
+}
+
+.payment-guide p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
+
+.payment-guide dl {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.payment-guide dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.payment-guide dt {
+  color: var(--color-muted);
+}
+
+.payment-guide dd {
+  margin: 0;
+  font-weight: 900;
+  text-align: right;
+}
+
+.deadline {
+  font-weight: 900;
 }
 
 .order-items {

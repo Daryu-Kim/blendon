@@ -13,7 +13,7 @@
             <span>01</span>
             <div>
               <h2>본인확인</h2>
-              <p>회원가입 시 성인 여부를 1회 확인합니다.</p>
+              <p>주민등록증 진위확인 후 성인 회원만 가입할 수 있습니다.</p>
             </div>
           </div>
 
@@ -38,26 +38,66 @@
               />
             </div>
             <div class="form-row">
-              <label for="birthDate">생년월일</label>
+              <label for="rrn1">주민등록번호 앞 6자리</label>
               <Input
-                id="birthDate"
-                v-model="form.birthDate"
-                type="date"
+                id="rrn1"
+                v-model="form.rrn1"
+                inputmode="numeric"
+                maxlength="6"
+                autocomplete="off"
                 required
               />
             </div>
-            <div class="verify-action">
-              <Button
-                type="button"
-                variant="secondary"
-                :disabled="identityVerified"
-                @click="verifyIdentity"
-              >
-                {{ identityVerified ? "확인 완료" : "본인확인" }}
-              </Button>
+            <div class="form-row">
+              <label for="rrn2">주민등록번호 뒤 7자리</label>
+              <Input
+                id="rrn2"
+                v-model="form.rrn2"
+                type="password"
+                inputmode="numeric"
+                maxlength="7"
+                autocomplete="off"
+                required
+              />
+            </div>
+            <div class="form-row">
+              <label for="issueDate">주민등록증 발급일자</label>
+              <Input
+                id="issueDate"
+                v-model="form.issueDate"
+                inputmode="numeric"
+                maxlength="8"
+                placeholder="YYYYMMDD"
+                autocomplete="off"
+                required
+              />
             </div>
           </div>
-          <p v-if="identityMessage" class="success">{{ identityMessage }}</p>
+          <p class="field-help">
+            입력한 주민등록증 정보는 진위확인에만 사용하며 저장하지 않습니다.
+          </p>
+          <div class="verify-action">
+            <Button
+              type="button"
+              variant="secondary"
+              :disabled="verificationLoading"
+              @click="verifyAdult"
+            >
+              {{
+                verificationLoading
+                  ? "확인 중"
+                  : verificationToken
+                    ? "다시 인증하기"
+                    : "성인 인증하기"
+              }}
+            </Button>
+            <p
+              v-if="verificationMessage"
+              :class="verificationToken ? 'success' : 'error'"
+            >
+              {{ verificationMessage }}
+            </p>
+          </div>
         </section>
 
         <section class="surface form-section">
@@ -173,7 +213,9 @@
 
         <p v-if="error" class="error">{{ error }}</p>
         <div class="submit-row">
-          <Button type="submit" size="lg" :disabled="loading">가입하기</Button>
+          <Button type="submit" size="lg" :disabled="loading">
+            {{ loading ? "가입 중" : "가입하기" }}
+          </Button>
           <NuxtLink to="/login">이미 계정이 있어요</NuxtLink>
         </div>
       </form>
@@ -201,7 +243,6 @@ import { legalConfig } from "~/config/legal";
 import { toUserMessage } from "~/utils/error-message";
 
 const auth = useAuthStore();
-const verifier = useAdultVerification();
 const router = useRouter();
 
 const form = reactive({
@@ -210,7 +251,9 @@ const form = reactive({
   password: "",
   displayName: "",
   phoneNumber: "",
-  birthDate: "",
+  rrn1: "",
+  rrn2: "",
+  issueDate: "",
 });
 const passwordConfirm = ref("");
 const terms = reactive({
@@ -220,10 +263,11 @@ const terms = reactive({
   marketing: false,
   nightMarketing: false,
 });
-const identityVerified = ref(false);
-const identityMessage = ref("");
 const error = ref("");
 const loading = ref(false);
+const verificationLoading = ref(false);
+const verificationToken = ref("");
+const verificationMessage = ref("");
 
 const allTerms = computed({
   get: () =>
@@ -275,45 +319,84 @@ const requiredTermsAccepted = computed(
   () => terms.service && terms.privacy && terms.refund,
 );
 
-const isAdult = (value: string) => {
-  const birth = new Date(`${value}T00:00:00+09:00`);
-  if (Number.isNaN(birth.getTime())) return false;
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate()))
-    age -= 1;
-  return age >= 19;
-};
-
-const verifyIdentity = () => {
-  error.value = "";
-  identityMessage.value = "";
-  if (!form.displayName.trim() || !form.phoneNumber.trim() || !form.birthDate) {
-    error.value = "이름, 휴대폰 번호, 생년월일을 입력해 주세요.";
-    return;
-  }
-  if (!isAdult(form.birthDate)) {
-    error.value = "성인 고객만 가입할 수 있습니다.";
-    identityVerified.value = false;
-    return;
-  }
-  identityVerified.value = true;
-  identityMessage.value = "본인확인이 완료되었습니다.";
-};
+const digitsOnly = (value: string) => value.replace(/\D/g, "");
 
 watch(
-  () => [form.displayName, form.phoneNumber, form.birthDate],
+  () => [form.displayName, form.rrn1, form.rrn2, form.issueDate],
   () => {
-    identityVerified.value = false;
-    identityMessage.value = "";
+    if (!verificationToken.value) return;
+    verificationToken.value = "";
+    verificationMessage.value = "인증 정보가 변경되었습니다. 다시 인증해 주세요.";
   },
 );
 
+const verifyAdult = async () => {
+  error.value = "";
+  verificationMessage.value = "";
+  const rrn1 = digitsOnly(form.rrn1);
+  const rrn2 = digitsOnly(form.rrn2);
+  const issueDate = digitsOnly(form.issueDate);
+
+  if (!form.displayName.trim()) {
+    verificationMessage.value = "이름을 입력해 주세요.";
+    return;
+  }
+  if (!/^\d{6}$/.test(rrn1) || !/^\d{7}$/.test(rrn2)) {
+    verificationMessage.value = "주민등록번호를 정확히 입력해 주세요.";
+    return;
+  }
+  if (!/^\d{8}$/.test(issueDate)) {
+    verificationMessage.value = "주민등록증 발급일자를 8자리로 입력해 주세요.";
+    return;
+  }
+
+  verificationLoading.value = true;
+  try {
+    const result = await $fetch<{
+      ok: boolean;
+      verificationToken: string;
+      expiresAt: string;
+    }>("/api/auth/signup-verification", {
+      method: "POST",
+      body: {
+        name: form.displayName.trim(),
+        rrn1,
+        rrn2,
+        issueDate,
+      },
+    });
+    if (!result.ok || !result.verificationToken) {
+      throw new Error("성인 인증에 실패했어요.");
+    }
+
+    verificationToken.value = result.verificationToken;
+    const expiresAt = new Date(result.expiresAt);
+    const expiresText = Number.isNaN(expiresAt.getTime())
+      ? "30분 안에"
+      : `${expiresAt.toLocaleTimeString("ko-KR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}까지`;
+    verificationMessage.value = `성인 인증이 완료되었습니다. ${expiresText} 가입을 완료해 주세요.`;
+  } catch (e) {
+    verificationToken.value = "";
+    verificationMessage.value = toUserMessage(
+      e,
+      "성인 인증에 실패했어요. 입력한 정보를 다시 확인해 주세요.",
+    );
+  } finally {
+    verificationLoading.value = false;
+  }
+};
+
 const submit = async () => {
   error.value = "";
-  if (!identityVerified.value) {
-    error.value = "본인확인을 먼저 진행해 주세요.";
+  if (!form.displayName.trim() || !form.phoneNumber.trim()) {
+    error.value = "이름과 휴대폰 번호를 입력해 주세요.";
+    return;
+  }
+  if (!verificationToken.value) {
+    error.value = "성인 인증을 먼저 완료해 주세요.";
     return;
   }
   if (!/^[a-zA-Z0-9._-]{4,30}$/.test(form.loginId)) {
@@ -342,7 +425,6 @@ const submit = async () => {
       email: form.email,
       displayName: form.displayName,
       phoneNumber: form.phoneNumber,
-      birthDate: form.birthDate,
       termsAgreement: {
         service: consent(terms.service),
         privacy: consent(terms.privacy),
@@ -358,8 +440,8 @@ const submit = async () => {
       form.password,
       form.displayName,
       profileInput,
+      verificationToken.value,
     );
-    await verifier.verifyWithMockProvider(form.birthDate);
     await router.push("/mypage");
   } catch (e) {
     error.value =
@@ -442,7 +524,13 @@ useHead({ title: "회원가입" });
 
 .verify-action {
   display: flex;
-  align-items: end;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.verify-action p {
+  margin: 0;
 }
 
 .terms-box {
@@ -565,10 +653,6 @@ useHead({ title: "회원가입" });
 @media (min-width: 700px) {
   .two-fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .verify-action {
-    align-items: end;
   }
 }
 </style>

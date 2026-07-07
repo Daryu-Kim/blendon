@@ -42,7 +42,7 @@
 
     <AdminFormSection
       title="혜택"
-      description="상품 고정 등급가가 없는 경우 회원가에 할인율을 적용합니다."
+      description="상품 고정 등급가가 없는 경우 회원가에 할인율을 적용합니다. 무료배송 기준을 0으로 두면 조건 없이 무료배송됩니다."
     >
       <div class="form-grid">
         <div class="form-row">

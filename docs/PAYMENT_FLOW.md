@@ -3,35 +3,31 @@
 ## 흐름
 
 1. 사용자가 주문서를 작성한다.
-2. 서버가 상품 가격, 재고, 성인 인증, 등급을 다시 확인한다.
-3. 서버가 pending 주문과 `paymentId`를 생성한다.
-4. 프론트가 PortOne Browser SDK로 결제창을 호출한다.
-5. 프론트가 결제 결과의 `paymentId`를 서버 검증 API로 보낸다.
-6. 서버가 PortOne API로 실제 결제 상태와 금액을 조회한다.
-7. 금액과 상태가 맞으면 주문을 `paid`로 확정하고 재고를 차감한다.
-8. 실패하면 주문을 `failed`로 표시한다.
+2. 서버가 상품 가격, 배송비, 성인 인증, 등급, 구매 권한을 다시 확인한다.
+3. 서버가 주문을 `ready` 상태로 접수하고 결제 기한을 주문 접수 시점부터 24시간 뒤로 저장한다.
+4. 신용/체크카드 선택 시 운영자가 P플 SMS 결제 안내를 영업시간 내 문자로 발송한다.
+5. 계좌이체 선택 시 쇼핑몰 설정에 저장된 사업자 계좌를 주문서, 주문 완료, 주문 내역에 표시한다.
+6. 결제 또는 입금 확인 후 관리자가 주문 관리에서 결제 상태를 `paid`로 변경한다.
+7. 결제 완료 처리 시 주문은 `confirmed`가 되고 배송 또는 픽업 준비 단계로 넘어간다.
 
 ## 보안 원칙
 
-- 클라이언트 결제 성공 콜백만으로 주문을 완료하지 않는다.
 - 클라이언트가 보낸 상품 가격이나 총액을 신뢰하지 않는다.
-- `PORTONE_API_SECRET`은 서버 환경변수로만 사용한다.
+- 주문 생성은 서버에서 가격, 재고, 성인 확인 상태, 등급을 다시 확인한다.
+- 결제 완료 처리는 관리자 확인 이후에만 반영한다.
 
 ## 구현 위치
 
-- 브라우저 호출: `composables/usePortOnePayment.ts`
-- Nuxt 서버 검증: `server/api/payments/verify.post.ts`
-- Firebase Functions 검증: `functions/src/index.ts`
+- 주문 생성: `server/api/orders/create.post.ts`
+- 주문 금액/배송비 계산: `server/utils/order-service.ts`
+- 결제 상태 변경: `stores/order.ts`, `pages/admin/orders.vue`
+- 결제 안내 표시: `pages/checkout.vue`, `pages/payment/complete.vue`, `pages/orders/index.vue`
 
-## PortOne 전자결제 신청 전 공개 페이지
+## 공개 페이지
 
-전자결제 심사 전 아래 항목은 웹사이트 푸터에서 접근 가능해야 한다.
+결제 및 판매 운영 전 아래 항목은 웹사이트 푸터에서 접근 가능해야 한다.
 
 - 사업자 정보: `/business-info`
 - 이용약관: `/terms`
 - 개인정보처리방침: `/privacy`
 - 취소/환불 및 청약철회 정책: `/refund-policy`
-
-현재 사업자 정보는 `config/legal.ts`의 임시값을 사용한다. 실제 신청 전 사업자등록증, 통신판매업 신고증, 고객센터 정보와 일치하도록 교체해야 한다.
-
-PortOne SDK/API 세부 파라미터는 공식 문서를 기준으로 채널별 설정을 확정해야 한다.

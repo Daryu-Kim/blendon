@@ -27,10 +27,4 @@ declare module "vue" {
   }
 }
 
-declare global {
-  interface Window {
-    PortOne?: unknown;
-  }
-}
-
 export {};

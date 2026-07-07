@@ -18,6 +18,7 @@ import {
   gradeLevel,
   PUBLIC_ACCESS_GRADE,
 } from "~/utils/access";
+import { gradeBenefitSeed } from "~/config/catalog";
 import type {
   Category,
   DeviceType,
@@ -119,23 +120,9 @@ const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
   updatedAt: timestampToIso(data.updatedAt),
 });
 
-const fallbackGrades: GradeBenefit[] = ["BASIC", "PLUS", "PRO", "VIP", "BLACK"].map(
-  (gradeCode, index) => ({
-    id: gradeCode,
-    gradeCode,
-    internalCode: `G${index + 1}`,
-    level: index + 1,
-    label: gradeCode,
-    discountRate: 0,
-    pointRate: 0,
-    minPurchaseAmount: 0,
-    freeShippingThreshold: 0,
-    isVisible: true,
-    order: index + 1,
-    createdAt: new Date(0).toISOString(),
-    updatedAt: new Date(0).toISOString(),
-  }),
-);
+const fallbackGrades: GradeBenefit[] = gradeBenefitSeed.map((grade) => ({
+  ...grade,
+}));
 
 const normalizeGradeBenefit = (id: string, data: Partial<GradeBenefit>) =>
   ({

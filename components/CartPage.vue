@@ -94,6 +94,7 @@ import { formatCurrency } from "~/utils/format";
 const cart = useCartStore();
 const auth = useAuthStore();
 const productStore = useProductStore();
+const settingsStore = useSiteSettingsStore();
 
 type DetailedCartItem = NonNullable<(typeof cart.detailedItems)[number]>;
 
@@ -106,7 +107,7 @@ const productPath = (slug: string) => `/products/${slug}`;
 
 onMounted(async () => {
   cart.hydrate();
-  await productStore.fetchCatalog();
+  await Promise.all([productStore.fetchCatalog(), settingsStore.fetchSettings()]);
 });
 </script>
 

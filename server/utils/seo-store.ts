@@ -23,6 +23,13 @@ export interface PublicGlobalSettings {
   businessAddress: string;
   customerCenterPhone: string;
   customerCenterEmail: string;
+  baseDeliveryFee: number;
+  storeMapUrl: string;
+  depositBankName: string;
+  depositAccountNumber: string;
+  depositAccountHolder: string;
+  homeCategoryTileIds: string[];
+  homeBestCategoryIds: string[];
   productDetailTopBannerImageUrl: string;
   productDetailBottomBannerImageUrl: string;
 }
@@ -48,6 +55,19 @@ export const defaultPublicSeoSettings = (): PublicSeoSettings => ({
   robots: "index,follow",
 });
 
+const defaultHomeCategoryTileIds = [
+  "device",
+  "flavor",
+  "nicotine-free",
+  "consumable",
+];
+const defaultHomeBestCategoryIds = ["device", "nicotine-free", "consumable"];
+
+const normalizeStringList = (value: unknown, fallback: string[]) => {
+  if (!Array.isArray(value)) return [...fallback];
+  return value.map((item) => String(item).trim()).filter(Boolean);
+};
+
 export const defaultPublicGlobalSettings = (): PublicGlobalSettings => ({
   mallName: "BLEND ON",
   mallDescription: "성인 취향을 쉽고 깔끔하게 고르는 라이프스타일 편집샵",
@@ -58,6 +78,13 @@ export const defaultPublicGlobalSettings = (): PublicGlobalSettings => ({
   businessAddress: "사업장 주소 입력 예정",
   customerCenterPhone: "0000-0000",
   customerCenterEmail: "support@example.com",
+  baseDeliveryFee: 3000,
+  storeMapUrl: "",
+  depositBankName: "",
+  depositAccountNumber: "",
+  depositAccountHolder: "",
+  homeCategoryTileIds: [...defaultHomeCategoryTileIds],
+  homeBestCategoryIds: [...defaultHomeBestCategoryIds],
   productDetailTopBannerImageUrl: "",
   productDetailBottomBannerImageUrl: "",
 });
@@ -96,6 +123,19 @@ export const getServerGlobalSettings =
       customerCenterEmail:
         data.customerCenterEmail ||
         defaultPublicGlobalSettings().customerCenterEmail,
+      baseDeliveryFee: Number(data.baseDeliveryFee ?? 3000),
+      storeMapUrl: data.storeMapUrl || "",
+      depositBankName: data.depositBankName || "",
+      depositAccountNumber: data.depositAccountNumber || "",
+      depositAccountHolder: data.depositAccountHolder || "",
+      homeCategoryTileIds: normalizeStringList(
+        data.homeCategoryTileIds,
+        defaultHomeCategoryTileIds,
+      ),
+      homeBestCategoryIds: normalizeStringList(
+        data.homeBestCategoryIds,
+        defaultHomeBestCategoryIds,
+      ),
       productDetailTopBannerImageUrl: data.productDetailTopBannerImageUrl || "",
       productDetailBottomBannerImageUrl:
         data.productDetailBottomBannerImageUrl || "",

@@ -64,6 +64,27 @@ export const gradeDiscountRate = (
   gradePolicy[grade || ""]?.discountRate ??
   0;
 
+export const gradeFreeShippingThreshold = (
+  grade: GradeCode | undefined,
+  grades: GradeBenefit[] = [],
+) => {
+  const threshold =
+    findGrade(grade, grades)?.freeShippingThreshold ??
+    gradePolicy[grade || "BASIC"]?.freeShippingThreshold ??
+    0;
+  return Math.max(0, Number(threshold || 0));
+};
+
+export const qualifiesForGradeFreeShipping = (
+  subtotal: number,
+  user?: Pick<UserProfile, "userGrade"> | null,
+  grades: GradeBenefit[] = [],
+) => {
+  if (subtotal <= 0) return true;
+  const threshold = gradeFreeShippingThreshold(user?.userGrade || "BASIC", grades);
+  return threshold === 0 || subtotal >= threshold;
+};
+
 export const hasGradeAtLeast = (
   userGrade: GradeCode | undefined,
   minGrade: AccessGradeCode,

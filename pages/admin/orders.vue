@@ -27,6 +27,19 @@
       <template #actions="{ row }">
         <div class="row-actions">
           <Select
+            :model-value="row.paymentStatus"
+            @update:model-value="
+              orders.setPaymentStatus(row.id, $event as typeof row.paymentStatus)
+            "
+          >
+            <option value="pending">pending</option>
+            <option value="ready">ready</option>
+            <option value="paid">paid</option>
+            <option value="failed">failed</option>
+            <option value="canceled">canceled</option>
+            <option value="refunded">refunded</option>
+          </Select>
+          <Select
             :model-value="row.orderStatus"
             @update:model-value="
               orders.setOrderStatus(row.id, $event as typeof row.orderStatus)
@@ -134,7 +147,7 @@ useHead({ title: "관리자 주문 관리" });
 <style scoped>
 .row-actions {
   display: grid;
-  grid-template-columns: 140px 160px minmax(320px, 1fr);
+  grid-template-columns: 140px 140px 160px minmax(320px, 1fr);
   gap: 8px;
 }
 

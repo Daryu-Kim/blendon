@@ -16,7 +16,7 @@
           />
         </div>
         <div class="form-row">
-          <label>가상 브랜드명</label><Input v-model="form.brandName" />
+          <label>브랜드명</label><Input v-model="form.brandName" />
         </div>
         <div class="form-row wide">
           <label>간단 설명</label><Input v-model="form.shortDescription" />

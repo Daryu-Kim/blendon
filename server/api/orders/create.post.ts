@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
       recipientPhone: string;
       address: { zipCode: string; address1: string; address2: string };
       deliveryMemo: string;
-      pickupType: "delivery" | "store-pickup" | "lounge-pickup";
+      pickupType: "delivery" | "store-pickup";
       pointUsed: number;
       paymentMethod: PaymentMethod;
     };
@@ -57,6 +57,11 @@ export default defineEventHandler(async (event) => {
     const categories = categorySnap.docs.map(
       (snap) => ({ id: snap.id, ...snap.data() }) as Category,
     );
+    const globalSettingsSnap = await admin.db
+      .collection("siteSettings")
+      .doc("global")
+      .get();
+    const globalSettings = globalSettingsSnap.data() || {};
 
     const order = buildPendingOrder(
       user,
@@ -65,6 +70,12 @@ export default defineEventHandler(async (event) => {
       products,
       categories,
       gradeBenefits,
+      {
+        baseDeliveryFee: Number(globalSettings.baseDeliveryFee ?? 3000),
+        depositBankName: String(globalSettings.depositBankName || ""),
+        depositAccountNumber: String(globalSettings.depositAccountNumber || ""),
+        depositAccountHolder: String(globalSettings.depositAccountHolder || ""),
+      },
     );
     return await saveServerOrder(order);
   } else {

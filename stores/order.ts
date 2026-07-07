@@ -50,15 +50,16 @@ const normalizeOrder = (id: string, data: Partial<Order>): Order =>
     orderStatus: data.orderStatus || "pending",
     deliveryStatus: data.deliveryStatus || "none",
     claimStatus: data.claimStatus || "none",
-    paymentProvider: "portone",
-    portonePaymentId: data.portonePaymentId || null,
-    portoneImpUid: data.portoneImpUid || null,
-    paymentId: data.paymentId || null,
     recipientName: data.recipientName || "",
     recipientPhone: data.recipientPhone || "",
     address: data.address || { zipCode: "", address1: "", address2: "" },
     deliveryMemo: data.deliveryMemo || "",
     pickupType: data.pickupType || "delivery",
+    paymentDueAt: data.paymentDueAt || null,
+    paymentGuide: data.paymentGuide || "",
+    depositBankName: data.depositBankName || "",
+    depositAccountNumber: data.depositAccountNumber || "",
+    depositAccountHolder: data.depositAccountHolder || "",
     deliveryCompany: data.deliveryCompany || "",
     trackingNumber: data.trackingNumber || "",
     shippedAt: data.shippedAt || null,
@@ -173,18 +174,6 @@ export const useOrderStore = defineStore("order", {
         this.loading = false;
       }
     },
-    async verifyPayment(orderId: string, paymentId: string) {
-      const result = await useGlobalLoading().withLoading(
-        () =>
-          $fetch<{ order: Order }>("/api/payments/verify", {
-            method: "POST",
-            body: { orderId, paymentId },
-          }),
-        "결제를 검증하는 중",
-      );
-      this.updateOrder(result.order);
-      return result.order;
-    },
     updateOrder(order: Order) {
       const normalized = normalizeOrder(order.id, order);
       const index = this.orders.findIndex((item) => item.id === normalized.id);
@@ -208,6 +197,18 @@ export const useOrderStore = defineStore("order", {
         orderStatus: status,
         completedAt: status === "completed" ? new Date().toISOString() : null,
       });
+    },
+    setPaymentStatus(orderId: string, status: Order["paymentStatus"]) {
+      const updates: Partial<Order> = {
+        paymentStatus: status,
+        paidAt: status === "paid" ? new Date().toISOString() : null,
+      };
+      const order = this.orders.find((item) => item.id === orderId);
+      if (status === "paid")
+        updates.deliveryStatus =
+          order?.pickupType === "store-pickup" ? "pickup-ready" : "ready";
+      if (status === "paid") updates.orderStatus = "confirmed";
+      return this.patchOrder(orderId, updates);
     },
     setDeliveryStatus(orderId: string, status: Order["deliveryStatus"]) {
       return this.patchOrder(orderId, { deliveryStatus: status });

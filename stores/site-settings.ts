@@ -14,6 +14,19 @@ const timestampToIso = (value: unknown) => {
   return typeof value === "string" ? value : new Date().toISOString();
 };
 
+const defaultHomeCategoryTileIds = [
+  "device",
+  "flavor",
+  "nicotine-free",
+  "consumable",
+];
+const defaultHomeBestCategoryIds = ["device", "nicotine-free", "consumable"];
+
+const normalizeStringList = (value: unknown, fallback: string[]) => {
+  if (!Array.isArray(value)) return [...fallback];
+  return value.map((item) => String(item).trim()).filter(Boolean);
+};
+
 const defaultGlobalSettings = (): SiteGlobalSettings => ({
   id: "global",
   mallName: "BLEND ON",
@@ -28,6 +41,13 @@ const defaultGlobalSettings = (): SiteGlobalSettings => ({
   businessAddress: "",
   customerCenterPhone: "0000-0000",
   customerCenterEmail: "support@example.com",
+  baseDeliveryFee: 3000,
+  storeMapUrl: "",
+  depositBankName: "",
+  depositAccountNumber: "",
+  depositAccountHolder: "",
+  homeCategoryTileIds: [...defaultHomeCategoryTileIds],
+  homeBestCategoryIds: [...defaultHomeBestCategoryIds],
   productDetailTopBannerImageUrl: "",
   productDetailBottomBannerImageUrl: "",
   updatedAt: new Date().toISOString(),
@@ -58,6 +78,19 @@ const normalizeGlobalSettings = (
     data.requireAdultVerificationToBrowse ?? false,
   hideAdultVerificationStatusOnConsumer:
     data.hideAdultVerificationStatusOnConsumer ?? true,
+  baseDeliveryFee: Number(data.baseDeliveryFee ?? 3000),
+  storeMapUrl: data.storeMapUrl || "",
+  depositBankName: data.depositBankName || "",
+  depositAccountNumber: data.depositAccountNumber || "",
+  depositAccountHolder: data.depositAccountHolder || "",
+  homeCategoryTileIds: normalizeStringList(
+    data.homeCategoryTileIds,
+    defaultHomeCategoryTileIds,
+  ),
+  homeBestCategoryIds: normalizeStringList(
+    data.homeBestCategoryIds,
+    defaultHomeBestCategoryIds,
+  ),
   updatedAt: timestampToIso(data.updatedAt),
 });
 

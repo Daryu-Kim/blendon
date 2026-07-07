@@ -3,6 +3,7 @@ import {
   canViewProductWithCategories,
   currentUnitPrice,
   gradeDiscountAmount,
+  qualifiesForGradeFreeShipping,
   regularMemberUnitPrice,
 } from "~/utils/access";
 import { createOrderNo } from "~/utils/format";
@@ -29,6 +30,42 @@ export interface ServerCheckoutInput {
   paymentMethod: PaymentMethod;
 }
 
+export interface OrderCheckoutSettings {
+  baseDeliveryFee: number;
+  depositBankName: string;
+  depositAccountNumber: string;
+  depositAccountHolder: string;
+}
+
+const paymentGuideFor = (
+  paymentMethod: PaymentMethod,
+  settings: OrderCheckoutSettings,
+) => {
+  if (paymentMethod === "transfer") {
+    return [
+      "계좌이체를 선택하셨습니다.",
+      settings.depositBankName && settings.depositAccountNumber
+        ? `${settings.depositBankName} ${settings.depositAccountNumber}`
+        : "입금 계좌는 고객센터 안내를 확인해주세요.",
+      settings.depositAccountHolder
+        ? `예금주: ${settings.depositAccountHolder}`
+        : "",
+      "입금 기한은 주문 접수 시점부터 24시간입니다.",
+      "받는 분 이름으로 이체해주셔야 입금 확인이 가능합니다.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+  return [
+    "신용/체크카드를 선택하셨습니다.",
+    "SMS 결제로 진행되며 영업시간 내 문자로 결제 안내를 보내드립니다.",
+    "결제 기한은 주문 접수 시점부터 24시간입니다.",
+  ].join("\n");
+};
+
+const valueText = (value: string | number | null | undefined) =>
+  String(value ?? "").trim();
+
 export const buildPendingOrder = (
   user: UserProfile,
   cartItems: CartItem[],
@@ -36,7 +73,20 @@ export const buildPendingOrder = (
   products: Product[],
   categories: Category[] = [],
   gradeBenefits: GradeBenefit[] = [],
+  settings: OrderCheckoutSettings = {
+    baseDeliveryFee: 3000,
+    depositBankName: "",
+    depositAccountNumber: "",
+    depositAccountHolder: "",
+  },
 ): Order => {
+  const checkoutAddress = checkout.address || {
+    zipCode: "",
+    address1: "",
+    address2: "",
+  };
+  const pickupType = checkout.pickupType;
+
   if (!user)
     throw createError({
       statusCode: 401,
@@ -47,11 +97,32 @@ export const buildPendingOrder = (
       statusCode: 400,
       statusMessage: "장바구니가 비어 있습니다.",
     });
+  if (!valueText(checkout.recipientName))
+    throw createError({
+      statusCode: 400,
+      statusMessage: "받는 분을 입력해 주세요.",
+    });
+  if (!valueText(checkout.recipientPhone))
+    throw createError({
+      statusCode: 400,
+      statusMessage: "연락처를 입력해 주세요.",
+    });
+  if (pickupType !== "delivery" && pickupType !== "store-pickup")
+    throw createError({
+      statusCode: 400,
+      statusMessage: "수령 방식을 선택해 주세요.",
+    });
   if (
-    checkout.pickupType === "delivery" &&
-    (!checkout.address.zipCode ||
-      !checkout.address.address1 ||
-      !checkout.address.address2)
+    checkout.paymentMethod !== "card" &&
+    checkout.paymentMethod !== "transfer"
+  )
+    throw createError({
+      statusCode: 400,
+      statusMessage: "결제수단을 선택해 주세요.",
+    });
+  if (
+    pickupType === "delivery" &&
+    (!valueText(checkoutAddress.zipCode) || !valueText(checkoutAddress.address1))
   ) {
     throw createError({
       statusCode: 400,
@@ -118,7 +189,10 @@ export const buildPendingOrder = (
 
   const subtotalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
   const deliveryFee =
-    checkout.pickupType === "delivery" && subtotalAmount < 50000 ? 3000 : 0;
+    pickupType === "delivery" &&
+    !qualifiesForGradeFreeShipping(subtotalAmount, user, gradeBenefits)
+      ? Math.max(0, Number(settings.baseDeliveryFee || 0))
+      : 0;
   const discountAmount = 0;
   const pointLimit = Math.floor(
     (subtotalAmount + deliveryFee - discountAmount) * 0.1,
@@ -130,8 +204,8 @@ export const buildPendingOrder = (
   );
   const totalAmount = subtotalAmount + deliveryFee - discountAmount - pointUsed;
   const now = new Date().toISOString();
+  const paymentDueAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const orderNo = createOrderNo();
-  const paymentId = `payment-${orderNo}`;
 
   return {
     id: `order-${orderNo}`,
@@ -143,25 +217,29 @@ export const buildPendingOrder = (
     discountAmount,
     pointUsed,
     totalAmount,
-    paymentStatus: "pending",
+    paymentStatus: "ready",
     paymentMethod: checkout.paymentMethod,
     orderStatus: "pending",
-    deliveryStatus:
-      checkout.pickupType === "delivery" ? "none" : "pickup-ready",
+    deliveryStatus: "none",
     claimStatus: "none",
-    paymentProvider: "portone",
-    portonePaymentId: paymentId,
-    portoneImpUid: null,
-    paymentId,
-    recipientName: checkout.recipientName,
-    recipientPhone: checkout.recipientPhone,
+    recipientName: valueText(checkout.recipientName),
+    recipientPhone: valueText(checkout.recipientPhone),
     address:
-      checkout.pickupType === "delivery"
-        ? checkout.address
+      pickupType === "delivery"
+        ? {
+            zipCode: valueText(checkoutAddress.zipCode),
+            address1: valueText(checkoutAddress.address1),
+            address2: valueText(checkoutAddress.address2),
+          }
         : { zipCode: "", address1: "", address2: "" },
     deliveryMemo:
-      checkout.pickupType === "delivery" ? checkout.deliveryMemo : "",
-    pickupType: checkout.pickupType,
+      pickupType === "delivery" ? valueText(checkout.deliveryMemo) : "",
+    pickupType,
+    paymentDueAt,
+    paymentGuide: paymentGuideFor(checkout.paymentMethod, settings),
+    depositBankName: settings.depositBankName,
+    depositAccountNumber: settings.depositAccountNumber,
+    depositAccountHolder: settings.depositAccountHolder,
     deliveryCompany: "",
     trackingNumber: "",
     shippedAt: null,
@@ -171,13 +249,11 @@ export const buildPendingOrder = (
   };
 };
 
-export const confirmPaidOrder = (order: Order, paymentId: string): Order => ({
+export const confirmPaidOrder = (order: Order): Order => ({
   ...order,
   paymentStatus: "paid",
   orderStatus: "confirmed",
   deliveryStatus: order.pickupType === "delivery" ? "ready" : "pickup-ready",
-  portonePaymentId: paymentId,
-  paymentId,
   paidAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 });

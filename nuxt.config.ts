@@ -68,15 +68,13 @@ export default defineNuxtConfig({
     "/robots.txt": { headers: { "cache-control": "no-store" } },
   },
   runtimeConfig: {
-    portoneApiSecret: process.env.PORTONE_API_SECRET,
     firebaseServiceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
     adminInitialEmail: process.env.ADMIN_INITIAL_EMAIL,
+    apickAuthKey: process.env.APICK_AUTH_KEY,
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_MODEL || "gpt-5.5",
     public: {
       appEnv: process.env.NUXT_PUBLIC_APP_ENV || "local",
-      enableMockPayments:
-        process.env.NUXT_PUBLIC_ENABLE_MOCK_PAYMENTS === "true",
       firebaseApiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
       firebaseProjectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -84,8 +82,6 @@ export default defineNuxtConfig({
       firebaseMessagingSenderId:
         process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID,
-      portoneStoreId: process.env.NUXT_PUBLIC_PORTONE_STORE_ID,
-      portoneChannelKey: process.env.NUXT_PUBLIC_PORTONE_CHANNEL_KEY,
       brand: brandConfig,
     },
   },

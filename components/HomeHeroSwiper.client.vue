@@ -86,7 +86,7 @@ const products = computed(() => productStore.visibleProducts);
 const featured = computed(
   () =>
     products.value.find((product) =>
-      product.categoryIds.includes("lounge-pick"),
+      product.categoryIds.includes("starter-pick"),
     ) || products.value[0],
 );
 const swiperModules = [Autoplay, Navigation, Pagination];
@@ -130,23 +130,23 @@ const defaultSlides = computed<HeroSlide[]>(() => [
     kicker: brand.slogan,
     title: `취향을 블렌딩하다, ${brand.name}`,
     description:
-      "향, 맛, 무드를 쉽고 깔끔하게 고르는 성인 라이프스타일 편집샵.",
+      "디바이스, 무니코틴 액상, 소모품을 취향과 사용 방식에 맞춰 고르는 성인 전용 셀렉션입니다.",
     primaryLabel: "인기 상품 보기",
     primaryTo: "/products",
     secondaryLabel: "입문 추천 보기",
     secondaryTo: "/products?category=starter-pick",
-    productKicker: "LOUNGE PICK",
-    product: firstByCategory("lounge-pick"),
-    visualImageUrl: productImageUrl(firstByCategory("lounge-pick")),
+    productKicker: "STARTER PICK",
+    product: firstByCategory("starter-pick"),
+    visualImageUrl: productImageUrl(firstByCategory("starter-pick")),
     tone: "cream",
   },
   {
     id: "nicotine-free",
     kicker: "NICOTINE FREE",
-    title: "니코틴 없이 즐기는 향의 선택",
+    title: "무니코틴 액상으로 고르는 취향",
     description:
-      "부담은 낮추고, 취향은 더 선명하게. 데일리하게 고르기 좋은 플레이버를 모았습니다.",
-    primaryLabel: "니코틴 프리 보기",
+      "니코틴 없이 향과 쿨링감 중심으로 데일리하게 고르기 좋은 셀렉션입니다.",
+    primaryLabel: "무니코틴 액상 보기",
     primaryTo: "/products?category=nicotine-free",
     secondaryLabel: "데일리 추천",
     secondaryTo: "/products?category=starter-pick",

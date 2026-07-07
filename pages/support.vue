@@ -20,8 +20,7 @@
           </div>
           <Button type="submit">문의 남기기</Button>
           <p v-if="submitted" class="success">
-            문의가 접수되었습니다. 답변은 고객센터 또는 마이페이지에서 확인할 수
-            있도록 확장할 수 있습니다.
+            문의가 접수되었습니다. 답변이 등록되면 고객센터에서 확인할 수 있습니다.
           </p>
           <p v-if="error" class="error">{{ error }}</p>
         </form>

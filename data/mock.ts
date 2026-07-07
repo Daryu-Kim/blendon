@@ -439,10 +439,6 @@ export const mockOrders: Order[] = [
     orderStatus: "confirmed",
     deliveryStatus: "ready",
     claimStatus: "none",
-    paymentProvider: "portone",
-    portonePaymentId: "mock-payment-1",
-    portoneImpUid: null,
-    paymentId: "mock-payment-1",
     recipientName: "블렌드 고객",
     recipientPhone: "010-0000-0000",
     address: {
@@ -452,6 +448,14 @@ export const mockOrders: Order[] = [
     },
     deliveryMemo: "문 앞에 놓아주세요.",
     pickupType: "delivery",
+    paymentDueAt: new Date(
+      new Date(now).getTime() + 24 * 60 * 60 * 1000,
+    ).toISOString(),
+    paymentGuide:
+      "SMS 결제로 진행되며 영업시간 내 문자로 결제 안내를 보내드립니다.",
+    depositBankName: "",
+    depositAccountNumber: "",
+    depositAccountHolder: "",
     deliveryCompany: "",
     trackingNumber: "",
     shippedAt: null,

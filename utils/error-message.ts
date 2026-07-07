@@ -38,11 +38,17 @@ export const toUserMessage = (
     message?: string;
     statusMessage?: string;
     statusCode?: number;
+    data?: {
+      statusMessage?: string;
+      message?: string;
+    };
   };
   const code = record?.code || "";
   if (code && firebaseMessageMap[code]) return firebaseMessageMap[code];
 
   if (record?.statusMessage) return record.statusMessage;
+  if (record?.data?.statusMessage) return record.data.statusMessage;
+  if (record?.data?.message) return record.data.message;
   const message = record?.message || "";
   const codeInMessage = Object.keys(firebaseMessageMap).find((key) =>
     message.includes(key),

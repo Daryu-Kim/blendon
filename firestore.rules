@@ -116,10 +116,10 @@ service cloud.firestore {
 
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
-      allow create: if signedIn() && request.auth.uid == uid && request.resource.data.role == 'customer';
+      allow create: if false;
       allow update: if signedIn()
         && request.auth.uid == uid
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'userGrade', 'userGradeLevel', 'isAdultVerified', 'adultVerifiedAt', 'adultVerificationProvider', 'totalPurchaseAmount']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'userGrade', 'userGradeLevel', 'birthDate', 'isAdultVerified', 'adultVerifiedAt', 'adultVerificationProvider', 'totalPurchaseAmount']);
       allow update, delete: if isAdmin();
     }
 
@@ -196,6 +196,10 @@ service cloud.firestore {
     match /adultVerificationLogs/{logId} {
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create, update, delete: if false;
+    }
+
+    match /signupAdultVerifications/{verificationId} {
+      allow read, write: if false;
     }
 
     match /pointLogs/{logId} {

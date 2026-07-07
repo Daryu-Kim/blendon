@@ -33,10 +33,7 @@ export const saveServerOrder = async (order: Order) => {
   return order;
 };
 
-export const confirmServerOrderPayment = async (
-  order: Order,
-  paymentId: string,
-) => {
+export const confirmServerOrderPayment = async (order: Order) => {
   const admin = getFirebaseAdmin();
   if (!admin) {
     throw createError({
@@ -51,8 +48,6 @@ export const confirmServerOrderPayment = async (
     paymentStatus: "paid",
     orderStatus: "confirmed",
     deliveryStatus: order.pickupType === "delivery" ? "ready" : "pickup-ready",
-    portonePaymentId: paymentId,
-    paymentId,
     paidAt: now,
     updatedAt: now,
   };

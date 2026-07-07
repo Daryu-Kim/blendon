@@ -3,6 +3,7 @@ import {
   canBuyProduct,
   currentUnitPrice,
   gradeDiscountAmount,
+  qualifiesForGradeFreeShipping,
   regularMemberUnitPrice,
 } from "~/utils/access";
 import type { CartItem } from "~/types/domain";
@@ -64,8 +65,20 @@ export const useCartStore = defineStore("cart", {
       );
     },
     deliveryFee(): number {
-      if (this.subtotal === 0 || this.subtotal >= 50000) return 0;
-      return 3000;
+      const settings = useSiteSettingsStore().global;
+      const auth = useAuthStore();
+      const productStore = useProductStore();
+      const baseDeliveryFee = Math.max(0, Number(settings.baseDeliveryFee || 0));
+      if (
+        this.subtotal === 0 ||
+        qualifiesForGradeFreeShipping(
+          this.subtotal,
+          auth.profile,
+          productStore.gradeBenefits,
+        )
+      )
+        return 0;
+      return baseDeliveryFee;
     },
     total(): number {
       return this.subtotal + this.deliveryFee;

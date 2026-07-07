@@ -16,8 +16,7 @@ export type DeviceType =
   | "not_applicable";
 export type PaymentStatus =
   "pending" | "ready" | "paid" | "failed" | "canceled" | "refunded";
-export type PaymentMethod =
-  "card" | "transfer" | "virtual-account" | "mobile" | "kakaopay" | "naverpay";
+export type PaymentMethod = "card" | "transfer";
 export type OrderStatus =
   "pending" | "confirmed" | "preparing" | "completed" | "canceled";
 export type DeliveryStatus =
@@ -232,15 +231,16 @@ export interface Order {
   orderStatus: OrderStatus;
   deliveryStatus: DeliveryStatus;
   claimStatus: ClaimStatus;
-  paymentProvider: "portone";
-  portonePaymentId: string | null;
-  portoneImpUid?: string | null;
-  paymentId?: string | null;
   recipientName: string;
   recipientPhone: string;
   address: Address;
   deliveryMemo: string;
   pickupType: PickupType;
+  paymentDueAt?: string | null;
+  paymentGuide?: string;
+  depositBankName?: string;
+  depositAccountNumber?: string;
+  depositAccountHolder?: string;
   deliveryCompany?: string;
   trackingNumber?: string;
   shippedAt?: string | null;
@@ -330,6 +330,13 @@ export interface SiteGlobalSettings {
   businessAddress: string;
   customerCenterPhone: string;
   customerCenterEmail: string;
+  baseDeliveryFee: number;
+  storeMapUrl: string;
+  depositBankName: string;
+  depositAccountNumber: string;
+  depositAccountHolder: string;
+  homeCategoryTileIds: string[];
+  homeBestCategoryIds: string[];
   productDetailTopBannerImageUrl: string;
   productDetailBottomBannerImageUrl: string;
   updatedAt: string;
@@ -392,7 +399,7 @@ export interface Inquiry {
 export interface AdultVerificationLog {
   id: string;
   userId: string;
-  provider: "mock" | "portone" | "external";
+  provider: "apick-identi-card" | "external";
   status: "requested" | "verified" | "failed";
   birthDate: string;
   requestedAt: string;

@@ -6,7 +6,7 @@
 
 - Nuxt 3, Vue 3, TypeScript, Pinia
 - Firebase Authentication, Firestore, Storage, Functions
-- PortOne Browser SDK + 서버 결제 조회/검증 어댑터
+- 주문 접수 후 카드 SMS 결제 안내/계좌이체 안내 기반 결제 운영
 - Vercel 또는 Firebase Hosting 배포 가능 구조
 
 ## 설치와 실행
@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-개발 서버는 기본적으로 `http://localhost:3000`에서 실행됩니다. 로그인, 회원, 상품, 주문, 공지, 배너 관리는 Firebase Auth/Firestore/Storage 실서버 설정을 기준으로 동작합니다. 로컬에서 결제 흐름만 확인해야 할 때는 `.env`에서 `NUXT_PUBLIC_ENABLE_MOCK_PAYMENTS=true`를 명시적으로 켭니다.
+개발 서버는 기본적으로 `http://localhost:3000`에서 실행됩니다. 로그인, 회원, 상품, 주문, 공지, 배너 관리는 Firebase Auth/Firestore/Storage 실서버 설정을 기준으로 동작합니다.
 
 테스트 계정은 Firebase Authentication에 직접 생성하고, Firestore `users/{uid}` 문서의 `role`을 `admin` 또는 `owner`로 설정해야 관리자에 접근할 수 있습니다.
 
@@ -25,12 +25,11 @@ npm run dev
 `.env.example`를 `.env`로 복사한 뒤 실제 값을 입력합니다.
 
 - `NUXT_PUBLIC_FIREBASE_*`: Firebase Web App 공개 설정
-- `NUXT_PUBLIC_PORTONE_STORE_ID`, `NUXT_PUBLIC_PORTONE_CHANNEL_KEY`: PortOne 브라우저 결제창 설정
-- `PORTONE_API_SECRET`: 서버 전용 PortOne API secret
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: 서버/seed용 Firebase service account JSON
 - `ADMIN_INITIAL_EMAIL`: 초기 관리자 이메일
+- `APICK_AUTH_KEY`: APick 주민등록증 진위확인 API 인증키
 
-`PORTONE_API_SECRET`와 `FIREBASE_SERVICE_ACCOUNT_JSON`은 절대 `NUXT_PUBLIC_` 접두사를 붙이지 않습니다.
+`FIREBASE_SERVICE_ACCOUNT_JSON`과 `APICK_AUTH_KEY`는 절대 `NUXT_PUBLIC_` 접두사를 붙이지 않습니다.
 
 ## Firebase 설정
 
@@ -53,19 +52,22 @@ ADMIN_EMAIL=admin@example.com ADMIN_ROLE=owner npm run admin:claim
 
 실행 후 해당 관리자는 로그아웃 후 다시 로그인해야 새 custom claim이 ID token에 반영됩니다.
 
-## PortOne 결제 구조
+## 결제 운영 구조
 
-프론트는 pending 주문 생성 후 PortOne 결제창만 호출합니다. 결제 성공 콜백만으로 주문을 완료하지 않고, `/api/payments/verify` 또는 Firebase Function `verifyPortOnePayment`가 PortOne API에서 결제 상태와 금액을 조회한 뒤 주문을 `paid`로 확정합니다.
+주문서는 서버에서 상품 가격, 배송비, 회원 등급, 구매 권한을 다시 계산한 뒤 주문을 `ready` 상태로 접수합니다. 결제수단은 `신용/체크카드`와 `계좌이체`만 사용합니다.
 
-현재 구현은 테스트/로컬 개발을 위해 명시적 mock payment를 지원합니다. 운영에서는 `NUXT_PUBLIC_ENABLE_MOCK_PAYMENTS=false`, `NUXT_PUBLIC_PORTONE_STORE_ID`, `NUXT_PUBLIC_PORTONE_CHANNEL_KEY`, `PORTONE_API_SECRET`을 설정합니다.
+- 신용/체크카드: 운영자가 P플 SMS 결제 안내를 영업시간 내 문자로 발송합니다.
+- 계좌이체: 쇼핑몰 설정의 사업자 계좌를 주문서, 주문 완료, 주문 내역에 표시합니다.
+- 결제 기한은 주문 접수 시점부터 24시간입니다.
+- 입금/결제 확인 후 관리자가 주문 관리에서 결제 상태를 `paid`로 변경합니다.
 
 ## 성인 확인 구조
 
-초기 버전은 회원가입 단계의 본인확인 영역에서 `/api/adult-verifications/mock`와 `mockAdultVerification` Function을 통해 성인 여부를 1회 확인합니다. 실제 본인확인 API로 교체할 수 있도록 adapter 경계를 분리했습니다.
+회원가입 단계에서 `성인 인증하기` 버튼으로 APick 주민등록증 진위확인 API를 호출해 유효한 주민등록증인지 확인하고, 주민등록번호 기준 만 19세 이상인 경우에만 가입을 진행할 수 있습니다. 서버는 30분짜리 가입 인증 토큰을 발급하며, 최종 가입 시 이 토큰을 검증하고 1회 소비합니다. 주민등록번호와 발급일자는 진위확인 요청에만 사용하고 Firestore에 저장하지 않습니다.
 
 - 확인 전: 성인 전용 상품 상세, 가격, 구매 버튼 제한
 - 확인 후: `users/{uid}.isAdultVerified=true`, `adultVerificationLogs` 기록
-- 회원정보 저장: Firebase Auth 가입 후 Firestore `users/{uid}`에 아이디, 이메일, 이름, 연락처, 생년월일, 항목별 약관 동의 여부와 동의 시각 저장
+- 회원정보 저장: 서버가 APick 확인 토큰을 검증한 후 Firebase Auth 계정과 Firestore `users/{uid}` 문서를 생성하고, 아이디, 이메일, 이름, 연락처, 생년월일, 항목별 약관 동의 여부와 동의 시각을 저장
 - 소비자 화면: 확인 완료/미완료 상태를 별도 노출하지 않음
 - 관리자: 회원 목록에서 확인 상태 확인
 
@@ -105,8 +107,7 @@ Nuxt SSR을 Firebase Hosting으로 배포하려면 Cloud Functions 또는 Cloud 
 
 ## TODO
 
-- 실제 PortOne PG 채널별 결제 옵션 확정
-- PortOne 또는 본인확인 provider 성인 확인 adapter 교체
+- 본인확인 provider 장애/실패 대응 운영 정책 확정
 - Firestore transaction 기반 주문 생성/재고 차감 완성
 - Firestore transaction 기반 주문 확정/재고 차감과 주문 저장을 Admin SDK로 완성
 - 환불/취소 API 연결

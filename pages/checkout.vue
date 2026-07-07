@@ -3,7 +3,7 @@
     <div class="section-title">
       <div>
         <h1>주문서</h1>
-        <p>서버에서 상품 가격과 재고를 다시 계산한 뒤 결제를 진행합니다.</p>
+        <p>상품 금액과 배송비를 확인한 뒤 결제 안내를 받을 수 있습니다.</p>
       </div>
     </div>
 
@@ -24,8 +24,21 @@
             <Select id="pickupType" v-model="form.pickupType">
               <option value="delivery">배송</option>
               <option value="store-pickup">매장 픽업</option>
-              <option value="lounge-pickup">라운지 픽업</option>
             </Select>
+          </div>
+          <div
+            v-if="form.pickupType === 'store-pickup'"
+            class="form-row store-pickup-row"
+          >
+            <label>매장 위치</label>
+            <Button
+              type="button"
+              variant="ghost"
+              :disabled="!settingsStore.global.storeMapUrl"
+              @click="openStoreMap"
+            >
+              매장 위치 보기
+            </Button>
           </div>
           <div
             v-if="form.pickupType === 'delivery'"
@@ -39,9 +52,9 @@
                 readonly
                 required
               />
-              <Button type="button" variant="ghost" @click="openPostcode"
-                >주소 검색</Button
-              >
+              <Button type="button" variant="ghost" @click="openPostcode">
+                주소 검색
+              </Button>
             </div>
           </div>
           <div v-if="form.pickupType === 'delivery'" class="form-row">
@@ -55,7 +68,11 @@
           </div>
           <div v-if="form.pickupType === 'delivery'" class="form-row">
             <label for="address2">상세 주소</label>
-            <Input id="address2" v-model="form.address.address2" required />
+            <Input
+              id="address2"
+              v-model="form.address.address2"
+              placeholder="선택 입력"
+            />
           </div>
           <div v-if="form.pickupType === 'delivery'" class="form-row">
             <label for="memo">배송 메모</label>
@@ -63,19 +80,39 @@
           </div>
         </div>
       </section>
+
       <aside class="surface summary">
         <h2>결제 정보</h2>
         <div class="form-row">
           <label for="paymentMethod">결제수단</label>
           <Select id="paymentMethod" v-model="form.paymentMethod" required>
             <option value="card">신용/체크카드</option>
-            <option value="transfer">실시간 계좌이체</option>
-            <option value="virtual-account">가상계좌</option>
-            <option value="mobile">휴대폰 결제</option>
-            <option value="kakaopay">카카오페이</option>
-            <option value="naverpay">네이버페이</option>
+            <option value="transfer">계좌이체</option>
           </Select>
         </div>
+
+        <div class="payment-guide">
+          <strong>{{ paymentGuideTitle }}</strong>
+          <p>{{ paymentGuideDescription }}</p>
+          <dl v-if="form.paymentMethod === 'transfer'" class="account-info">
+            <div>
+              <dt>은행</dt>
+              <dd>{{ settingsStore.global.depositBankName || "-" }}</dd>
+            </div>
+            <div>
+              <dt>계좌번호</dt>
+              <dd>{{ settingsStore.global.depositAccountNumber || "-" }}</dd>
+            </div>
+            <div>
+              <dt>예금주</dt>
+              <dd>{{ settingsStore.global.depositAccountHolder || "-" }}</dd>
+            </div>
+          </dl>
+          <p class="deadline-note">
+            결제 기한은 주문 접수 시점부터 24시간입니다.
+          </p>
+        </div>
+
         <div class="form-row">
           <label for="pointUsed">포인트 사용</label>
           <Input
@@ -87,7 +124,8 @@
           />
           <small>최대 {{ formatCurrency(maxPointUsable) }}까지 사용 가능</small>
         </div>
-        <dl>
+
+        <dl class="amounts">
           <div>
             <dt>상품 금액</dt>
             <dd>{{ formatCurrency(cart.subtotal) }}</dd>
@@ -105,22 +143,22 @@
             <dd>{{ formatCurrency(totalAmount) }}</dd>
           </div>
         </dl>
+
         <p class="benefit-note">
-          회원 등급 혜택가는 상품 금액에 반영되며, 일부 특가/세트/정가 고정 상품은 제외됩니다.
+          회원 등급 혜택가가 상품 금액에 반영되며, 일부 할인 제외 상품은
+          제외됩니다.
         </p>
         <p v-if="error" class="error">{{ error }}</p>
         <Button
           type="submit"
           size="lg"
           :disabled="orderStore.loading || !cart.items.length"
-          >결제하기</Button
         >
+          주문 접수하기
+        </Button>
       </aside>
     </form>
-    <LoadingOverlay
-      :show="orderStore.loading || payment.loading.value"
-      label="주문 처리 중"
-    />
+    <LoadingOverlay :show="orderStore.loading" label="주문 처리 중" />
   </main>
 </template>
 
@@ -129,10 +167,12 @@ import { formatCurrency } from "~/utils/format";
 import type { CheckoutInput } from "~/stores/order";
 
 definePageMeta({ middleware: "auth" });
+
 const auth = useAuthStore();
 const cart = useCartStore();
 const orderStore = useOrderStore();
-const payment = usePortOnePayment();
+const productStore = useProductStore();
+const settingsStore = useSiteSettingsStore();
 const router = useRouter();
 const error = ref("");
 
@@ -169,9 +209,56 @@ const totalAmount = computed(() =>
   Math.max(0, checkoutBaseAmount.value - clampedPointUsed.value),
 );
 
-onMounted(() => {
+const paymentGuideTitle = computed(() =>
+  form.paymentMethod === "transfer" ? "계좌이체 안내" : "신용/체크카드 안내",
+);
+const paymentGuideDescription = computed(() =>
+  form.paymentMethod === "transfer"
+    ? "아래 사업자 계좌로 받는 분 이름과 동일한 이름으로 이체해주세요. 이름이 다르면 입금 확인이 늦어질 수 있습니다."
+    : "SMS 결제로 진행됩니다. 영업시간 내에 문자로 결제 안내를 보내드립니다.",
+);
+
+const valueText = (value: string | number | null | undefined) =>
+  String(value ?? "").trim();
+
+const validateCheckoutForm = () => {
+  if (!valueText(form.recipientName)) return "받는 분을 입력해 주세요.";
+  if (!valueText(form.recipientPhone)) return "연락처를 입력해 주세요.";
+  if (form.pickupType !== "delivery" && form.pickupType !== "store-pickup") {
+    return "수령 방식을 선택해 주세요.";
+  }
+  if (form.pickupType === "delivery") {
+    if (!valueText(form.address.zipCode)) return "우편번호를 입력해 주세요.";
+    if (!valueText(form.address.address1)) return "주소를 입력해 주세요.";
+  }
+  return "";
+};
+
+const getErrorMessage = (e: unknown) => {
+  if (e && typeof e === "object") {
+    const errorObject = e as {
+      data?: { statusMessage?: string; message?: string };
+      statusMessage?: string;
+      message?: string;
+    };
+    return (
+      errorObject.data?.statusMessage ||
+      errorObject.data?.message ||
+      errorObject.statusMessage ||
+      errorObject.message ||
+      ""
+    );
+  }
+  return "";
+};
+
+onMounted(async () => {
   cart.hydrate();
-  orderStore.hydrate();
+  await Promise.all([
+    productStore.fetchCatalog(),
+    settingsStore.fetchSettings(),
+    orderStore.hydrate(),
+  ]);
 });
 
 watch(
@@ -191,12 +278,16 @@ watch(
   },
 );
 
+const openStoreMap = () => {
+  const url = settingsStore.global.storeMapUrl;
+  if (!url || !import.meta.client) return;
+  window.open(url, "_blank", "noopener,noreferrer");
+};
+
 const loadDaumPostcode = () =>
   new Promise<void>((resolve, reject) => {
     if (!import.meta.client)
-      return reject(
-        new Error("브라우저에서만 주소 검색을 사용할 수 있습니다."),
-      );
+      return reject(new Error("브라우저에서만 주소 검색을 사용할 수 있습니다."));
     const win = window as Window & {
       daum?: {
         Postcode: new (options: {
@@ -241,22 +332,20 @@ const openPostcode = async () => {
 
 const submit = async () => {
   error.value = "";
+  const validationMessage = validateCheckoutForm();
+  if (validationMessage) {
+    error.value = validationMessage;
+    return;
+  }
   try {
-    const order = await orderStore.createPendingOrder(form);
-    const paymentResult = await payment.requestPayment(order);
-    if ("code" in paymentResult && paymentResult.code)
-      throw new Error(paymentResult.message || "결제가 완료되지 않았습니다.");
-    const paymentId =
-      "paymentId" in paymentResult && paymentResult.paymentId
-        ? paymentResult.paymentId
-        : order.paymentId || order.portonePaymentId || "";
-    const verifiedOrder = await orderStore.verifyPayment(order.id, paymentId);
-    if (verifiedOrder.paymentStatus !== "paid")
-      throw new Error("결제 검증에 실패했습니다.");
+    const order = await orderStore.createPendingOrder({
+      ...form,
+      pointUsed: clampedPointUsed.value,
+    });
     cart.clear();
-    await router.push(`/payment/complete?orderId=${verifiedOrder.id}`);
+    await router.push(`/payment/complete?orderId=${order.id}`);
   } catch (e) {
-    error.value = e instanceof Error ? e.message : "주문 처리에 실패했어요.";
+    error.value = getErrorMessage(e) || "주문 처리에 실패했어요.";
   }
 };
 
@@ -281,15 +370,39 @@ useHead({ title: "주문서" });
   gap: 8px;
 }
 
+.store-pickup-row {
+  align-content: end;
+}
+
+.payment-guide {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: #fbf8f1;
+  padding: 12px;
+}
+
+.payment-guide strong {
+  font-size: 15px;
+}
+
+.payment-guide p,
 small,
 .benefit-note {
   color: var(--color-muted);
   font-size: 13px;
+  line-height: 1.55;
+  word-break: keep-all;
 }
 
+.payment-guide p,
 .benefit-note {
   margin: 0;
-  font-weight: 700;
+}
+
+.deadline-note {
+  font-weight: 900;
 }
 
 h2 {
@@ -305,11 +418,22 @@ dl {
 dl div {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+}
+
+dt {
+  color: var(--color-muted);
 }
 
 dd {
   margin: 0;
   font-weight: 900;
+  text-align: right;
+}
+
+.account-info {
+  border-top: 1px solid var(--color-line);
+  padding-top: 8px;
 }
 
 .total {
@@ -325,7 +449,7 @@ dd {
 
 @media (min-width: 900px) {
   .checkout-grid {
-    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-columns: minmax(0, 1fr) 360px;
     align-items: start;
   }
 

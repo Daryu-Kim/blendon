@@ -18,7 +18,7 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `birthDate`                     | string                | `YYYY-MM-DD`                                     |
 | `isAdultVerified`               | boolean               | 서버 인증 결과만 반영                            |
 | `adultVerifiedAt`               | timestamp/string/null | 성인 인증 완료 시각                              |
-| `adultVerificationProvider`     | string/null           | `portone`, `external` 등                         |
+| `adultVerificationProvider`     | string/null           | `apick-identi-card`, `external` 등               |
 | `userGrade`                     | string                | `gradeBenefits/{gradeCode}` 참조                 |
 | `userGradeLevel`                | number                | 현재 회원 등급 레벨. Rules/카테고리 접근 계산용 |
 | `gradeEvaluatedAt`              | timestamp/string/null | 등급 자동 갱신 평가 시각                         |
@@ -144,17 +144,15 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `pointUsed`                                      | number                | 결제금액의 최대 10%                                                     |
 | `totalAmount`                                    | number                | 최종 결제 금액                                                          |
 | `paymentStatus`                                  | string                | `pending`, `ready`, `paid`, `failed`, `canceled`, `refunded`            |
-| `paymentMethod`                                  | string                | `card`, `transfer`, `virtual-account`, `mobile`, `kakaopay`, `naverpay` |
+| `paymentMethod`                                  | string                | `card`, `transfer`                                                      |
 | `orderStatus`                                    | string                | 주문 처리 상태                                                          |
 | `deliveryStatus`                                 | string                | 배송/픽업 상태                                                          |
 | `deliveryCompany`, `trackingNumber`, `shippedAt` | string/string/date    | 택배사, 송장번호, 출고 처리 시각                                         |
 | `claimStatus`                                    | string                | 취소/교환/환불 상태                                                     |
-| `paymentProvider`                                | string                | 현재 `portone`                                                          |
-| `portonePaymentId`, `portoneImpUid`, `paymentId` | string/null           | 결제 식별자                                                             |
 | `recipientName`, `recipientPhone`                | string                | 수령 정보                                                               |
 | `address`                                        | map                   | 배송 주문일 때 입력                                                     |
 | `deliveryMemo`                                   | string                | 배송 주문일 때 입력                                                     |
-| `pickupType`                                     | string                | `delivery`, `store-pickup`, `lounge-pickup`                             |
+| `pickupType`                                     | string                | `delivery`, `store-pickup`                                              |
 | `adminMemo`                                      | string                | 관리자 메모                                                             |
 | `createdAt`, `updatedAt`, `paidAt`               | timestamp/string/null | 시각                                                                    |
 | `completedAt`                                    | timestamp/string/null | 구매확정 시각. 등급 자동 갱신의 최근 6개월 실적 기준                    |
@@ -235,11 +233,28 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | Field                       | Type                              |
 | --------------------------- | --------------------------------- |
 | `id`, `userId`              | string                            |
-| `provider`                  | `portone`, `external`, `mock`     |
+| `provider`                  | `apick-identi-card`, `external`   |
 | `status`                    | `requested`, `verified`, `failed` |
 | `birthDate`                 | string                            |
 | `requestedAt`, `verifiedAt` | timestamp/string/null             |
 | `reason`                    | string                            |
+
+### `signupAdultVerifications/{verificationId}`
+
+회원가입 전 APick 확인이 끝난 뒤 최종 가입까지 짧게 유지하는 서버 전용 임시 문서다. Firestore Rules에서는 클라이언트 접근을 모두 차단한다.
+
+| Field            | Type                  |
+| ---------------- | --------------------- |
+| `name`           | string                |
+| `provider`       | `apick-identi-card`   |
+| `birthDate`      | string                |
+| `verifiedAt`     | string                |
+| `apickRequestId` | number/null           |
+| `expiresAt`      | timestamp             |
+| `consumedAt`     | timestamp/null        |
+| `consumedBy`     | string/null           |
+| `createdAt`      | timestamp             |
+| `updatedAt`      | timestamp             |
 
 ### `pointLogs/{logId}`
 
@@ -321,5 +336,5 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 - 주문 생성은 서버가 `users`, `products`를 다시 읽고 가격, 등급, 성인 인증, 재고, 포인트 한도를 검증한다.
 - 포인트 사용은 `subtotalAmount + deliveryFee - discountAmount`의 최대 10%다.
-- 결제 완료는 PortOne API 조회 금액과 주문 금액이 일치할 때만 `paid`로 확정한다.
+- 결제 완료는 관리자 확인 이후 주문 관리에서 `paid`로 확정한다.
 - 성인 인증 완료 필드는 클라이언트가 직접 수정하지 않는다.
