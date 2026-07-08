@@ -194,8 +194,13 @@ watch(authCatalogKey, async () => {
 .nav-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
   align-items: center;
   gap: 12px;
+}
+
+.nav-row :deep(.category-nav) {
+  min-width: 0;
 }
 
 .nav-promo {

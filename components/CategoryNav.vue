@@ -111,9 +111,20 @@ const isActiveTree = (category: NavCategory): boolean =>
 <style scoped>
 .category-nav {
   display: flex;
-  gap: 16px;
-  overflow: visible;
-  padding: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  padding: 0 0 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
@@ -239,5 +250,21 @@ const isActiveTree = (category: NavCategory): boolean =>
 
 .dropdown-link.leaf {
   font-weight: 700;
+}
+
+@media (max-width: 859px) {
+  .nav-item:hover .dropdown,
+  .nav-item:focus-within .dropdown {
+    display: none;
+  }
+}
+
+@media (min-width: 860px) {
+  .category-nav {
+    gap: 16px;
+    overflow: visible;
+    padding: 0;
+    scrollbar-width: auto;
+  }
 }
 </style>
