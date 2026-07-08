@@ -35,6 +35,7 @@ interface AuthSessionState {
   userGrade: UserProfile["userGrade"];
   userGradeLevel?: number;
   isAdultVerified: boolean;
+  mustChangePassword?: boolean;
   savedAt: string;
 }
 
@@ -118,6 +119,14 @@ const createDefaultProfile = (
     role: "customer",
     availablePoint: 0,
     totalPurchaseAmount: 0,
+    mustChangePassword: false,
+    passwordChangedAt: null,
+    createdByAdmin: false,
+    status: "active",
+    isWithdrawn: false,
+    withdrawnAt: null,
+    withdrawnBy: null,
+    withdrawReason: "",
     createdAt: now,
     updatedAt: now,
     defaultAddress: null,
@@ -165,6 +174,14 @@ const normalizeProfile = (profile: UserProfile): UserProfile => ({
   gradeLockedAt: profile.gradeLockedAt || null,
   gradeLockedBy: profile.gradeLockedBy || null,
   gradeLockReason: profile.gradeLockReason || "",
+  mustChangePassword: Boolean(profile.mustChangePassword),
+  passwordChangedAt: profile.passwordChangedAt || null,
+  createdByAdmin: Boolean(profile.createdByAdmin),
+  status: profile.status || "active",
+  isWithdrawn: Boolean(profile.isWithdrawn || profile.status === "withdrawn"),
+  withdrawnAt: profile.withdrawnAt || null,
+  withdrawnBy: profile.withdrawnBy || null,
+  withdrawReason: profile.withdrawReason || "",
   termsAgreement: normalizeTermsAgreement(profile.termsAgreement),
 });
 
@@ -177,6 +194,7 @@ const toSessionState = (profile: UserProfile): AuthSessionState => ({
   userGrade: profile.userGrade,
   userGradeLevel: profile.userGradeLevel,
   isAdultVerified: profile.isAdultVerified,
+  mustChangePassword: Boolean(profile.mustChangePassword),
   savedAt: new Date().toISOString(),
 });
 
@@ -228,6 +246,14 @@ export const useAuthStore = defineStore("auth", {
           const snap = await getDoc(ref);
           if (snap.exists()) {
             this.profile = normalizeProfile(snap.data() as UserProfile);
+            if (this.profile.isWithdrawn) {
+              await firebaseSignOut(firebase.auth!);
+              this.profile = null;
+              writeStoredProfile(null);
+              this.initialized = true;
+              resolve();
+              return;
+            }
           } else {
             const defaultUserGrade = await defaultGrade();
             this.profile = createDefaultProfile(
@@ -268,6 +294,14 @@ export const useAuthStore = defineStore("auth", {
                   email,
                   credential.user.displayName || "블렌드 고객",
                 );
+            if (this.profile.isWithdrawn) {
+              await firebaseSignOut(firebase.auth);
+              this.profile = null;
+              writeStoredProfile(null);
+              throw new Error(
+                "탈퇴 처리된 계정입니다. 고객센터로 문의해 주세요.",
+              );
+            }
             writeStoredProfile(this.profile);
             return this.profile;
           }
@@ -342,6 +376,25 @@ export const useAuthStore = defineStore("auth", {
           updatedAt: serverTimestamp(),
         });
       }
+    },
+    applyLocalProfileUpdates(updates: Partial<UserProfile>) {
+      if (!this.profile) return;
+      this.profile = normalizeProfile({
+        ...this.profile,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      });
+      writeStoredProfile(this.profile);
+    },
+    async refreshProfile() {
+      const firebase = useNuxtApp().$firebase;
+      const uid = firebase.auth?.currentUser?.uid || this.profile?.uid;
+      if (!uid || !firebase.enabled || !firebase.db) return this.profile;
+      const snap = await getDoc(doc(firebase.db, "users", uid));
+      if (!snap.exists()) return this.profile;
+      this.profile = normalizeProfile(snap.data() as UserProfile);
+      writeStoredProfile(this.profile);
+      return this.profile;
     },
     async markAdultVerified(provider: string, birthDate: string) {
       if (!this.profile) return;

@@ -6,8 +6,19 @@
     >
       <div class="form-grid">
         <div class="form-row">
+          <label>상단 문구</label>
+          <Input
+            v-model="form.kicker"
+            placeholder="비워두면 기본 슬로건 사용"
+          />
+        </div>
+        <div class="form-row">
           <label>제목</label>
-          <Input v-model="form.title" required />
+          <Textarea
+            v-model="form.title"
+            class="compact-textarea"
+            required
+          />
         </div>
         <div class="form-row">
           <label>슬러그</label>
@@ -18,7 +29,7 @@
         </div>
         <div class="form-row wide">
           <label>부제목</label>
-          <Input v-model="form.subtitle" />
+          <Textarea v-model="form.subtitle" class="compact-textarea" />
         </div>
         <div class="form-row">
           <label>버튼 문구</label>
@@ -121,6 +132,7 @@ const productStore = useProductStore();
 const createEmptyBanner = (): Banner => ({
   id: "",
   slug: "",
+  kicker: "",
   title: "",
   subtitle: "",
   imageUrl: "",
@@ -187,6 +199,7 @@ const submit = async () => {
     ...form,
     id: form.id || `banner-${slug}-${Date.now()}`,
     slug,
+    kicker: String(form.kicker || "").trim(),
     title: form.title.trim(),
     subtitle: form.subtitle.trim(),
     imageUrl: form.imageUrl.trim(),
@@ -213,6 +226,10 @@ onMounted(async () => {
 .form-grid {
   display: grid;
   gap: 14px;
+}
+
+.compact-textarea {
+  min-height: 86px;
 }
 
 .wide {

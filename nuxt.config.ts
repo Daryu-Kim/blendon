@@ -69,6 +69,9 @@ export default defineNuxtConfig({
     firebaseServiceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
     adminInitialEmail: process.env.ADMIN_INITIAL_EMAIL,
     apickAuthKey: process.env.APICK_AUTH_KEY,
+    smsWebhookUrl: process.env.SMS_WEBHOOK_URL,
+    smsWebhookSecret: process.env.SMS_WEBHOOK_SECRET,
+    smsSenderNumber: process.env.SMS_SENDER_NUMBER,
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_MODEL || "gpt-5.5",
     public: {

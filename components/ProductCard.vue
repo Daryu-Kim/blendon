@@ -116,8 +116,9 @@ const canBuy = computed(() =>
 }
 
 .product-body {
-  display: grid;
-  align-content: start;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
   gap: 9px;
   padding: 12px;
 }
@@ -182,6 +183,7 @@ p {
 .card-footer {
   display: grid;
   gap: 8px;
+  margin-top: auto;
   padding-top: 1px;
 }
 

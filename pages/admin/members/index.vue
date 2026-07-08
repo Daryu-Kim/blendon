@@ -5,6 +5,7 @@
         <h1>회원 관리</h1>
         <p>회원 검색, 성인 인증 상태, 등급, 포인트, 권한을 관리합니다.</p>
       </div>
+      <Button to="/admin/members/new" variant="secondary">회원 수동 등록</Button>
     </div>
 
     <section class="surface member-search">
@@ -43,6 +44,12 @@
       }}</template>
       <template #isGradeLocked="{ row }">{{
         row.isGradeLocked ? "고정" : "자동"
+      }}</template>
+      <template #status="{ row }">{{
+        row.isWithdrawn ? "탈퇴 처리" : "정상"
+      }}</template>
+      <template #mustChangePassword="{ row }">{{
+        row.mustChangePassword ? "변경 필요" : "완료"
       }}</template>
       <template #availablePoint="{ row }">{{
         formatCurrency(row.availablePoint)
@@ -108,6 +115,8 @@ const columns = [
   { key: "userGrade", label: "등급" },
   { key: "isGradeLocked", label: "등급 갱신" },
   { key: "role", label: "권한" },
+  { key: "status", label: "상태" },
+  { key: "mustChangePassword", label: "비밀번호" },
   { key: "availablePoint", label: "포인트" },
 ] as const;
 

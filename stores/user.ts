@@ -47,6 +47,14 @@ const normalizeUser = (uid: string, data: Partial<UserProfile>): UserProfile =>
     role: data.role || "customer",
     availablePoint: Number(data.availablePoint || 0),
     totalPurchaseAmount: Number(data.totalPurchaseAmount || 0),
+    mustChangePassword: Boolean(data.mustChangePassword),
+    passwordChangedAt: data.passwordChangedAt || null,
+    createdByAdmin: Boolean(data.createdByAdmin),
+    status: data.status || "active",
+    isWithdrawn: Boolean(data.isWithdrawn || data.status === "withdrawn"),
+    withdrawnAt: data.withdrawnAt || null,
+    withdrawnBy: data.withdrawnBy || null,
+    withdrawReason: data.withdrawReason || "",
     createdAt: timestampToIso(data.createdAt),
     updatedAt: timestampToIso(data.updatedAt),
     defaultAddress: data.defaultAddress || null,
@@ -157,6 +165,39 @@ export const useUserStore = defineStore("user", {
         userGradeLevel: grade?.level || 1,
       });
     },
+    async createMember(input: {
+      loginId: string;
+      email: string;
+      displayName: string;
+      phoneNumber: string;
+      birthDate?: string;
+      userGrade?: GradeCode;
+      role?: Role;
+      adminMemo?: string;
+    }) {
+      const firebase = useNuxtApp().$firebase;
+      const token = await firebase.auth?.currentUser?.getIdToken();
+      if (!token) throw new Error("관리자 로그인이 필요합니다.");
+
+      return await useGlobalLoading().withLoading(async () => {
+        const result = await $fetch<{
+          profile: UserProfile;
+          temporaryPassword?: string;
+          sms: {
+            sent: boolean;
+            status: string;
+            message?: string;
+          };
+          manualSmsMessage?: string;
+        }>("/api/admin/members/create", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: input,
+        });
+        this.upsertUser(normalizeUser(result.profile.uid, result.profile));
+        return result;
+      }, "회원을 등록하는 중");
+    },
     async updateUserGradeLock(
       uid: string,
       isGradeLocked: boolean,
@@ -243,6 +284,23 @@ export const useUserStore = defineStore("user", {
           body: { uid, email: user.email },
         });
       }, "비밀번호 재설정 메일을 발송하는 중");
+    },
+    async withdrawMember(uid: string, reason: string) {
+      const firebase = useNuxtApp().$firebase;
+      const token = await firebase.auth?.currentUser?.getIdToken();
+      if (!token) throw new Error("관리자 로그인이 필요합니다.");
+
+      await useGlobalLoading().withLoading(async () => {
+        const result = await $fetch<{ profile: UserProfile }>(
+          "/api/admin/members/withdraw",
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: { uid, reason },
+          },
+        );
+        this.upsertUser(normalizeUser(result.profile.uid, result.profile));
+      }, "회원 탈퇴를 처리하는 중");
     },
   },
 });

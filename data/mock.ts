@@ -469,6 +469,7 @@ export const mockBanners: Banner[] = [
   {
     id: "home-main",
     slug: "home-main",
+    kicker: "취향을 블렌딩하다",
     title: "취향을 블렌딩하다, BLEND ON",
     subtitle: "향, 맛, 무드를 쉽고 깔끔하게 고르는 성인 라이프스타일 편집샵.",
     imageUrl: "",

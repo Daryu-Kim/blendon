@@ -170,6 +170,14 @@ export interface UserProfile {
   role: Role;
   availablePoint: number;
   totalPurchaseAmount: number;
+  mustChangePassword?: boolean;
+  passwordChangedAt?: string | null;
+  createdByAdmin?: boolean;
+  status?: "active" | "withdrawn";
+  isWithdrawn?: boolean;
+  withdrawnAt?: string | null;
+  withdrawnBy?: string | null;
+  withdrawReason?: string;
   createdAt: string;
   updatedAt: string;
   defaultAddress: Address | null;
@@ -298,6 +306,7 @@ export interface ProductReview {
 export interface Banner {
   id: string;
   slug: string;
+  kicker: string;
   title: string;
   subtitle: string;
   imageUrl: string;
@@ -392,7 +401,7 @@ export interface Inquiry {
 export interface AdultVerificationLog {
   id: string;
   userId: string;
-  provider: "apick-identi-card" | "external";
+  provider: "apick-identi-card" | "external" | "admin-manual";
   status: "requested" | "verified" | "failed";
   birthDate: string;
   requestedAt: string;

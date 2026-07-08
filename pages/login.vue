@@ -56,6 +56,13 @@ const submit = async () => {
   await nextTick();
   try {
     await auth.signIn(email.value, password.value);
+    if (auth.profile?.mustChangePassword) {
+      await router.push({
+        path: "/account/change-password",
+        query: { redirect: (route.query.redirect as string) || "/mypage" },
+      });
+      return;
+    }
     await router.push((route.query.redirect as string) || "/mypage");
   } catch (error) {
     errorMessage.value =

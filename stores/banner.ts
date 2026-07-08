@@ -11,11 +11,18 @@ import {
 import { defineStore } from "pinia";
 import type { Banner } from "~/types/domain";
 
+const normalizeLineBreaks = (value?: string) =>
+  String(value || "")
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\n");
+
 const normalizeBanner = (id: string, data: Partial<Banner>): Banner => ({
   id,
   slug: data.slug || id,
-  title: data.title || "",
-  subtitle: data.subtitle || "",
+  kicker: normalizeLineBreaks(data.kicker),
+  title: normalizeLineBreaks(data.title),
+  subtitle: normalizeLineBreaks(data.subtitle),
   imageUrl: data.imageUrl || "",
   buttonText: data.buttonText || "바로가기",
   linkUrl: data.linkUrl || "",

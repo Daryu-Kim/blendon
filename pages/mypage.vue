@@ -30,6 +30,10 @@
         <div class="quick-links">
           <Button to="/orders" variant="ghost">주문 내역</Button>
           <Button to="/cart" variant="ghost">장바구니</Button>
+          <Button to="/account/change-password" variant="ghost">
+            비밀번호 변경
+          </Button>
+          <Button to="/account/withdraw" variant="danger">회원탈퇴</Button>
           <Button v-if="auth.isAdmin" to="/admin" variant="secondary"
             >관리자</Button
           >

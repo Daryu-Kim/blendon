@@ -184,7 +184,7 @@ const heroSlides = computed<HeroSlide[]>(() => {
       : undefined;
     return {
       id: banner.id,
-      kicker: brand.slogan,
+      kicker: banner.kicker || brand.slogan,
       title: banner.title,
       description: banner.subtitle,
       primaryLabel: banner.buttonText || "바로가기",
@@ -320,11 +320,16 @@ const heroSlides = computed<HeroSlide[]>(() => {
   padding: 34px 24px;
 }
 
+.hero-copy .eyebrow {
+  white-space: pre-line;
+}
+
 .hero-copy h1 {
   max-width: 720px;
   margin: 0;
   font-size: clamp(38px, 8vw, 76px);
   line-height: 1.02;
+  white-space: pre-line;
 }
 
 .hero-copy > p:not(.eyebrow) {
@@ -333,6 +338,7 @@ const heroSlides = computed<HeroSlide[]>(() => {
   color: var(--color-muted);
   font-size: 18px;
   line-height: 1.55;
+  white-space: pre-line;
 }
 
 .hero-actions {
@@ -380,7 +386,7 @@ const heroSlides = computed<HeroSlide[]>(() => {
   }
 
   .hero-copy {
-    padding: 58px;
+    padding: 58px 88px;
   }
 
   .hero-nav {

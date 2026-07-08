@@ -47,8 +47,26 @@
           <strong>{{ member.isAdultVerified ? "인증 완료" : "미인증" }}</strong>
         </div>
         <div class="field">
+          <span>계정 상태</span>
+          <strong>{{ member.isWithdrawn ? "탈퇴 처리" : "정상" }}</strong>
+        </div>
+        <div class="field">
+          <span>비밀번호 변경</span>
+          <strong>{{
+            member.mustChangePassword ? "최초 변경 필요" : "완료"
+          }}</strong>
+        </div>
+        <div class="field">
           <span>가입일</span>
           <strong>{{ formatDate(member.createdAt) }}</strong>
+        </div>
+        <div v-if="member.withdrawnAt" class="field">
+          <span>탈퇴 처리일</span>
+          <strong>{{ formatDate(member.withdrawnAt) }}</strong>
+        </div>
+        <div v-if="member.withdrawReason" class="field wide">
+          <span>탈퇴 사유</span>
+          <strong>{{ member.withdrawReason }}</strong>
         </div>
       </AdminFormSection>
 
@@ -175,6 +193,29 @@
         </div>
       </AdminFormSection>
 
+      <AdminFormSection
+        title="탈퇴 처리"
+        description="탈퇴 처리 시 Firebase Auth 계정이 비활성화되고 다시 로그인할 수 없습니다."
+      >
+        <label class="wide">
+          탈퇴 처리 사유
+          <Textarea
+            v-model="withdrawReason"
+            :disabled="member.isWithdrawn"
+            placeholder="관리자 탈퇴 처리 사유를 입력해 주세요."
+          />
+        </label>
+        <div class="security-actions">
+          <Button
+            variant="danger"
+            :disabled="member.isWithdrawn"
+            @click="withdrawMember"
+          >
+            {{ member.isWithdrawn ? "탈퇴 처리됨" : "회원 탈퇴 처리" }}
+          </Button>
+        </div>
+      </AdminFormSection>
+
       <div class="form-actions">
         <Button variant="ghost" to="/admin/members">취소</Button>
         <Button @click="save">저장</Button>
@@ -218,6 +259,7 @@ const pointAdjust = reactive({
   amount: "",
   memo: "",
 });
+const withdrawReason = ref("");
 const pointLogs = computed(() => users.pointLogsByUser[uid.value] || []);
 
 const gradeLockText = computed({
@@ -234,6 +276,7 @@ const syncForm = () => {
   form.isGradeLocked = Boolean(member.value.isGradeLocked);
   form.gradeLockReason = member.value.gradeLockReason || "";
   form.adminMemo = member.value.adminMemo || "";
+  withdrawReason.value = member.value.withdrawReason || "";
 };
 
 watch(member, syncForm, { immediate: true });
@@ -275,6 +318,19 @@ const sendResetEmail = async () => {
   if (!member.value) return;
   await users.sendPasswordResetEmail(member.value.uid);
   toast.show("비밀번호 재설정 메일을 발송했습니다.", "success");
+};
+
+const withdrawMember = async () => {
+  if (!member.value || member.value.isWithdrawn) return;
+  const reason = withdrawReason.value.trim();
+  if (
+    !confirm(
+      `${member.value.displayName || member.value.email} 회원을 탈퇴 처리할까요?`,
+    )
+  )
+    return;
+  await users.withdrawMember(member.value.uid, reason);
+  toast.show("회원 탈퇴 처리가 완료되었습니다.", "success");
 };
 
 onMounted(async () => {

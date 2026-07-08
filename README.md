@@ -28,8 +28,9 @@ npm run dev
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: 서버/seed용 Firebase service account JSON
 - `ADMIN_INITIAL_EMAIL`: 초기 관리자 이메일
 - `APICK_AUTH_KEY`: APick 주민등록증 진위확인 API 인증키
+- `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_SECRET`, `SMS_SENDER_NUMBER`: 관리자 수동 회원 등록 안내 문자 발송 웹훅 설정
 
-`FIREBASE_SERVICE_ACCOUNT_JSON`과 `APICK_AUTH_KEY`는 절대 `NUXT_PUBLIC_` 접두사를 붙이지 않습니다.
+`FIREBASE_SERVICE_ACCOUNT_JSON`, `APICK_AUTH_KEY`, `SMS_WEBHOOK_SECRET`은 절대 `NUXT_PUBLIC_` 접두사를 붙이지 않습니다.
 
 ## Firebase 설정
 
@@ -70,6 +71,7 @@ ADMIN_EMAIL=admin@example.com ADMIN_ROLE=owner npm run admin:claim
 - 회원정보 저장: 서버가 APick 확인 토큰을 검증한 후 Firebase Auth 계정과 Firestore `users/{uid}` 문서를 생성하고, 아이디, 이메일, 이름, 연락처, 생년월일, 항목별 약관 동의 여부와 동의 시각을 저장
 - 소비자 화면: 확인 완료/미완료 상태를 별도 노출하지 않음
 - 관리자: 회원 목록에서 확인 상태 확인
+- 관리자 수동 등록: 성인 인증을 `admin-manual`로 기록하고, 임시 비밀번호 안내 SMS를 발송한 뒤 최초 로그인 시 비밀번호 변경을 요구
 
 ## 보안 주의사항
 

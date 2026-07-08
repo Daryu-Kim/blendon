@@ -33,6 +33,12 @@ export interface IdentityCardVerificationResult {
 const onlyDigits = (value: string) => value.replace(/\D/g, "");
 const normalizeIdentityName = (value: string) =>
   value.trim().replace(/\s+/g, "");
+const systemErrorMessage =
+  "성인 인증 전산 오류로 확인을 완료하지 못했습니다. 관리자에게 문의해 주세요.";
+const isOperationalFailureMessage = (message = "") =>
+  /잔액|포인트|충전|인증키|권한|forbidden|unauthorized|오류|error|fail/i.test(
+    message,
+  );
 
 const multipartTextBody = (fields: Record<string, string>) => {
   const boundary = `----blendon-${randomUUID()}`;
@@ -165,8 +171,8 @@ export const verifyIdentityCardWithApick = async (
   const config = useRuntimeConfig();
   if (!config.apickAuthKey) {
     throw createError({
-      statusCode: 500,
-      statusMessage: "APick 인증키 설정이 필요합니다.",
+      statusCode: 502,
+      statusMessage: systemErrorMessage,
     });
   }
 
@@ -193,23 +199,27 @@ export const verifyIdentityCardWithApick = async (
   } catch {
     throw createError({
       statusCode: 502,
-      statusMessage: "주민등록증 진위확인 서버 연결이 원활하지 않습니다.",
+      statusMessage: systemErrorMessage,
     });
   }
 
   if (response.api?.success !== true) {
     throw createError({
       statusCode: 502,
-      statusMessage: "주민등록증 진위확인 서버 응답을 확인하지 못했습니다.",
+      statusMessage: systemErrorMessage,
     });
   }
   const apickResult = Number(response.data?.result);
   if (apickResult !== 1) {
+    const apickMessage = response.data?.msg || "";
+    const operationalFailure = isOperationalFailureMessage(apickMessage);
     throw createError({
-      statusCode: 422,
+      statusCode: operationalFailure ? 502 : 422,
       statusMessage:
-        response.data?.msg ||
-        "성명, 주민등록번호, 발급일자가 주민등록증 기록과 일치하지 않습니다. 발급일자는 주민등록증 하단의 발급일자를 YYYYMMDD로 입력해 주세요.",
+        operationalFailure
+          ? systemErrorMessage
+          : apickMessage ||
+            "성명, 주민등록번호, 발급일자가 주민등록증 기록과 일치하지 않습니다. 발급일자는 주민등록증 하단의 발급일자를 YYYYMMDD로 입력해 주세요.",
     });
   }
 
