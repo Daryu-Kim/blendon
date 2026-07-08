@@ -104,7 +104,10 @@ export const useUserStore = defineStore("user", {
             return;
           }
           const snap = await getDocs(
-            query(collection(firebase.db, "users"), orderBy("createdAt", "desc")),
+            query(
+              collection(firebase.db, "users"),
+              orderBy("createdAt", "desc"),
+            ),
           );
           this.users = snap.docs.map((item) =>
             normalizeUser(item.id, item.data() as Partial<UserProfile>),
@@ -133,7 +136,8 @@ export const useUserStore = defineStore("user", {
     },
     async patchUser(uid: string, updates: Partial<UserProfile>) {
       const user = this.users.find((item) => item.uid === uid);
-      if (user) Object.assign(user, updates, { updatedAt: new Date().toISOString() });
+      if (user)
+        Object.assign(user, updates, { updatedAt: new Date().toISOString() });
       const firebase = useNuxtApp().$firebase;
       if (!firebase.enabled || !firebase.db) return;
       await useGlobalLoading().withLoading(async () => {
@@ -227,7 +231,9 @@ export const useUserStore = defineStore("user", {
       const token = await firebase.auth?.currentUser?.getIdToken();
       if (!token) throw new Error("관리자 로그인이 필요합니다.");
 
-      const user = this.users.find((item) => item.uid === uid) || (await this.fetchUser(uid));
+      const user =
+        this.users.find((item) => item.uid === uid) ||
+        (await this.fetchUser(uid));
       if (!user?.email) throw new Error("회원 이메일을 찾을 수 없습니다.");
 
       await useGlobalLoading().withLoading(async () => {

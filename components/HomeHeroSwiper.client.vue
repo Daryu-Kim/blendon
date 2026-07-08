@@ -40,11 +40,15 @@
             </div>
           </div>
 
-          <div v-if="slide.visualImageUrl" class="hero-visual" aria-hidden="true">
+          <div
+            v-if="slide.visualImageUrl"
+            class="hero-visual"
+            aria-hidden="true"
+          >
             <img
               :src="slide.visualImageUrl"
               :alt="slide.product?.name || slide.title"
-            >
+            />
             <div v-if="slide.product" class="hero-product">
               <span>{{ slide.productKicker }}</span>
               <strong>{{ slide.product.name }}</strong>
@@ -190,9 +194,7 @@ const heroSlides = computed<HeroSlide[]>(() => {
       imageUrl: banner.imageUrl,
       visualImageUrl: productImageUrl(product) || banner.imageUrl,
       tone: (["cream", "green", "amber"][index % 3] || "cream") as
-        | "cream"
-        | "green"
-        | "amber",
+        "cream" | "green" | "amber",
     };
   });
 });

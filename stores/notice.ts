@@ -13,7 +13,12 @@ import { defineStore } from "pinia";
 import type { Notice } from "~/types/domain";
 
 const timestampToIso = (value: unknown) => {
-  if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+  if (
+    value &&
+    typeof value === "object" &&
+    "toDate" in value &&
+    typeof value.toDate === "function"
+  ) {
     return value.toDate().toISOString();
   }
   return typeof value === "string" ? value : new Date().toISOString();
@@ -50,7 +55,10 @@ export const useNoticeStore = defineStore("notice", {
         await useGlobalLoading().withLoading(async () => {
           if (firebase.enabled && firebase.db) {
             const snap = await getDocs(
-              query(collection(firebase.db, "notices"), orderBy("createdAt", "desc")),
+              query(
+                collection(firebase.db, "notices"),
+                orderBy("createdAt", "desc"),
+              ),
             );
             this.notices = snap.docs.map((item) =>
               normalizeNotice(item.id, item.data() as Partial<Notice>),
@@ -95,7 +103,9 @@ export const useNoticeStore = defineStore("notice", {
             {
               ...payload,
               updatedAt: serverTimestamp(),
-              createdAt: notice.createdAt ? payload.createdAt : serverTimestamp(),
+              createdAt: notice.createdAt
+                ? payload.createdAt
+                : serverTimestamp(),
             },
             { merge: true },
           );

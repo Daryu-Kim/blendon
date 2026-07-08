@@ -18,12 +18,18 @@
     </section>
 
     <AdminTable :rows="filteredNotices" :columns="columns" row-key="id">
-      <template #isPinned="{ row }">{{ row.isPinned ? "고정" : "일반" }}</template>
+      <template #isPinned="{ row }">{{
+        row.isPinned ? "고정" : "일반"
+      }}</template>
       <template #createdAt="{ row }">{{ formatDate(row.createdAt) }}</template>
       <template #actions="{ row }">
         <div class="row-actions">
-          <Button size="sm" variant="ghost" :to="`/admin/notices/${row.id}`">수정</Button>
-          <Button size="sm" variant="danger" @click="remove(row.id)">삭제</Button>
+          <Button size="sm" variant="ghost" :to="`/admin/notices/${row.id}`"
+            >수정</Button
+          >
+          <Button size="sm" variant="danger" @click="remove(row.id)"
+            >삭제</Button
+          >
         </div>
       </template>
     </AdminTable>
@@ -47,8 +53,12 @@ const columns = [
 const filteredNotices = computed(() => {
   const q = keyword.value.trim().toLowerCase();
   return noticeStore.sortedNotices.filter((notice) => {
-    const matchesKeyword = !q || notice.title.toLowerCase().includes(q) || notice.content.toLowerCase().includes(q);
-    const matchesPinned = !pinned.value || String(notice.isPinned) === pinned.value;
+    const matchesKeyword =
+      !q ||
+      notice.title.toLowerCase().includes(q) ||
+      notice.content.toLowerCase().includes(q);
+    const matchesPinned =
+      !pinned.value || String(notice.isPinned) === pinned.value;
     return matchesKeyword && matchesPinned;
   });
 });

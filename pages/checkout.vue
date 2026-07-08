@@ -287,7 +287,9 @@ const openStoreMap = () => {
 const loadDaumPostcode = () =>
   new Promise<void>((resolve, reject) => {
     if (!import.meta.client)
-      return reject(new Error("브라우저에서만 주소 검색을 사용할 수 있습니다."));
+      return reject(
+        new Error("브라우저에서만 주소 검색을 사용할 수 있습니다."),
+      );
     const win = window as Window & {
       daum?: {
         Postcode: new (options: {

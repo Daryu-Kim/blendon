@@ -35,7 +35,9 @@ export const isPublicAccessGrade = (grade?: AccessGradeCode | null) =>
 const findGrade = (grade: GradeCode | undefined, grades: GradeBenefit[] = []) =>
   grades.find(
     (item) =>
-      item.gradeCode === grade || item.id === grade || item.internalCode === grade,
+      item.gradeCode === grade ||
+      item.id === grade ||
+      item.internalCode === grade,
   );
 
 const numericGradeLevel = (grade?: string) => {
@@ -81,7 +83,10 @@ export const qualifiesForGradeFreeShipping = (
   grades: GradeBenefit[] = [],
 ) => {
   if (subtotal <= 0) return true;
-  const threshold = gradeFreeShippingThreshold(user?.userGrade || "BASIC", grades);
+  const threshold = gradeFreeShippingThreshold(
+    user?.userGrade || "BASIC",
+    grades,
+  );
   return threshold === 0 || subtotal >= threshold;
 };
 
@@ -91,7 +96,9 @@ export const hasGradeAtLeast = (
   grades: GradeBenefit[] = [],
 ) => {
   if (isPublicAccessGrade(minGrade)) return true;
-  return gradeLevel(userGrade || "BASIC", grades) >= gradeLevel(minGrade, grades);
+  return (
+    gradeLevel(userGrade || "BASIC", grades) >= gradeLevel(minGrade, grades)
+  );
 };
 
 export const categoryDisplayGrade = (category: Category) =>

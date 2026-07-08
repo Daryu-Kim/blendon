@@ -63,7 +63,8 @@ const defaultTermsAgreement = (): TermsAgreement => ({
 
 const defaultGrade = async () => {
   const firebase = useNuxtApp().$firebase;
-  if (!firebase.enabled || !firebase.db) return { gradeCode: "BASIC", level: 1 };
+  if (!firebase.enabled || !firebase.db)
+    return { gradeCode: "BASIC", level: 1 };
   try {
     const snap = await getDocs(
       query(collection(firebase.db, "gradeBenefits"), orderBy("level", "asc")),

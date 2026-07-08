@@ -20,7 +20,11 @@
         <span>관리</span>
       </div>
 
-      <div v-for="(option, index) in options" :key="option.optionId" class="option-row">
+      <div
+        v-for="(option, index) in options"
+        :key="option.optionId"
+        class="option-row"
+      >
         <Input
           v-model="option.optionName"
           aria-label="옵션명"
@@ -68,7 +72,8 @@
     </div>
 
     <p class="option-help">
-      옵션이 하나뿐인 상품도 기본 옵션을 유지해야 장바구니와 주문 재고 차감이 안정적으로 동작합니다.
+      옵션이 하나뿐인 상품도 기본 옵션을 유지해야 장바구니와 주문 재고 차감이
+      안정적으로 동작합니다.
     </p>
   </div>
 </template>
@@ -89,9 +94,16 @@ const createOption = (index: number): ProductOption => ({
   isActive: true,
 });
 
-const normalizeOption = (option: ProductOption, index: number): ProductOption => {
-  const optionName = String(option.optionName || "").trim() || (index === 0 ? "기본" : `옵션 ${index + 1}`);
-  const optionCode = String(option.optionCode || "").trim() || toSafeId(optionName).toUpperCase();
+const normalizeOption = (
+  option: ProductOption,
+  index: number,
+): ProductOption => {
+  const optionName =
+    String(option.optionName || "").trim() ||
+    (index === 0 ? "기본" : `옵션 ${index + 1}`);
+  const optionCode =
+    String(option.optionCode || "").trim() ||
+    toSafeId(optionName).toUpperCase();
   return {
     optionId: option.optionId || `option-${toSafeId(optionName)}-${index}`,
     optionName,
@@ -131,7 +143,9 @@ const addOption = () => {
 
 const removeOption = (index: number) => {
   if (options.value.length <= 1) return;
-  options.value = options.value.filter((_, optionIndex) => optionIndex !== index);
+  options.value = options.value.filter(
+    (_, optionIndex) => optionIndex !== index,
+  );
   sync();
 };
 

@@ -20,7 +20,11 @@
         <time>{{ formatDate(notice.createdAt) }}</time>
       </NuxtLink>
     </div>
-    <EmptyState v-else title="등록된 공지사항이 없어요." description="새로운 안내가 등록되면 이곳에서 확인할 수 있습니다." />
+    <EmptyState
+      v-else
+      title="등록된 공지사항이 없어요."
+      description="새로운 안내가 등록되면 이곳에서 확인할 수 있습니다."
+    />
   </main>
 </template>
 

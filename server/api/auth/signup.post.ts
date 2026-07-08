@@ -88,7 +88,8 @@ export default defineEventHandler(async (event) => {
   if (!/^[a-zA-Z0-9._-]{4,30}$/.test(loginId)) {
     throw createError({
       statusCode: 400,
-      statusMessage: "아이디는 영문, 숫자, 일부 기호 포함 4자 이상으로 입력해 주세요.",
+      statusMessage:
+        "아이디는 영문, 숫자, 일부 기호 포함 4자 이상으로 입력해 주세요.",
     });
   }
   if (!email || !password || password.length < 6) {
@@ -173,12 +174,11 @@ export default defineEventHandler(async (event) => {
 
   try {
     await admin.db.runTransaction(async (transaction) => {
-      const activeVerification =
-        await getSignupAdultVerificationForTransaction(
-          transaction,
-          verification,
-          displayName,
-        );
+      const activeVerification = await getSignupAdultVerificationForTransaction(
+        transaction,
+        verification,
+        displayName,
+      );
       const timestamp = FieldValue.serverTimestamp();
       transaction.set(admin.db.collection("users").doc(userRecord.uid), {
         ...profile,

@@ -23,7 +23,9 @@ const toIsoDate = (value: unknown) => {
   }
   if (typeof value === "string" && value) {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value.slice(0, 10) : date.toISOString().slice(0, 10);
+    return Number.isNaN(date.getTime())
+      ? value.slice(0, 10)
+      : date.toISOString().slice(0, 10);
   }
   return new Date().toISOString().slice(0, 10);
 };
@@ -53,17 +55,25 @@ export default defineEventHandler(async (event) => {
   const urls: Array<{ loc: string; lastmod?: string }> = [
     { loc: absoluteUrl(baseUrl, "/") },
     { loc: absoluteUrl(baseUrl, "/products") },
+    { loc: absoluteUrl(baseUrl, "/notices") },
+    { loc: absoluteUrl(baseUrl, "/support") },
+    { loc: absoluteUrl(baseUrl, "/business-info") },
   ];
 
   const admin = getFirebaseAdmin();
   if (admin) {
-    const [productSnap, categorySnap] = await Promise.all([
+    const [productSnap, categorySnap, noticeSnap] = await Promise.all([
       admin.db
         .collection("products")
         .where("isVisible", "==", true)
         .where("status", "==", "active")
         .get(),
       admin.db.collection("categories").where("isVisible", "==", true).get(),
+      admin.db
+        .collection("notices")
+        .orderBy("createdAt", "desc")
+        .get()
+        .catch(() => null),
     ]);
     const publicCategoryIds = new Set(
       categorySnap.docs
@@ -75,6 +85,12 @@ export default defineEventHandler(async (event) => {
     productSnap.docs.forEach((doc) => {
       const product = doc.data() as Product;
       if (!product.slug || !isPublicGrade(product.minUserGradeToView)) return;
+      if (
+        product.isAdultOnly ||
+        product.isPriceHiddenBeforeAdultVerification ||
+        product.isPriceHiddenBeforeLogin
+      )
+        return;
       const categoryIds = Array.isArray(product.categoryIds)
         ? product.categoryIds
         : [];
@@ -89,6 +105,15 @@ export default defineEventHandler(async (event) => {
           product.canonicalUrl || `/products/${product.slug}`,
         ),
         lastmod: toIsoDate(product.updatedAt),
+      });
+    });
+
+    noticeSnap?.docs.forEach((doc) => {
+      const notice = doc.data();
+      if (!notice.title) return;
+      urls.push({
+        loc: absoluteUrl(baseUrl, `/notices/${doc.id}`),
+        lastmod: toIsoDate(notice.updatedAt || notice.createdAt),
       });
     });
   }

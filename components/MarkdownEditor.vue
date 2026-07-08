@@ -29,9 +29,17 @@
 </template>
 
 <script setup lang="ts">
-import { getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
+import {
+  getDownloadURL,
+  ref as storageRef,
+  uploadBytes,
+} from "firebase/storage";
 import { MdEditor, allToolbar } from "md-editor-v3";
-import type { ToolbarNames, UploadImgCallBack, UploadImgEvent } from "md-editor-v3";
+import type {
+  ToolbarNames,
+  UploadImgCallBack,
+  UploadImgEvent,
+} from "md-editor-v3";
 
 const props = withDefaults(
   defineProps<{
@@ -81,7 +89,9 @@ const handleUploadImages: UploadImgEvent = async (
     callback(uploaded);
   } catch (error) {
     useToast().show(
-      error instanceof Error ? error.message : "이미지 업로드 중 문제가 발생했습니다.",
+      error instanceof Error
+        ? error.message
+        : "이미지 업로드 중 문제가 발생했습니다.",
       "error",
     );
   } finally {

@@ -41,7 +41,12 @@ const timestampToIso = (value: unknown) => {
 };
 
 const normalizeDeviceType = (value: unknown): DeviceType => {
-  if (value === "mtl" || value === "dtl" || value === "disposable" || value === "common")
+  if (
+    value === "mtl" ||
+    value === "dtl" ||
+    value === "disposable" ||
+    value === "common"
+  )
     return value;
   if (value === "starter" || value === "compact" || value === "all-in-one")
     return "mtl";
@@ -161,7 +166,10 @@ const normalizeCategory = (
     data.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE,
   displayMinUserGradeLevel:
     Number(data.displayMinUserGradeLevel || 0) ||
-    gradeLevel(data.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE, gradeBenefits),
+    gradeLevel(
+      data.displayMinUserGradeToView || PUBLIC_ACCESS_GRADE,
+      gradeBenefits,
+    ),
   adultOnly: Boolean(data.adultOnly),
 });
 
@@ -175,7 +183,9 @@ const allowedGradesFor = (
     .sort((a, b) => a.level - b.level || a.order - b.order);
   const current = grades.find(
     (item) =>
-      item.gradeCode === grade || item.id === grade || item.internalCode === grade,
+      item.gradeCode === grade ||
+      item.id === grade ||
+      item.internalCode === grade,
   );
   const currentLevel = (current?.level ?? gradeLevel(grade, grades)) || 1;
   const allowed = grades
@@ -282,7 +292,11 @@ export const useProductStore = defineStore("product", {
               auth.profile?.userGrade || PUBLIC_ACCESS_GRADE,
               auth.profile?.isAdultVerified ? "adult" : "unverified",
             ].join(":");
-            if (this.initialized && this.catalogAccessKey === accessKey && !force)
+            if (
+              this.initialized &&
+              this.catalogAccessKey === accessKey &&
+              !force
+            )
               return;
             const isAdmin = auth.isAdmin;
             const gradeSnap = await getDocs(
@@ -292,7 +306,10 @@ export const useProductStore = defineStore("product", {
               ),
             );
             const gradeBenefits = gradeSnap.docs.map((item) =>
-              normalizeGradeBenefit(item.id, item.data() as Partial<GradeBenefit>),
+              normalizeGradeBenefit(
+                item.id,
+                item.data() as Partial<GradeBenefit>,
+              ),
             );
             const gradeFilter = allowedGradesFor(
               auth.profile?.userGrade,
@@ -343,37 +360,41 @@ export const useProductStore = defineStore("product", {
               return;
             }
 
-            const [productSnap, legacyProductSnap, categorySnap, legacyCategorySnap] =
-              await Promise.all([
-                getDocs(
-                  query(
-                    collection(firebase.db, "products"),
-                    ...productConstraints,
-                  ),
+            const [
+              productSnap,
+              legacyProductSnap,
+              categorySnap,
+              legacyCategorySnap,
+            ] = await Promise.all([
+              getDocs(
+                query(
+                  collection(firebase.db, "products"),
+                  ...productConstraints,
                 ),
-                isAdmin
-                  ? Promise.resolve(null)
-                  : getDocs(
-                      query(
-                        collection(firebase.db, "products"),
-                        ...legacyProductConstraints,
-                      ),
+              ),
+              isAdmin
+                ? Promise.resolve(null)
+                : getDocs(
+                    query(
+                      collection(firebase.db, "products"),
+                      ...legacyProductConstraints,
                     ),
-                getDocs(
-                  query(
-                    collection(firebase.db, "categories"),
-                    ...categoryConstraints,
                   ),
+              getDocs(
+                query(
+                  collection(firebase.db, "categories"),
+                  ...categoryConstraints,
                 ),
-                isAdmin
-                  ? Promise.resolve(null)
-                  : getDocs(
-                      query(
-                        collection(firebase.db, "categories"),
-                        ...legacyCategoryConstraints,
-                      ),
+              ),
+              isAdmin
+                ? Promise.resolve(null)
+                : getDocs(
+                    query(
+                      collection(firebase.db, "categories"),
+                      ...legacyCategoryConstraints,
                     ),
-              ]);
+                  ),
+            ]);
             const productDocs = new Map(
               [...productSnap.docs, ...(legacyProductSnap?.docs || [])].map(
                 (item) => [item.id, item],
@@ -482,21 +503,15 @@ export const useProductStore = defineStore("product", {
           Number(category.displayMinUserGradeLevel || 0) ||
           gradeLevel(categoryDisplayGrade(category), this.gradeBenefits),
       };
-      const index = this.categories.findIndex(
-        (item) => item.id === payload.id,
-      );
+      const index = this.categories.findIndex((item) => item.id === payload.id);
       if (index >= 0) this.categories[index] = payload;
       else this.categories.push(payload);
       const firebase = useNuxtApp().$firebase;
       if (firebase.enabled && firebase.db) {
         await useGlobalLoading().withLoading(async () => {
-          await setDoc(
-            doc(firebase.db!, "categories", payload.id),
-            payload,
-            {
-              merge: true,
-            },
-          );
+          await setDoc(doc(firebase.db!, "categories", payload.id), payload, {
+            merge: true,
+          });
         }, "카테고리를 저장하는 중");
       }
     },
@@ -512,7 +527,8 @@ export const useProductStore = defineStore("product", {
       const now = new Date().toISOString();
       const payload = { ...benefit, updatedAt: now };
       const index = this.gradeBenefits.findIndex(
-        (item) => item.id === benefit.id || item.gradeCode === benefit.gradeCode,
+        (item) =>
+          item.id === benefit.id || item.gradeCode === benefit.gradeCode,
       );
       if (index >= 0) this.gradeBenefits[index] = payload;
       else this.gradeBenefits.push(payload);

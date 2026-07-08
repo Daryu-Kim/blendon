@@ -34,9 +34,7 @@ export const useBannerStore = defineStore("banner", {
   getters: {
     activeHomeMainBanners: (state) =>
       state.banners
-        .filter(
-          (banner) => banner.isActive && banner.placement === "home-main",
-        )
+        .filter((banner) => banner.isActive && banner.placement === "home-main")
         .sort((a, b) => a.order - b.order),
   },
   actions: {

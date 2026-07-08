@@ -3,9 +3,13 @@
     <div class="section-title">
       <div>
         <h1>카테고리 관리</h1>
-        <p>1차/2차/3차 카테고리를 트리 구조로 확인하고 권한 정책을 관리합니다.</p>
+        <p>
+          1차/2차/3차 카테고리를 트리 구조로 확인하고 권한 정책을 관리합니다.
+        </p>
       </div>
-      <Button to="/admin/categories/new" variant="secondary">카테고리 추가</Button>
+      <Button to="/admin/categories/new" variant="secondary"
+        >카테고리 추가</Button
+      >
     </div>
 
     <section class="surface category-summary">
@@ -41,7 +45,9 @@
           {{ row.isVisible ? "노출" : "숨김" }}
         </span>
       </template>
-      <template #adultOnly="{ row }">{{ row.adultOnly ? "예" : "아니오" }}</template>
+      <template #adultOnly="{ row }">{{
+        row.adultOnly ? "예" : "아니오"
+      }}</template>
       <template #minUserGradeToView="{ row }">
         {{ gradeLabel(row.minUserGradeToView, row.minUserGradeLevel) }}
       </template>
@@ -93,8 +99,11 @@ const columns = [
   { key: "minUserGradeToView", label: "열람 등급" },
 ] as const;
 
-const categoryNameMap = computed(() =>
-  new Map(productStore.categories.map((category) => [category.id, category.name])),
+const categoryNameMap = computed(
+  () =>
+    new Map(
+      productStore.categories.map((category) => [category.id, category.name]),
+    ),
 );
 
 const treeRows = computed<CategoryTreeRow[]>(() =>
@@ -133,7 +142,11 @@ const gradeLabel = (gradeCode: string, level?: number) => {
 };
 
 const remove = async (id: string) => {
-  if (!confirm("카테고리를 삭제할까요? 연결된 상품의 categoryIds는 직접 정리해야 합니다."))
+  if (
+    !confirm(
+      "카테고리를 삭제할까요? 연결된 상품의 categoryIds는 직접 정리해야 합니다.",
+    )
+  )
     return;
   await productStore.removeCategory(id);
 };

@@ -8,8 +8,14 @@
       <Button to="/admin/grades/new" variant="secondary">등급 추가</Button>
     </div>
 
-    <AdminTable :rows="productStore.gradeBenefits" :columns="columns" row-key="id">
-      <template #isVisible="{ row }">{{ row.isVisible ? "사용" : "숨김" }}</template>
+    <AdminTable
+      :rows="productStore.gradeBenefits"
+      :columns="columns"
+      row-key="id"
+    >
+      <template #isVisible="{ row }">{{
+        row.isVisible ? "사용" : "숨김"
+      }}</template>
       <template #discountRate="{ row }">{{ row.discountRate }}%</template>
       <template #pointRate="{ row }">{{ row.pointRate }}%</template>
       <template #minPurchaseAmount="{ row }">

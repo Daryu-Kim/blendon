@@ -36,7 +36,10 @@ const businessItems = computed(() => [
     value: globalSettings.value?.mailOrderSalesNumber || "-",
   },
   { label: "사업장 주소", value: globalSettings.value?.businessAddress || "-" },
-  { label: "고객센터", value: globalSettings.value?.customerCenterPhone || "-" },
+  {
+    label: "고객센터",
+    value: globalSettings.value?.customerCenterPhone || "-",
+  },
   { label: "이메일", value: globalSettings.value?.customerCenterEmail || "-" },
   { label: "호스팅 서비스", value: "Vercel" },
 ]);

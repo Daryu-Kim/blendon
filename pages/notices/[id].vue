@@ -1,6 +1,12 @@
 <template>
   <main class="section page-shell">
-    <EmptyState v-if="!notice" title="공지사항을 찾을 수 없어요." description="목록에서 다시 선택해 주세요." action-label="공지사항 목록" action-to="/notices" />
+    <EmptyState
+      v-if="!notice"
+      title="공지사항을 찾을 수 없어요."
+      description="목록에서 다시 선택해 주세요."
+      action-label="공지사항 목록"
+      action-to="/notices"
+    />
     <article v-else class="notice-detail surface">
       <div class="notice-head">
         <span v-if="notice.isPinned" class="pill">고정</span>
@@ -20,7 +26,11 @@ import { formatDate } from "~/utils/format";
 
 const route = useRoute();
 const noticeStore = useNoticeStore();
-const notice = computed(() => noticeStore.notices.find((item) => item.id === String(route.params.id)) || null);
+const notice = computed(
+  () =>
+    noticeStore.notices.find((item) => item.id === String(route.params.id)) ||
+    null,
+);
 
 onMounted(async () => {
   await noticeStore.fetchNotice(String(route.params.id));

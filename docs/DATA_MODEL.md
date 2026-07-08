@@ -20,9 +20,9 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `adultVerifiedAt`               | timestamp/string/null | 성인 인증 완료 시각                              |
 | `adultVerificationProvider`     | string/null           | `apick-identi-card`, `external` 등               |
 | `userGrade`                     | string                | `gradeBenefits/{gradeCode}` 참조                 |
-| `userGradeLevel`                | number                | 현재 회원 등급 레벨. Rules/카테고리 접근 계산용 |
+| `userGradeLevel`                | number                | 현재 회원 등급 레벨. Rules/카테고리 접근 계산용  |
 | `gradeEvaluatedAt`              | timestamp/string/null | 등급 자동 갱신 평가 시각                         |
-| `gradePurchaseAmount6Months`    | number                | 최근 6개월 구매확정액. 자동 갱신 결과 스냅샷    |
+| `gradePurchaseAmount6Months`    | number                | 최근 6개월 구매확정액. 자동 갱신 결과 스냅샷     |
 | `isGradeLocked`                 | boolean               | 관리자 수동 등급 고정 여부                       |
 | `gradeLockedAt`                 | timestamp/string/null | 등급 고정 처리 시각                              |
 | `gradeLockedBy`                 | string/null           | 등급 고정 처리 관리자 UID                        |
@@ -47,39 +47,39 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 등급 평가는 모든 등급에 공통으로 `최근 6개월 구매확정액`을 기준으로 하며, Firebase Functions 스케줄러가 매월 1일 자동 갱신한다.
 등급 할인 제외 여부는 등급이 아니라 `products/{productId}.isGradeDiscountExcluded`에서 상품별로 관리한다.
 
-| Field                    | Type             | Notes                 |
-| ------------------------ | ---------------- | --------------------- |
-| `id`                     | string           | 문서 ID와 동일        |
-| `gradeCode`              | string           | 운영자가 생성하는 등급 코드 |
-| `internalCode`           | string           | 내부 운영 코드             |
-| `level`                  | number           | 권한 비교용 숫자. 높을수록 상위 등급 |
-| `label`                  | string           | 화면 표시명           |
-| `discountRate`           | number           | 회원가 기준 할인율    |
-| `pointRate`              | number           | 적립률                |
+| Field                    | Type             | Notes                                 |
+| ------------------------ | ---------------- | ------------------------------------- |
+| `id`                     | string           | 문서 ID와 동일                        |
+| `gradeCode`              | string           | 운영자가 생성하는 등급 코드           |
+| `internalCode`           | string           | 내부 운영 코드                        |
+| `level`                  | number           | 권한 비교용 숫자. 높을수록 상위 등급  |
+| `label`                  | string           | 화면 표시명                           |
+| `discountRate`           | number           | 회원가 기준 할인율                    |
+| `pointRate`              | number           | 적립률                                |
 | `minPurchaseAmount`      | number           | 승급 기준 구매확정액. 최근 6개월 기준 |
-| `freeShippingThreshold`  | number           | 무료배송 기준         |
-| `isVisible`              | boolean          | 관리자/회원 화면 노출 |
-| `order`                  | number           | 정렬                  |
-| `createdAt`, `updatedAt` | timestamp/string | 시각                  |
+| `freeShippingThreshold`  | number           | 무료배송 기준                         |
+| `isVisible`              | boolean          | 관리자/회원 화면 노출                 |
+| `order`                  | number           | 정렬                                  |
+| `createdAt`, `updatedAt` | timestamp/string | 시각                                  |
 
 ### `categories/{categoryId}`
 
 카테고리 메뉴를 Firestore에서 관리한다.
 
-| Field                | Type        | Notes              |
-| -------------------- | ----------- | ------------------ |
-| `id`                 | string      | 문서 ID와 동일     |
-| `name`               | string      | 카테고리명         |
-| `slug`               | string      | URL/검색용         |
-| `parentId`           | string/null | 상위 카테고리      |
-| `depth`              | number      | 1~3 권장           |
-| `order`              | number      | 정렬               |
-| `isVisible`          | boolean     | 노출 여부          |
-| `minUserGradeToView` | string      | 최소 열람 기준 코드. 특정 등급은 `gradeCode`, 레벨 기준은 `LEVEL_7`처럼 저장 |
-| `minUserGradeLevel`  | number      | 실제 최소 열람 등급 레벨. 권한 비교의 기준값 |
-| `displayMinUserGradeToView` | string | 소비자 카테고리 메뉴 노출 기준. `adultOnly`와 실제 접근 등급과 별개로 이 값만 메뉴 표시 권한에 사용 |
-| `displayMinUserGradeLevel`  | number | 소비자 카테고리 메뉴 노출 기준 레벨. `PUBLIC`은 0, 권한 비교의 기준값 |
-| `adultOnly`          | boolean     | 성인 전용 카테고리 |
+| Field                       | Type        | Notes                                                                                               |
+| --------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
+| `id`                        | string      | 문서 ID와 동일                                                                                      |
+| `name`                      | string      | 카테고리명                                                                                          |
+| `slug`                      | string      | URL/검색용                                                                                          |
+| `parentId`                  | string/null | 상위 카테고리                                                                                       |
+| `depth`                     | number      | 1~3 권장                                                                                            |
+| `order`                     | number      | 정렬                                                                                                |
+| `isVisible`                 | boolean     | 노출 여부                                                                                           |
+| `minUserGradeToView`        | string      | 최소 열람 기준 코드. 특정 등급은 `gradeCode`, 레벨 기준은 `LEVEL_7`처럼 저장                        |
+| `minUserGradeLevel`         | number      | 실제 최소 열람 등급 레벨. 권한 비교의 기준값                                                        |
+| `displayMinUserGradeToView` | string      | 소비자 카테고리 메뉴 노출 기준. `adultOnly`와 실제 접근 등급과 별개로 이 값만 메뉴 표시 권한에 사용 |
+| `displayMinUserGradeLevel`  | number      | 소비자 카테고리 메뉴 노출 기준 레벨. `PUBLIC`은 0, 권한 비교의 기준값                               |
+| `adultOnly`                 | boolean     | 성인 전용 카테고리                                                                                  |
 
 ### `products/{productId}`
 
@@ -101,8 +101,8 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `memberPrice`                          | number           | 회원 기준가                                                                           |
 | `compareAtPrice`                       | number/null      | 정가/할인 전 가격                                                                     |
 | `gradePrices`                          | map              | 등급별 고정가, 예: `{ VIP_2026: 21000 }`                                              |
-| `isGradeDiscountExcluded`               | boolean          | 등급 할인/등급 고정가 제외 여부. 특가, 세트, 법정가/정가 고정 상품 등에 사용          |
-| `discountExcludedReason`                | string           | 할인 제외 사유                                                                         |
+| `isGradeDiscountExcluded`              | boolean          | 등급 할인/등급 고정가 제외 여부. 특가, 세트, 법정가/정가 고정 상품 등에 사용          |
+| `discountExcludedReason`               | string           | 할인 제외 사유                                                                        |
 | `stock`                                | number           | 총 재고                                                                               |
 | `options`                              | array            | `optionId`, `optionName`, `optionCode`, `additionalPrice`, `stock`, `isActive`        |
 | `badges`                               | string[]         | 카드 배지                                                                             |
@@ -123,10 +123,10 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 | `isPriceHiddenBeforeAdultVerification` | boolean          | 성인 확인 전 가격 숨김                                                                |
 | `viewRoles`, `buyRoles`                | string[]         | 향후 staff/manager 전용 상품 확장                                                     |
 | `status`                               | string           | `draft`, `active`, `hidden`, `soldOut`, `deleted`                                     |
-| `seoTitle`, `seoDescription`           | string           | 상품 상세 SEO 타이틀/설명                                                            |
+| `seoTitle`, `seoDescription`           | string           | 상품 상세 SEO 타이틀/설명                                                             |
 | `seoKeywords`                          | string[]         | 상품 상세 SEO 키워드                                                                  |
-| `ogImageUrl`                           | string           | 상품 공유 이미지                                                                       |
-| `canonicalUrl`                         | string           | 상품 canonical URL. 비어 있으면 `/products/{slug}` 사용                              |
+| `ogImageUrl`                           | string           | 상품 공유 이미지                                                                      |
+| `canonicalUrl`                         | string           | 상품 canonical URL. 비어 있으면 `/products/{slug}` 사용                               |
 | `adminMemo`                            | string           | 관리자 메모                                                                           |
 | `createdAt`, `updatedAt`               | timestamp/string | 시각                                                                                  |
 
@@ -134,28 +134,28 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 주문은 서버 API가 생성하고 결제 검증 후 확정한다.
 
-| Field                                            | Type                  | Notes                                                                   |
-| ------------------------------------------------ | --------------------- | ----------------------------------------------------------------------- |
-| `id`, `orderNo`, `userId`                        | string                | 식별자                                                                  |
+| Field                                            | Type                  | Notes                                                                                         |
+| ------------------------------------------------ | --------------------- | --------------------------------------------------------------------------------------------- |
+| `id`, `orderNo`, `userId`                        | string                | 식별자                                                                                        |
 | `items`                                          | array                 | `OrderItem` 스냅샷. `regularUnitPrice`, `gradeDiscountAmount`, `isGradeDiscountExcluded` 포함 |
-| `subtotalAmount`                                 | number                | 서버 계산 상품 합계                                                     |
-| `deliveryFee`                                    | number                | 배송 주문일 때만 부과                                                   |
-| `discountAmount`                                 | number                | 쿠폰/프로모션 확장용                                                    |
-| `pointUsed`                                      | number                | 결제금액의 최대 10%                                                     |
-| `totalAmount`                                    | number                | 최종 결제 금액                                                          |
-| `paymentStatus`                                  | string                | `pending`, `ready`, `paid`, `failed`, `canceled`, `refunded`            |
-| `paymentMethod`                                  | string                | `card`, `transfer`                                                      |
-| `orderStatus`                                    | string                | 주문 처리 상태                                                          |
-| `deliveryStatus`                                 | string                | 배송/픽업 상태                                                          |
-| `deliveryCompany`, `trackingNumber`, `shippedAt` | string/string/date    | 택배사, 송장번호, 출고 처리 시각                                         |
-| `claimStatus`                                    | string                | 취소/교환/환불 상태                                                     |
-| `recipientName`, `recipientPhone`                | string                | 수령 정보                                                               |
-| `address`                                        | map                   | 배송 주문일 때 입력                                                     |
-| `deliveryMemo`                                   | string                | 배송 주문일 때 입력                                                     |
-| `pickupType`                                     | string                | `delivery`, `store-pickup`                                              |
-| `adminMemo`                                      | string                | 관리자 메모                                                             |
-| `createdAt`, `updatedAt`, `paidAt`               | timestamp/string/null | 시각                                                                    |
-| `completedAt`                                    | timestamp/string/null | 구매확정 시각. 등급 자동 갱신의 최근 6개월 실적 기준                    |
+| `subtotalAmount`                                 | number                | 서버 계산 상품 합계                                                                           |
+| `deliveryFee`                                    | number                | 배송 주문일 때만 부과                                                                         |
+| `discountAmount`                                 | number                | 쿠폰/프로모션 확장용                                                                          |
+| `pointUsed`                                      | number                | 결제금액의 최대 10%                                                                           |
+| `totalAmount`                                    | number                | 최종 결제 금액                                                                                |
+| `paymentStatus`                                  | string                | `pending`, `ready`, `paid`, `failed`, `canceled`, `refunded`                                  |
+| `paymentMethod`                                  | string                | `card`, `transfer`                                                                            |
+| `orderStatus`                                    | string                | 주문 처리 상태                                                                                |
+| `deliveryStatus`                                 | string                | 배송/픽업 상태                                                                                |
+| `deliveryCompany`, `trackingNumber`, `shippedAt` | string/string/date    | 택배사, 송장번호, 출고 처리 시각                                                              |
+| `claimStatus`                                    | string                | 취소/교환/환불 상태                                                                           |
+| `recipientName`, `recipientPhone`                | string                | 수령 정보                                                                                     |
+| `address`                                        | map                   | 배송 주문일 때 입력                                                                           |
+| `deliveryMemo`                                   | string                | 배송 주문일 때 입력                                                                           |
+| `pickupType`                                     | string                | `delivery`, `store-pickup`                                                                    |
+| `adminMemo`                                      | string                | 관리자 메모                                                                                   |
+| `createdAt`, `updatedAt`, `paidAt`               | timestamp/string/null | 시각                                                                                          |
+| `completedAt`                                    | timestamp/string/null | 구매확정 시각. 등급 자동 갱신의 최근 6개월 실적 기준                                          |
 
 ### `cartItems/{cartItemId}`
 
@@ -169,12 +169,12 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 ### `banners/{bannerId}`
 
-| Field                                                                         | Type                                  |
-| ----------------------------------------------------------------------------- | ------------------------------------- |
+| Field                                                                               | Type                                  |
+| ----------------------------------------------------------------------------------- | ------------------------------------- |
 | `id`, `slug`, `title`, `subtitle`, `imageUrl`, `buttonText`, `linkUrl`, `productId` | string                                |
-| `isActive`                                                                    | boolean                               |
-| `order`                                                                       | number                                |
-| `placement`                                                                   | `home-main`, `home-section`, `notice` |
+| `isActive`                                                                          | boolean                               |
+| `order`                                                                             | number                                |
+| `placement`                                                                         | `home-main`, `home-section`, `notice` |
 
 ### `notices/{noticeId}`
 
@@ -189,17 +189,17 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 사이트 진입 시 오버레이 모달로 노출되는 공지 팝업이다. 관리자만 작성/수정/삭제 가능하고, 소비자는 활성 팝업만 읽는다.
 
-| Field                    | Type                         | Notes                                  |
-| ------------------------ | ---------------------------- | -------------------------------------- |
-| `id`, `title`, `content` | string                       | 식별자, 제목, md-editor-v3 Markdown 본문 |
-| `imageUrl`               | string                       | 팝업 상단 이미지                       |
-| `linkUrl`, `buttonText`  | string                       | 연결 링크와 버튼 문구                  |
-| `placement`              | `main`, `all`                | 메인 접속 또는 전체 페이지             |
-| `isActive`               | boolean                      | 활성 여부                              |
-| `dismissMode`            | `session`, `today`, `none`   | 닫기 유지 방식                         |
-| `startsAt`, `endsAt`     | timestamp/string/null        | 노출 기간                              |
-| `order`                  | number                       | 노출 순서                              |
-| `createdAt`, `updatedAt` | timestamp/string             | 시각                                   |
+| Field                    | Type                       | Notes                                    |
+| ------------------------ | -------------------------- | ---------------------------------------- |
+| `id`, `title`, `content` | string                     | 식별자, 제목, md-editor-v3 Markdown 본문 |
+| `imageUrl`               | string                     | 팝업 상단 이미지                         |
+| `linkUrl`, `buttonText`  | string                     | 연결 링크와 버튼 문구                    |
+| `placement`              | `main`, `all`              | 메인 접속 또는 전체 페이지               |
+| `isActive`               | boolean                    | 활성 여부                                |
+| `dismissMode`            | `session`, `today`, `none` | 닫기 유지 방식                           |
+| `startsAt`, `endsAt`     | timestamp/string/null      | 노출 기간                                |
+| `order`                  | number                     | 노출 순서                                |
+| `createdAt`, `updatedAt` | timestamp/string           | 시각                                     |
 
 ### `inquiries/{inquiryId}`
 
@@ -214,17 +214,17 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 상품 상세 리뷰다. 소비자는 본인 계정으로 리뷰를 생성할 수 있고, 관리자만 답변과 노출 상태를 수정한다.
 
-| Field                              | Type                  |
-| ---------------------------------- | --------------------- |
-| `id`, `productId`, `productSlug`, `productName` | string |
-| `userId`, `userName`               | string                |
-| `rating`                           | number, 1~5           |
-| `content`                          | string                |
-| `media`                            | `{ url, type, name }[]`, type은 `image` 또는 `video` |
-| `adminReply`                       | string                |
-| `adminReplyAt`, `adminReplyBy`      | string/null           |
-| `isVisible`                        | boolean               |
-| `createdAt`, `updatedAt`            | timestamp/string      |
+| Field                                           | Type                                                 |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| `id`, `productId`, `productSlug`, `productName` | string                                               |
+| `userId`, `userName`                            | string                                               |
+| `rating`                                        | number, 1~5                                          |
+| `content`                                       | string                                               |
+| `media`                                         | `{ url, type, name }[]`, type은 `image` 또는 `video` |
+| `adminReply`                                    | string                                               |
+| `adminReplyAt`, `adminReplyBy`                  | string/null                                          |
+| `isVisible`                                     | boolean                                              |
+| `createdAt`, `updatedAt`                        | timestamp/string                                     |
 
 ### `adultVerificationLogs/{logId}`
 
@@ -243,71 +243,71 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 회원가입 전 APick 확인이 끝난 뒤 최종 가입까지 짧게 유지하는 서버 전용 임시 문서다. Firestore Rules에서는 클라이언트 접근을 모두 차단한다.
 
-| Field            | Type                  |
-| ---------------- | --------------------- |
-| `name`           | string                |
-| `provider`       | `apick-identi-card`   |
-| `birthDate`      | string                |
-| `verifiedAt`     | string                |
-| `apickRequestId` | number/null           |
-| `expiresAt`      | timestamp             |
-| `consumedAt`     | timestamp/null        |
-| `consumedBy`     | string/null           |
-| `createdAt`      | timestamp             |
-| `updatedAt`      | timestamp             |
+| Field            | Type                |
+| ---------------- | ------------------- |
+| `name`           | string              |
+| `provider`       | `apick-identi-card` |
+| `birthDate`      | string              |
+| `verifiedAt`     | string              |
+| `apickRequestId` | number/null         |
+| `expiresAt`      | timestamp           |
+| `consumedAt`     | timestamp/null      |
+| `consumedBy`     | string/null         |
+| `createdAt`      | timestamp           |
+| `updatedAt`      | timestamp           |
 
 ### `pointLogs/{logId}`
 
 포인트 원장이다. `users.availablePoint`는 화면 표시와 한도 계산을 위한 현재 잔액이고, 적립/사용/관리자 조정/소멸 이력은 반드시 이 컬렉션에 남긴다.
 클라이언트 직접 쓰기는 금지하며, 서버 API 또는 Firebase Functions 트랜잭션으로만 생성한다.
 
-| Field           | Type             | Notes                                                              |
-| --------------- | ---------------- | ------------------------------------------------------------------ |
-| `id`            | string           | 문서 ID                                                            |
-| `userId`        | string           | 대상 회원 UID                                                      |
-| `type`          | string           | `earn`, `use`, `adjust`, `expire`, `cancel`                        |
+| Field           | Type             | Notes                                                                                                        |
+| --------------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `id`            | string           | 문서 ID                                                                                                      |
+| `userId`        | string           | 대상 회원 UID                                                                                                |
+| `type`          | string           | `earn`, `use`, `adjust`, `expire`, `cancel`                                                                  |
 | `reason`        | string           | `order-earned`, `order-used`, `admin-grant`, `admin-deduct`, `order-cancel`, `expired`, `migration`, `other` |
-| `amount`        | number           | 증감액. 지급/적립은 양수, 사용/차감은 음수                         |
-| `balanceBefore` | number           | 처리 전 잔액                                                       |
-| `balanceAfter`  | number           | 처리 후 잔액                                                       |
-| `orderId`       | string/null      | 주문 관련 포인트일 때 주문 ID                                      |
-| `orderNo`       | string/null      | 주문 관련 포인트일 때 주문번호                                     |
-| `adminId`       | string/null      | 관리자 조정 시 처리 관리자 UID                                     |
-| `adminEmail`    | string/null      | 관리자 조정 시 처리 관리자 이메일                                  |
-| `memo`          | string           | 처리 사유/CS 메모                                                  |
-| `createdAt`     | timestamp/string | 생성 시각                                                          |
+| `amount`        | number           | 증감액. 지급/적립은 양수, 사용/차감은 음수                                                                   |
+| `balanceBefore` | number           | 처리 전 잔액                                                                                                 |
+| `balanceAfter`  | number           | 처리 후 잔액                                                                                                 |
+| `orderId`       | string/null      | 주문 관련 포인트일 때 주문 ID                                                                                |
+| `orderNo`       | string/null      | 주문 관련 포인트일 때 주문번호                                                                               |
+| `adminId`       | string/null      | 관리자 조정 시 처리 관리자 UID                                                                               |
+| `adminEmail`    | string/null      | 관리자 조정 시 처리 관리자 이메일                                                                            |
+| `memo`          | string           | 처리 사유/CS 메모                                                                                            |
+| `createdAt`     | timestamp/string | 생성 시각                                                                                                    |
 
 ### `siteSettings/global`
 
 카페24 관리자 기본 설정에 해당하는 쇼핑몰 운영 정보다. 이 프로젝트는 성인 전용 쇼핑몰이므로 `adultOnly`와 `hideAdultVerificationStatusOnConsumer`는 기본적으로 `true`로 유지한다.
 
-| Field                                      | Type    |
-| ------------------------------------------ | ------- |
-| `mallName`, `mallDescription`              | string  |
-| `adultOnly`                                | boolean |
-| `requireAdultVerificationToBrowse`         | boolean |
-| `hideAdultVerificationStatusOnConsumer`    | boolean |
-| `businessName`, `representativeName`       | string  |
-| `businessRegistrationNumber`               | string  |
-| `mailOrderSalesNumber`                     | string  |
-| `businessAddress`                          | string  |
-| `customerCenterPhone`, `customerCenterEmail` | string |
-| `productDetailTopBannerImageUrl`           | string  |
-| `productDetailBottomBannerImageUrl`        | string  |
-| `updatedAt`                                | timestamp/string |
+| Field                                        | Type             |
+| -------------------------------------------- | ---------------- |
+| `mallName`, `mallDescription`                | string           |
+| `adultOnly`                                  | boolean          |
+| `requireAdultVerificationToBrowse`           | boolean          |
+| `hideAdultVerificationStatusOnConsumer`      | boolean          |
+| `businessName`, `representativeName`         | string           |
+| `businessRegistrationNumber`                 | string           |
+| `mailOrderSalesNumber`                       | string           |
+| `businessAddress`                            | string           |
+| `customerCenterPhone`, `customerCenterEmail` | string           |
+| `productDetailTopBannerImageUrl`             | string           |
+| `productDetailBottomBannerImageUrl`          | string           |
+| `updatedAt`                                  | timestamp/string |
 
 ### `siteSettings/seo`
 
 사이트 공통 SEO/공유 메타 설정이다. 상품 상세는 상품별 SEO 필드가 우선한다.
 
-| Field                                      | Type     |
-| ------------------------------------------ | -------- |
-| `defaultTitle`, `titleTemplate`            | string   |
-| `defaultDescription`, `defaultKeywords`    | string/string[] |
-| `ogTitle`, `ogDescription`, `ogImageUrl`   | string   |
-| `canonicalBaseUrl`                         | string   |
-| `robots`                                   | string   |
-| `updatedAt`                                | timestamp/string |
+| Field                                    | Type             |
+| ---------------------------------------- | ---------------- |
+| `defaultTitle`, `titleTemplate`          | string           |
+| `defaultDescription`, `defaultKeywords`  | string/string[]  |
+| `ogTitle`, `ogDescription`, `ogImageUrl` | string           |
+| `canonicalBaseUrl`                       | string           |
+| `robots`                                 | string           |
+| `updatedAt`                              | timestamp/string |
 
 ### `storeSettings/{settingId}`
 
@@ -319,18 +319,18 @@ Firestore 문서는 운영자가 직접 입력해도 일관성을 유지할 수 
 
 ## Storage Paths
 
-| Path                    | Purpose          | Rule                       |
-| ----------------------- | ---------------- | -------------------------- |
-| `products/thumbnails/*` | 상품 대표 이미지 | 관리자만 업로드, 공개 읽기 |
-| `products/details/*`    | 상품 상세 이미지 | 관리자만 업로드, 공개 읽기 |
-| `products/descriptions/*` | 상품 상세 설명 삽입 이미지 | 관리자만 업로드, 공개 읽기 |
-| `products/seo/*`        | 상품 SEO/공유 이미지 | 관리자만 업로드, 공개 읽기 |
-| `banners/*`             | 배너 이미지      | 관리자만 업로드, 공개 읽기 |
-| `notices/*`             | 공지사항 본문 이미지 | 관리자만 업로드, 공개 읽기 |
-| `notice-popups/*`       | 공지 팝업 이미지/본문 이미지 | 관리자만 업로드, 공개 읽기 |
-| `seo/*`                 | 사이트 공통 SEO 이미지 | 관리자만 업로드, 공개 읽기 |
-| `reviews/{userId}/*`    | 리뷰 사진/동영상 | 작성 회원 업로드, 공개 읽기 |
-| `uploads/*`             | 임시/공통 이미지 | 관리자만 업로드, 공개 읽기 |
+| Path                      | Purpose                      | Rule                        |
+| ------------------------- | ---------------------------- | --------------------------- |
+| `products/thumbnails/*`   | 상품 대표 이미지             | 관리자만 업로드, 공개 읽기  |
+| `products/details/*`      | 상품 상세 이미지             | 관리자만 업로드, 공개 읽기  |
+| `products/descriptions/*` | 상품 상세 설명 삽입 이미지   | 관리자만 업로드, 공개 읽기  |
+| `products/seo/*`          | 상품 SEO/공유 이미지         | 관리자만 업로드, 공개 읽기  |
+| `banners/*`               | 배너 이미지                  | 관리자만 업로드, 공개 읽기  |
+| `notices/*`               | 공지사항 본문 이미지         | 관리자만 업로드, 공개 읽기  |
+| `notice-popups/*`         | 공지 팝업 이미지/본문 이미지 | 관리자만 업로드, 공개 읽기  |
+| `seo/*`                   | 사이트 공통 SEO 이미지       | 관리자만 업로드, 공개 읽기  |
+| `reviews/{userId}/*`      | 리뷰 사진/동영상             | 작성 회원 업로드, 공개 읽기 |
+| `uploads/*`               | 임시/공통 이미지             | 관리자만 업로드, 공개 읽기  |
 
 ## Server Boundaries
 

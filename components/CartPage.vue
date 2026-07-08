@@ -23,7 +23,7 @@
               v-if="item.product.thumbnailUrl"
               :src="item.product.thumbnailUrl"
               :alt="item.product.name"
-            >
+            />
             <div v-else class="cart-thumb__empty">
               {{ item.product.name }}
             </div>
@@ -99,15 +99,16 @@ const settingsStore = useSiteSettingsStore();
 type DetailedCartItem = NonNullable<(typeof cart.detailedItems)[number]>;
 
 const detailedItems = computed<DetailedCartItem[]>(() =>
-  cart.detailedItems.filter(
-    (item): item is DetailedCartItem => Boolean(item),
-  ),
+  cart.detailedItems.filter((item): item is DetailedCartItem => Boolean(item)),
 );
 const productPath = (slug: string) => `/products/${slug}`;
 
 onMounted(async () => {
   cart.hydrate();
-  await Promise.all([productStore.fetchCatalog(), settingsStore.fetchSettings()]);
+  await Promise.all([
+    productStore.fetchCatalog(),
+    settingsStore.fetchSettings(),
+  ]);
 });
 </script>
 

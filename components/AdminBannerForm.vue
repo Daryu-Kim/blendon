@@ -78,12 +78,14 @@
             v-if="selectedProduct.thumbnailUrl"
             :src="selectedProduct.thumbnailUrl"
             :alt="selectedProduct.name"
-          >
+          />
           <div v-else class="selected-product__empty">이미지 없음</div>
           <div>
             <span>선택된 상품</span>
             <strong>{{ selectedProduct.name }}</strong>
-            <p>{{ selectedProduct.shortDescription || selectedProduct.slug }}</p>
+            <p>
+              {{ selectedProduct.shortDescription || selectedProduct.slug }}
+            </p>
           </div>
         </div>
         <p v-else class="helper wide">
@@ -131,9 +133,7 @@ const createEmptyBanner = (): Banner => ({
 });
 
 const form = reactive<Banner>(
-  props.banner
-    ? JSON.parse(JSON.stringify(props.banner))
-    : createEmptyBanner(),
+  props.banner ? JSON.parse(JSON.stringify(props.banner)) : createEmptyBanner(),
 );
 
 const activeText = computed({
@@ -171,7 +171,11 @@ watch(
     const previousRoute = previousProduct
       ? `/products/${previousProduct.slug}`
       : "";
-    if (!form.linkUrl || form.linkUrl === "/products" || form.linkUrl === previousRoute) {
+    if (
+      !form.linkUrl ||
+      form.linkUrl === "/products" ||
+      form.linkUrl === previousRoute
+    ) {
       form.linkUrl = `/products/${product.slug}`;
     }
   },

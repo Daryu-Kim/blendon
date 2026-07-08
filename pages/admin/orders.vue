@@ -29,7 +29,10 @@
           <Select
             :model-value="row.paymentStatus"
             @update:model-value="
-              orders.setPaymentStatus(row.id, $event as typeof row.paymentStatus)
+              orders.setPaymentStatus(
+                row.id,
+                $event as typeof row.paymentStatus,
+              )
             "
           >
             <option value="pending">pending</option>

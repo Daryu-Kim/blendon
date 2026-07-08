@@ -1,6 +1,9 @@
 <template>
   <form class="notice-form" @submit.prevent="submit">
-    <AdminFormSection title="공지사항 정보" description="제목과 고정 여부를 설정합니다.">
+    <AdminFormSection
+      title="공지사항 정보"
+      description="제목과 고정 여부를 설정합니다."
+    >
       <div class="form-grid">
         <div class="form-row wide">
           <label>제목</label>
@@ -16,7 +19,10 @@
       </div>
     </AdminFormSection>
 
-    <AdminFormSection title="본문" description="md-editor-v3로 작성하며 이미지는 Firebase Storage에 업로드해 삽입합니다.">
+    <AdminFormSection
+      title="본문"
+      description="md-editor-v3로 작성하며 이미지는 Firebase Storage에 업로드해 삽입합니다."
+    >
       <MarkdownEditor v-model="form.content" path-prefix="notices" />
     </AdminFormSection>
 

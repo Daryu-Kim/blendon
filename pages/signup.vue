@@ -83,13 +83,7 @@
               :disabled="verificationLoading"
               @click="verifyAdult"
             >
-              {{
-                verificationLoading
-                  ? "확인 중"
-                  : verificationToken
-                    ? "다시 인증하기"
-                    : "성인 인증하기"
-              }}
+              {{ verificationButtonText }}
             </Button>
             <p
               v-if="verificationMessage"
@@ -268,6 +262,11 @@ const loading = ref(false);
 const verificationLoading = ref(false);
 const verificationToken = ref("");
 const verificationMessage = ref("");
+const verificationButtonText = computed(() => {
+  if (verificationLoading.value) return "확인 중";
+  if (verificationToken.value) return "다시 인증하기";
+  return "성인 인증하기";
+});
 
 const allTerms = computed({
   get: () =>
@@ -326,7 +325,8 @@ watch(
   () => {
     if (!verificationToken.value) return;
     verificationToken.value = "";
-    verificationMessage.value = "인증 정보가 변경되었습니다. 다시 인증해 주세요.";
+    verificationMessage.value =
+      "인증 정보가 변경되었습니다. 다시 인증해 주세요.";
   },
 );
 
@@ -354,6 +354,7 @@ const verifyAdult = async () => {
   try {
     const result = await $fetch<{
       ok: boolean;
+      message?: string;
       verificationToken: string;
       expiresAt: string;
     }>("/api/auth/signup-verification", {
@@ -366,7 +367,10 @@ const verifyAdult = async () => {
       },
     });
     if (!result.ok || !result.verificationToken) {
-      throw new Error("성인 인증에 실패했어요.");
+      verificationMessage.value =
+        result.message ||
+        "성인 인증에 실패했어요. 입력한 정보를 다시 확인해 주세요.";
+      return;
     }
 
     verificationToken.value = result.verificationToken;

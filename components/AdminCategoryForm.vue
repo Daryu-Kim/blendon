@@ -175,8 +175,9 @@ const accessGradeOptions = computed(() => {
       label: `${grade.label} 이상 (level ${grade.level}, ${grade.internalCode || grade.gradeCode})`,
     })),
   ];
-  return [...new Map(options.map((option) => [option.value, option])).values()]
-    .sort((a, b) => a.level - b.level || a.order - b.order);
+  return [
+    ...new Map(options.map((option) => [option.value, option])).values(),
+  ].sort((a, b) => a.level - b.level || a.order - b.order);
 });
 
 const gradeByCode = (gradeCode?: string) =>
@@ -188,9 +189,11 @@ const gradeByCode = (gradeCode?: string) =>
   );
 
 const accessValueFrom = (gradeCode?: string, level?: number) => {
-  if (!gradeCode || gradeCode === PUBLIC_ACCESS_GRADE) return PUBLIC_ACCESS_GRADE;
+  if (!gradeCode || gradeCode === PUBLIC_ACCESS_GRADE)
+    return PUBLIC_ACCESS_GRADE;
   const grade = gradeByCode(gradeCode);
-  if (grade && (!level || grade.level === level)) return `GRADE:${grade.gradeCode}`;
+  if (grade && (!level || grade.level === level))
+    return `GRADE:${grade.gradeCode}`;
   const levelGrade = productStore.gradeBenefits.find(
     (item) => item.isVisible && item.level === level,
   );
@@ -231,7 +234,9 @@ const displayAccessValue = computed({
   set: (value: string) => applyAccessValue(value, "display"),
 });
 
-const sortedCategories = computed(() => buildCategoryTree(productStore.categories));
+const sortedCategories = computed(() =>
+  buildCategoryTree(productStore.categories),
+);
 const descendantIds = computed(() => {
   if (!form.id) return new Set<string>();
   const result = new Set<string>();

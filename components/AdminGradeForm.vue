@@ -98,9 +98,7 @@ const createEmptyGrade = (): GradeBenefit => ({
 });
 
 const form = reactive<GradeBenefit>(
-  props.grade
-    ? JSON.parse(JSON.stringify(props.grade))
-    : createEmptyGrade(),
+  props.grade ? JSON.parse(JSON.stringify(props.grade)) : createEmptyGrade(),
 );
 
 const visibleText = computed({

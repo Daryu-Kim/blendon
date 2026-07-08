@@ -9,7 +9,8 @@ export const buildCategoryTree = (categories: Category[]) => {
 
   const sortItems = (items: Category[]) =>
     [...items].sort(
-      (a, b) => a.order - b.order || a.depth - b.depth || a.name.localeCompare(b.name),
+      (a, b) =>
+        a.order - b.order || a.depth - b.depth || a.name.localeCompare(b.name),
     );
 
   const result: Category[] = [];

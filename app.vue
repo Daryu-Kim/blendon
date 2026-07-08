@@ -43,13 +43,24 @@ const absoluteUrl = (path: string) => {
 
 useHead(() => ({
   titleTemplate: seoSettings.value.titleTemplate || "%s | BLEND ON",
+  link: [
+    {
+      rel: "alternate",
+      type: "application/rss+xml",
+      title: "BLEND ON RSS",
+      href: absoluteUrl("/rss.xml"),
+    },
+  ],
   meta: [
     { name: "description", content: seoSettings.value.defaultDescription },
     { name: "keywords", content: seoSettings.value.defaultKeywords.join(", ") },
     { name: "robots", content: seoSettings.value.robots },
     { property: "og:title", content: seoSettings.value.ogTitle },
     { property: "og:description", content: seoSettings.value.ogDescription },
-    { property: "og:image", content: absoluteUrl(seoSettings.value.ogImageUrl) },
+    {
+      property: "og:image",
+      content: absoluteUrl(seoSettings.value.ogImageUrl),
+    },
   ],
 }));
 

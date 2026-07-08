@@ -89,7 +89,8 @@ const filteredUsers = computed(() => {
       .join(" ")
       .toLowerCase();
     const matchesKeyword = !q || haystack.includes(q);
-    const matchesGrade = !gradeFilter.value || user.userGrade === gradeFilter.value;
+    const matchesGrade =
+      !gradeFilter.value || user.userGrade === gradeFilter.value;
     const matchesRole = !roleFilter.value || user.role === roleFilter.value;
     const matchesAdult =
       !adultFilter.value ||

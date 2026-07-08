@@ -101,7 +101,11 @@ export const useInquiryStore = defineStore("inquiry", {
         () => addDoc(collection(firebase.db!, "inquiries"), payload),
         "문의를 접수하는 중",
       );
-      const inquiry = normalizeInquiry(ref.id, { ...payload, createdAt: now, updatedAt: now });
+      const inquiry = normalizeInquiry(ref.id, {
+        ...payload,
+        createdAt: now,
+        updatedAt: now,
+      });
       this.inquiries.unshift(inquiry);
       return inquiry;
     },

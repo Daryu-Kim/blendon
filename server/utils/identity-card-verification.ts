@@ -1,10 +1,12 @@
+import { randomUUID } from "node:crypto";
+
 interface ApickIdentityCardResponse {
   data?: {
-    ic_id?: number;
-    type?: number;
-    result?: number;
+    ic_id?: number | string;
+    type?: number | string;
+    result?: number | string;
     msg?: string;
-    success?: number;
+    success?: number | string;
   };
   api?: {
     success?: boolean;
@@ -29,6 +31,31 @@ export interface IdentityCardVerificationResult {
 }
 
 const onlyDigits = (value: string) => value.replace(/\D/g, "");
+const normalizeIdentityName = (value: string) =>
+  value.trim().replace(/\s+/g, "");
+
+const multipartTextBody = (fields: Record<string, string>) => {
+  const boundary = `----blendon-${randomUUID()}`;
+  const chunks: Buffer[] = [];
+  Object.entries(fields).forEach(([name, value]) => {
+    chunks.push(
+      Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n`,
+      ),
+      Buffer.from(value, "utf8"),
+      Buffer.from("\r\n"),
+    );
+  });
+  chunks.push(Buffer.from(`--${boundary}--\r\n`));
+  const body = Buffer.concat(chunks);
+  return {
+    body,
+    headers: {
+      "content-type": `multipart/form-data; boundary=${boundary}`,
+      "content-length": String(body.byteLength),
+    },
+  };
+};
 
 const isValidYmd = (value: string) => {
   if (!/^\d{8}$/.test(value)) return false;
@@ -110,7 +137,7 @@ export const birthDateFromRrn = (rrn1Value: string, rrn2Value: string) => {
 export const verifyIdentityCardWithApick = async (
   input: IdentityCardVerificationInput,
 ): Promise<IdentityCardVerificationResult> => {
-  const name = input.name.trim();
+  const name = normalizeIdentityName(input.name);
   const rrn1 = onlyDigits(input.rrn1);
   const rrn2 = onlyDigits(input.rrn2);
   const issueDate = onlyDigits(input.issueDate);
@@ -130,7 +157,7 @@ export const verifyIdentityCardWithApick = async (
   }
   if (!isAdultBirthDate(birthDate)) {
     throw createError({
-      statusCode: 403,
+      statusCode: 422,
       statusMessage: "성인 고객만 가입할 수 있습니다.",
     });
   }
@@ -143,11 +170,12 @@ export const verifyIdentityCardWithApick = async (
     });
   }
 
-  const form = new FormData();
-  form.append("name", name);
-  form.append("rrn1", rrn1);
-  form.append("rrn2", rrn2);
-  form.append("date", issueDate);
+  const multipart = multipartTextBody({
+    name,
+    rrn1,
+    rrn2,
+    date: issueDate,
+  });
 
   let response: ApickIdentityCardResponse;
   try {
@@ -156,9 +184,10 @@ export const verifyIdentityCardWithApick = async (
       {
         method: "POST",
         headers: {
+          ...multipart.headers,
           CL_AUTH_KEY: String(config.apickAuthKey),
         },
-        body: form,
+        body: multipart.body,
       },
     );
   } catch {
@@ -174,11 +203,13 @@ export const verifyIdentityCardWithApick = async (
       statusMessage: "주민등록증 진위확인 서버 응답을 확인하지 못했습니다.",
     });
   }
-  if (response.data?.result !== 1) {
+  const apickResult = Number(response.data?.result);
+  if (apickResult !== 1) {
     throw createError({
-      statusCode: 403,
+      statusCode: 422,
       statusMessage:
-        response.data?.msg || "유효한 주민등록증 정보가 아닙니다.",
+        response.data?.msg ||
+        "성명, 주민등록번호, 발급일자가 주민등록증 기록과 일치하지 않습니다. 발급일자는 주민등록증 하단의 발급일자를 YYYYMMDD로 입력해 주세요.",
     });
   }
 

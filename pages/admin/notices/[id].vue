@@ -6,7 +6,13 @@
         <p>공지사항 제목, 고정 여부, 본문을 변경합니다.</p>
       </div>
     </div>
-    <EmptyState v-if="!notice" title="공지사항을 찾을 수 없어요." description="목록에서 다시 선택해 주세요." action-label="공지 목록" action-to="/admin/notices" />
+    <EmptyState
+      v-if="!notice"
+      title="공지사항을 찾을 수 없어요."
+      description="목록에서 다시 선택해 주세요."
+      action-label="공지 목록"
+      action-to="/admin/notices"
+    />
     <AdminNoticeForm v-else :notice="notice" @saved="goList" />
   </main>
 </template>
@@ -18,7 +24,11 @@ definePageMeta({ layout: "admin", middleware: "admin" });
 
 const route = useRoute();
 const noticeStore = useNoticeStore();
-const notice = computed(() => noticeStore.notices.find((item) => item.id === String(route.params.id)) || null);
+const notice = computed(
+  () =>
+    noticeStore.notices.find((item) => item.id === String(route.params.id)) ||
+    null,
+);
 
 onMounted(async () => {
   await noticeStore.fetchNotice(String(route.params.id));

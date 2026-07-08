@@ -18,13 +18,23 @@
     </section>
 
     <AdminTable :rows="filteredPopups" :columns="columns" row-key="id">
-      <template #isActive="{ row }">{{ row.isActive ? "활성" : "비활성" }}</template>
-      <template #placement="{ row }">{{ row.placement === "all" ? "전체" : "메인" }}</template>
-      <template #dismissMode="{ row }">{{ dismissLabels[row.dismissMode] }}</template>
+      <template #isActive="{ row }">{{
+        row.isActive ? "활성" : "비활성"
+      }}</template>
+      <template #placement="{ row }">{{
+        row.placement === "all" ? "전체" : "메인"
+      }}</template>
+      <template #dismissMode="{ row }">{{
+        dismissLabels[row.dismissMode]
+      }}</template>
       <template #actions="{ row }">
         <div class="row-actions">
-          <Button size="sm" variant="ghost" :to="`/admin/popups/${row.id}`">수정</Button>
-          <Button size="sm" variant="danger" @click="remove(row.id)">삭제</Button>
+          <Button size="sm" variant="ghost" :to="`/admin/popups/${row.id}`"
+            >수정</Button
+          >
+          <Button size="sm" variant="danger" @click="remove(row.id)"
+            >삭제</Button
+          >
         </div>
       </template>
     </AdminTable>

@@ -79,9 +79,7 @@ export const useOrderStore = defineStore("order", {
   getters: {
     myOrders: (state) => {
       const uid = useAuthStore().profile?.uid;
-      return uid
-        ? state.orders.filter((order) => order.userId === uid)
-        : [];
+      return uid ? state.orders.filter((order) => order.userId === uid) : [];
     },
     pendingPaymentCount: (state) =>
       state.orders.filter(
@@ -182,7 +180,8 @@ export const useOrderStore = defineStore("order", {
     },
     async patchOrder(orderId: string, updates: Partial<Order>) {
       const order = this.orders.find((item) => item.id === orderId);
-      if (order) Object.assign(order, updates, { updatedAt: new Date().toISOString() });
+      if (order)
+        Object.assign(order, updates, { updatedAt: new Date().toISOString() });
       const firebase = useNuxtApp().$firebase;
       if (!firebase.enabled || !firebase.db) return;
       await useGlobalLoading().withLoading(async () => {

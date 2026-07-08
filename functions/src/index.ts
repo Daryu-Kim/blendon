@@ -52,10 +52,7 @@ const toMillis = (value: unknown) => {
   return 0;
 };
 
-const calculateRecentConfirmedAmount = async (
-  userId: string,
-  since: Date,
-) => {
+const calculateRecentConfirmedAmount = async (userId: string, since: Date) => {
   const snap = await db
     .collection("orders")
     .where("userId", "==", userId)
@@ -65,7 +62,9 @@ const calculateRecentConfirmedAmount = async (
   return snap.docs.reduce((sum, doc) => {
     const order = doc.data();
     if (order.orderStatus !== "completed") return sum;
-    const basisTime = toMillis(order.completedAt || order.updatedAt || order.paidAt);
+    const basisTime = toMillis(
+      order.completedAt || order.updatedAt || order.paidAt,
+    );
     if (basisTime < sinceTime) return sum;
     return sum + Number(order.totalAmount || 0);
   }, 0);

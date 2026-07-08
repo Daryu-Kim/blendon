@@ -30,7 +30,7 @@
           class="thumb"
           :src="row.imageUrl"
           :alt="row.title"
-        >
+        />
         <span v-else>-</span>
       </template>
       <template #productId="{ row }">
@@ -40,12 +40,14 @@
             class="product-thumb"
             :src="productById(row.productId)?.thumbnailUrl"
             :alt="productById(row.productId)?.name"
-          >
+          />
           <span>{{ productById(row.productId)?.name }}</span>
         </div>
         <span v-else>-</span>
       </template>
-      <template #isActive="{ row }">{{ row.isActive ? "활성" : "비활성" }}</template>
+      <template #isActive="{ row }">{{
+        row.isActive ? "활성" : "비활성"
+      }}</template>
       <template #actions="{ row }">
         <div class="row-actions">
           <Button size="sm" variant="ghost" :to="`/admin/banners/${row.id}`">

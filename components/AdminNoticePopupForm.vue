@@ -46,7 +46,10 @@
       </div>
     </AdminFormSection>
 
-    <AdminFormSection title="이미지/링크" description="팝업 상단 이미지와 연결 링크를 설정합니다.">
+    <AdminFormSection
+      title="이미지/링크"
+      description="팝업 상단 이미지와 연결 링크를 설정합니다."
+    >
       <div class="form-grid">
         <div class="form-row">
           <label>이미지</label>
@@ -63,8 +66,14 @@
       </div>
     </AdminFormSection>
 
-    <AdminFormSection title="본문" description="md-editor-v3로 작성하며 이미지는 Storage에 업로드됩니다.">
-      <MarkdownEditor v-model="form.content" path-prefix="notice-popups/content" />
+    <AdminFormSection
+      title="본문"
+      description="md-editor-v3로 작성하며 이미지는 Storage에 업로드됩니다."
+    >
+      <MarkdownEditor
+        v-model="form.content"
+        path-prefix="notice-popups/content"
+      />
     </AdminFormSection>
 
     <div class="sticky-actions">
@@ -88,7 +97,9 @@ const toLocalDatetime = (value: string | null) => {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  const offsetDate = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60000,
+  );
   return offsetDate.toISOString().slice(0, 16);
 };
 

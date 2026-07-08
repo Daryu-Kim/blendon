@@ -9,6 +9,31 @@ interface SignupVerificationBody {
   issueDate?: string;
 }
 
+const verificationFailureStatusCodes = new Set([400, 403, 422, 502]);
+
+const verificationFailureMessage = (error: unknown) => {
+  const record = error as {
+    statusCode?: number;
+    statusMessage?: string;
+    message?: string;
+    data?: {
+      statusCode?: number;
+      statusMessage?: string;
+      message?: string;
+    };
+  };
+  const statusCode = Number(
+    record?.statusCode || record?.data?.statusCode || 500,
+  );
+  const message =
+    record?.statusMessage ||
+    record?.data?.statusMessage ||
+    record?.data?.message ||
+    record?.message ||
+    "성인 인증에 실패했어요. 입력한 정보를 다시 확인해 주세요.";
+  return { statusCode, message };
+};
+
 export default defineEventHandler(async (event) => {
   const body = (await readBody<SignupVerificationBody>(event)) || {};
   const admin = getFirebaseAdmin();
@@ -20,12 +45,24 @@ export default defineEventHandler(async (event) => {
   }
 
   const name = String(body.name || "").trim();
-  const verification = await verifyIdentityCardWithApick({
-    name,
-    rrn1: body.rrn1 || "",
-    rrn2: body.rrn2 || "",
-    issueDate: body.issueDate || "",
-  });
+  let verification;
+  try {
+    verification = await verifyIdentityCardWithApick({
+      name,
+      rrn1: body.rrn1 || "",
+      rrn2: body.rrn2 || "",
+      issueDate: body.issueDate || "",
+    });
+  } catch (error) {
+    const failure = verificationFailureMessage(error);
+    if (verificationFailureStatusCodes.has(failure.statusCode)) {
+      return {
+        ok: false,
+        message: failure.message,
+      };
+    }
+    throw error;
+  }
   const signupVerification = await createSignupAdultVerification(
     admin,
     name,

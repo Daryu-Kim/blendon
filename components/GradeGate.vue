@@ -15,17 +15,16 @@ const props = defineProps<{ minGrade: GradeCode }>();
 const auth = useAuthStore();
 const productStore = useProductStore();
 const minGradeLabel = computed(
-  () =>
-    productStore.findGradeBenefit(props.minGrade)?.label || props.minGrade,
+  () => productStore.findGradeBenefit(props.minGrade)?.label || props.minGrade,
 );
 const allowed = computed(() =>
   Boolean(
     auth.profile &&
-      hasGradeAtLeast(
-        auth.profile.userGrade,
-        props.minGrade,
-        productStore.gradeBenefits,
-      ),
+    hasGradeAtLeast(
+      auth.profile.userGrade,
+      props.minGrade,
+      productStore.gradeBenefits,
+    ),
   ),
 );
 </script>

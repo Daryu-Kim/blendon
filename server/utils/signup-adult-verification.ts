@@ -105,18 +105,21 @@ export const createSignupAdultVerification = async (
   const token = randomUUID();
   const expiresAt = new Date(Date.now() + verificationTtlMs);
   const timestamp = FieldValue.serverTimestamp();
-  await admin.db.collection(collectionName).doc(token).set({
-    name: normalizeName(name),
-    provider: verification.provider,
-    birthDate: verification.birthDate,
-    verifiedAt: verification.verifiedAt,
-    apickRequestId: verification.apickRequestId,
-    expiresAt: Timestamp.fromDate(expiresAt),
-    consumedAt: null,
-    consumedBy: null,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
+  await admin.db
+    .collection(collectionName)
+    .doc(token)
+    .set({
+      name: normalizeName(name),
+      provider: verification.provider,
+      birthDate: verification.birthDate,
+      verifiedAt: verification.verifiedAt,
+      apickRequestId: verification.apickRequestId,
+      expiresAt: Timestamp.fromDate(expiresAt),
+      consumedAt: null,
+      consumedBy: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
 
   return {
     token,
@@ -137,7 +140,10 @@ export const getSignupAdultVerification = async (
     });
   }
 
-  const snap = await admin.db.collection(collectionName).doc(trimmedToken).get();
+  const snap = await admin.db
+    .collection(collectionName)
+    .doc(trimmedToken)
+    .get();
   return parseActiveVerification(snap, displayName);
 };
 

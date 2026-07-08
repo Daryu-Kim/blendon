@@ -15,7 +15,7 @@
         <img
           :src="globalSettings.productDetailTopBannerImageUrl"
           :alt="`${product.name} 상단 배너`"
-        >
+        />
       </div>
 
       <div class="product-detail">
@@ -25,7 +25,7 @@
             :src="selectedImage"
             :alt="product.name"
             class="main-image"
-          >
+          />
           <div v-else class="main-image image-empty">{{ product.name }}</div>
           <div v-if="galleryImages.length > 1" class="thumbs">
             <button
@@ -35,7 +35,7 @@
               :class="{ active: selectedImage === image }"
               @click="selectedImage = image"
             >
-              <img :src="image" :alt="product.name">
+              <img :src="image" :alt="product.name" />
             </button>
           </div>
         </section>
@@ -124,7 +124,7 @@
                 :key="image"
                 :src="image"
                 :alt="product.name"
-              >
+              />
             </div>
           </div>
 
@@ -178,7 +178,7 @@
         <img
           :src="globalSettings.productDetailBottomBannerImageUrl"
           :alt="`${product.name} 하단 배너`"
-        >
+        />
       </div>
       <Modal
         :open="cartPromptOpen"
@@ -257,11 +257,15 @@ const { data: serverProduct } = await useAsyncData(
   { default: () => null },
 );
 const rawProduct = computed(
-  () => productStore.findBySlug(String(route.params.slug)) || serverProduct.value,
+  () =>
+    productStore.findBySlug(String(route.params.slug)) || serverProduct.value,
 );
 const product = computed(() => {
   if (!rawProduct.value) return undefined;
-  if (!productStore.initialized && serverProduct.value?.id === rawProduct.value.id)
+  if (
+    !productStore.initialized &&
+    serverProduct.value?.id === rawProduct.value.id
+  )
     return rawProduct.value;
   return canViewProductWithCategories(
     rawProduct.value,
@@ -281,10 +285,9 @@ const activeDetailTab = ref<DetailTabKey>("description");
 const galleryImages = computed(() => {
   if (!product.value) return [];
   return [
-    ...new Set([
-      product.value.thumbnailUrl,
-      ...product.value.imageUrls,
-    ].filter(Boolean)),
+    ...new Set(
+      [product.value.thumbnailUrl, ...product.value.imageUrls].filter(Boolean),
+    ),
   ];
 });
 const selectedOption = computed(() =>
@@ -292,8 +295,8 @@ const selectedOption = computed(() =>
 );
 const canBuy = computed(() =>
   Boolean(
-      product.value &&
-      canBuyProduct(product.value, auth.profile, productStore.gradeBenefits),
+    product.value &&
+    canBuyProduct(product.value, auth.profile, productStore.gradeBenefits),
   ),
 );
 const description = computed(() =>
@@ -302,13 +305,13 @@ const description = computed(() =>
 const reviews = computed(() =>
   product.value ? reviewStore.productReviews(product.value.id) : [],
 );
-const detailTabs = computed<Array<{ key: DetailTabKey; label: string; count?: number }>>(
-  () => [
-    { key: "description", label: "상품 상세설명" },
-    { key: "reviews", label: "리뷰", count: reviews.value.length },
-    { key: "policy", label: "배송/환불 안내" },
-  ],
-);
+const detailTabs = computed<
+  Array<{ key: DetailTabKey; label: string; count?: number }>
+>(() => [
+  { key: "description", label: "상품 상세설명" },
+  { key: "reviews", label: "리뷰", count: reviews.value.length },
+  { key: "policy", label: "배송/환불 안내" },
+]);
 
 const tabId = (key: DetailTabKey) => `product-detail-tab-${key}`;
 const panelId = (key: DetailTabKey) => `product-detail-panel-${key}`;
@@ -367,7 +370,8 @@ useHead(() => {
       ? item.seoKeywords
       : item?.tags || seoSettings.value.defaultKeywords;
   const ogImage = seo?.ogImageUrl || item?.ogImageUrl || item?.thumbnailUrl;
-  const canonicalPath = seo?.canonicalUrl || (item ? `/products/${item.slug}` : "");
+  const canonicalPath =
+    seo?.canonicalUrl || (item ? `/products/${item.slug}` : "");
   return {
     title,
     meta: [

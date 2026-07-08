@@ -3,13 +3,14 @@ import { getFirebaseAdmin } from "~/server/utils/firebase-admin";
 import { verifyIdentityCardWithApick } from "~/server/utils/identity-card-verification";
 
 export default defineEventHandler(async (event) => {
-  const body = (await readBody<{
-    idToken?: string;
-    name?: string;
-    rrn1?: string;
-    rrn2?: string;
-    issueDate?: string;
-  }>(event)) || {};
+  const body =
+    (await readBody<{
+      idToken?: string;
+      name?: string;
+      rrn1?: string;
+      rrn2?: string;
+      issueDate?: string;
+    }>(event)) || {};
 
   const admin = getFirebaseAdmin();
   if (!admin) {

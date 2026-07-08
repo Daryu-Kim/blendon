@@ -55,7 +55,7 @@ const timestampToIso = (value: unknown) => {
 
 const normalizeMedia = (media: unknown): ReviewMedia[] =>
   Array.isArray(media)
-    ? media
+    ? (media
         .map((item) => {
           if (!item || typeof item !== "object") return null;
           const record = item as Partial<ReviewMedia>;
@@ -66,7 +66,7 @@ const normalizeMedia = (media: unknown): ReviewMedia[] =>
             name: record.name || "",
           } satisfies ReviewMedia;
         })
-        .filter(Boolean) as ReviewMedia[]
+        .filter(Boolean) as ReviewMedia[])
     : [];
 
 const normalizeReview = (
@@ -122,7 +122,8 @@ export const useProductReviewStore = defineStore("productReview", {
       if (productIndex >= 0) next[productIndex] = review;
       else next.unshift(review);
       this.byProduct[review.productId] = next.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
       this.setSummary(review.productId, this.byProduct[review.productId]);
     },
@@ -196,7 +197,10 @@ export const useProductReviewStore = defineStore("productReview", {
           }
           await auth.init();
           const constraints = auth.isAdmin
-            ? [where("productId", "==", productId), orderBy("createdAt", "desc")]
+            ? [
+                where("productId", "==", productId),
+                orderBy("createdAt", "desc"),
+              ]
             : [
                 where("productId", "==", productId),
                 where("isVisible", "==", true),
@@ -233,7 +237,10 @@ export const useProductReviewStore = defineStore("productReview", {
             return;
           }
           const snap = await getDocs(
-            query(collection(firebase.db, "productReviews"), orderBy("updatedAt", "desc")),
+            query(
+              collection(firebase.db, "productReviews"),
+              orderBy("updatedAt", "desc"),
+            ),
           );
           this.reviews = snap.docs.map((item) =>
             normalizeReview(item.id, item.data() as Partial<ProductReview>),
@@ -248,7 +255,8 @@ export const useProductReviewStore = defineStore("productReview", {
     async createReview(input: CreateReviewInput) {
       const auth = useAuthStore();
       await auth.init();
-      if (!auth.profile) throw new Error("로그인 후 리뷰를 작성할 수 있습니다.");
+      if (!auth.profile)
+        throw new Error("로그인 후 리뷰를 작성할 수 있습니다.");
 
       const firebase = useNuxtApp().$firebase;
       if (!firebase.enabled || !firebase.db)

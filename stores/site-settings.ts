@@ -138,7 +138,9 @@ export const useSiteSettingsStore = defineStore("siteSettings", {
               : {},
           );
           this.seo = normalizeSeoSettings(
-            seoSnap.exists() ? (seoSnap.data() as Partial<SiteSeoSettings>) : {},
+            seoSnap.exists()
+              ? (seoSnap.data() as Partial<SiteSeoSettings>)
+              : {},
           );
           this.initialized = true;
         }, "쇼핑몰 설정을 불러오는 중");

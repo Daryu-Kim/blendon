@@ -6,7 +6,7 @@
         :src="product.thumbnailUrl"
         :alt="product.name"
         loading="lazy"
-      >
+      />
       <div v-else class="image-placeholder">
         {{ product.name }}
       </div>

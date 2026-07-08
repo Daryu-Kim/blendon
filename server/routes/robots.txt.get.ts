@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
     "Disallow: /orders",
     "Disallow: /mypage",
     `Sitemap: ${baseUrl}/sitemap.xml`,
+    `Sitemap: ${baseUrl}/rss.xml`,
     "",
   ].join("\n");
 });

@@ -41,7 +41,11 @@
             target="_blank"
             rel="noopener"
           >
-            <img v-if="item.type === 'image'" :src="item.url" :alt="item.name">
+            <img
+              v-if="item.type === 'image'"
+              :src="item.url"
+              :alt="item.name"
+            />
             <video v-else :src="item.url" muted />
           </a>
         </div>

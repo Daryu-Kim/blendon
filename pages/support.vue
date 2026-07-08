@@ -20,7 +20,8 @@
           </div>
           <Button type="submit">문의 남기기</Button>
           <p v-if="submitted" class="success">
-            문의가 접수되었습니다. 답변이 등록되면 고객센터에서 확인할 수 있습니다.
+            문의가 접수되었습니다. 답변이 등록되면 고객센터에서 확인할 수
+            있습니다.
           </p>
           <p v-if="error" class="error">{{ error }}</p>
         </form>
@@ -75,7 +76,10 @@ const submit = async () => {
     content.value = "";
     submitted.value = true;
   } catch (e) {
-    error.value = toUserMessage(e, "문의 접수에 실패했어요. 잠시 후 다시 시도해 주세요.");
+    error.value = toUserMessage(
+      e,
+      "문의 접수에 실패했어요. 잠시 후 다시 시도해 주세요.",
+    );
   }
 };
 

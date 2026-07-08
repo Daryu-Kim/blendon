@@ -23,7 +23,10 @@
         </div>
         <div class="form-row wide">
           <label>상세 설명</label
-          ><MarkdownEditor v-model="form.description" path-prefix="products/descriptions" />
+          ><MarkdownEditor
+            v-model="form.description"
+            path-prefix="products/descriptions"
+          />
         </div>
       </div>
     </AdminFormSection>
@@ -45,7 +48,8 @@
             </option>
           </select>
           <p class="field-help">
-            Ctrl 또는 Command 키를 누른 상태로 여러 카테고리를 선택할 수 있습니다.
+            Ctrl 또는 Command 키를 누른 상태로 여러 카테고리를 선택할 수
+            있습니다.
           </p>
         </div>
         <div v-if="selectedCategories.length" class="selected-chip-row wide">
@@ -256,7 +260,10 @@
               >자동완성</Button
             >
           </div>
-          <Input v-model="tagsText" placeholder="내부 검색용 태그, 쉼표로 구분" />
+          <Input
+            v-model="tagsText"
+            placeholder="내부 검색용 태그, 쉼표로 구분"
+          />
         </div>
         <AdminProductOptionsEditor v-model="form.options" class="wide" />
         <div class="form-row wide">
@@ -474,7 +481,9 @@ const gradeDiscountExcludedText = computed({
   },
 });
 const seoTitlePlaceholder = computed(() =>
-  form.name.trim() ? `${form.name.trim()} | ${brand.name}` : `상품명 | ${brand.name}`,
+  form.name.trim()
+    ? `${form.name.trim()} | ${brand.name}`
+    : `상품명 | ${brand.name}`,
 );
 const categoryOptions = computed(() =>
   buildCategoryTree(productStore.categories).map((category) => ({
@@ -510,7 +519,8 @@ const normalizeOptions = (options: ProductOption[]) =>
       String(option.optionName || "").trim() ||
       (index === 0 ? "기본" : `옵션 ${index + 1}`);
     const optionCode =
-      String(option.optionCode || "").trim() || toSafeId(optionName).toUpperCase();
+      String(option.optionCode || "").trim() ||
+      toSafeId(optionName).toUpperCase();
     return {
       optionId: option.optionId || `option-${toSafeId(optionName)}-${index}`,
       optionName,
@@ -532,7 +542,9 @@ const generateProductKeywords = async (mode: KeywordMode) => {
   }
 
   const loadingText =
-    mode === "seo" ? "SEO 키워드를 생성하는 중" : "내부 검색 태그를 생성하는 중";
+    mode === "seo"
+      ? "SEO 키워드를 생성하는 중"
+      : "내부 검색 태그를 생성하는 중";
   const loading = useGlobalLoading();
   const firebase = useNuxtApp().$firebase;
   const token = await firebase.auth?.currentUser?.getIdToken();

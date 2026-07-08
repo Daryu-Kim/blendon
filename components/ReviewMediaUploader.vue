@@ -2,9 +2,13 @@
   <div class="review-media-uploader">
     <div v-if="modelValue.length" class="media-grid">
       <div v-for="item in modelValue" :key="item.url" class="media-item">
-        <img v-if="item.type === 'image'" :src="item.url" :alt="item.name">
+        <img v-if="item.type === 'image'" :src="item.url" :alt="item.name" />
         <video v-else :src="item.url" controls muted />
-        <button type="button" aria-label="미디어 삭제" @click="remove(item.url)">
+        <button
+          type="button"
+          aria-label="미디어 삭제"
+          @click="remove(item.url)"
+        >
           삭제
         </button>
       </div>
@@ -17,7 +21,7 @@
         accept="image/*,video/*"
         :disabled="uploading || modelValue.length >= max"
         @change="uploadFiles"
-      >
+      />
       사진/동영상 추가
     </label>
     <p>{{ helperText }}</p>

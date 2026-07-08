@@ -31,7 +31,8 @@ const docToJson = <T extends Record<string, unknown>>(
   ...(toJsonValue(data) as Record<string, unknown>),
 });
 
-const isPublicGrade = (grade?: unknown) => !grade || grade === PUBLIC_ACCESS_GRADE;
+const isPublicGrade = (grade?: unknown) =>
+  !grade || grade === PUBLIC_ACCESS_GRADE;
 
 const publicCategoryGrade = (category: Record<string, unknown>) =>
   category.displayMinUserGradeToView ||
@@ -83,9 +84,13 @@ export default defineEventHandler(async () => {
           ))
       );
     })
-    .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+    .sort((a, b) =>
+      String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")),
+    );
 
-  const gradeBenefits = gradeSnap.docs.map((doc) => docToJson(doc.id, doc.data()));
+  const gradeBenefits = gradeSnap.docs.map((doc) =>
+    docToJson(doc.id, doc.data()),
+  );
 
   return {
     products,

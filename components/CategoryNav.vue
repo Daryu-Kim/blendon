@@ -1,13 +1,12 @@
 <template>
   <nav class="category-nav" aria-label="상품 카테고리">
-    <NuxtLink class="nav-link" to="/products" :class="{ active: !activeCategoryId }"
+    <NuxtLink
+      class="nav-link"
+      to="/products"
+      :class="{ active: !activeCategoryId }"
       >전체</NuxtLink
     >
-    <div
-      v-for="category in categoryTree"
-      :key="category.id"
-      class="nav-item"
-    >
+    <div v-for="category in categoryTree" :key="category.id" class="nav-item">
       <NuxtLink
         class="nav-link"
         :to="categoryTo(category)"
@@ -81,7 +80,8 @@ const categoryTo = (category: Category) => ({
 
 const sortCategories = (categories: NavCategory[]) =>
   categories.sort(
-    (a, b) => a.order - b.order || a.depth - b.depth || a.name.localeCompare(b.name),
+    (a, b) =>
+      a.order - b.order || a.depth - b.depth || a.name.localeCompare(b.name),
   );
 
 const categoryTree = computed(() => {

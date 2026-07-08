@@ -32,7 +32,7 @@
 
     <AdminTable :rows="filteredProducts" :columns="columns" row-key="id">
       <template #thumbnailUrl="{ row }">
-        <img class="thumb" :src="row.thumbnailUrl" :alt="row.name">
+        <img class="thumb" :src="row.thumbnailUrl" :alt="row.name" />
       </template>
       <template #memberPrice="{ row }">{{
         formatCurrency(row.memberPrice)

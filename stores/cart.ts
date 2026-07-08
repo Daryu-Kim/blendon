@@ -38,8 +38,11 @@ export const useCartStore = defineStore("cart", {
           );
           if (!product || !option) return null;
           const unitPrice =
-            currentUnitPrice(product, auth.profile, productStore.gradeBenefits) +
-            option.additionalPrice;
+            currentUnitPrice(
+              product,
+              auth.profile,
+              productStore.gradeBenefits,
+            ) + option.additionalPrice;
           const regularUnitPrice =
             regularMemberUnitPrice(product) + option.additionalPrice;
           return {
@@ -68,7 +71,10 @@ export const useCartStore = defineStore("cart", {
       const settings = useSiteSettingsStore().global;
       const auth = useAuthStore();
       const productStore = useProductStore();
-      const baseDeliveryFee = Math.max(0, Number(settings.baseDeliveryFee || 0));
+      const baseDeliveryFee = Math.max(
+        0,
+        Number(settings.baseDeliveryFee || 0),
+      );
       if (
         this.subtotal === 0 ||
         qualifiesForGradeFreeShipping(

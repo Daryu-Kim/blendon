@@ -1,4 +1,8 @@
-import type { Product, SiteGlobalSettings, SiteSeoSettings } from "~/types/domain";
+import type {
+  Product,
+  SiteGlobalSettings,
+  SiteSeoSettings,
+} from "~/types/domain";
 import { getFirebaseAdmin } from "~/server/utils/firebase-admin";
 
 export interface PublicSeoSettings {
@@ -102,8 +106,7 @@ export const getServerGlobalSettings =
       ...defaultPublicGlobalSettings(),
       mallName: data.mallName || defaultPublicGlobalSettings().mallName,
       mallDescription:
-        data.mallDescription ||
-        defaultPublicGlobalSettings().mallDescription,
+        data.mallDescription || defaultPublicGlobalSettings().mallDescription,
       businessName:
         data.businessName || defaultPublicGlobalSettings().businessName,
       representativeName:
@@ -190,8 +193,9 @@ export const getServerProductSeo = async (
     slug: product.slug,
     title: product.seoTitle || product.name,
     description: product.seoDescription || product.shortDescription,
-    keywords:
-      product.seoKeywords?.length ? product.seoKeywords : product.tags || [],
+    keywords: product.seoKeywords?.length
+      ? product.seoKeywords
+      : product.tags || [],
     ogImageUrl: product.ogImageUrl || product.thumbnailUrl,
     canonicalUrl: product.canonicalUrl || `/products/${product.slug}`,
   };

@@ -94,8 +94,8 @@
           <span>02</span>
           <h2>배송/픽업 안내</h2>
           <p>
-            배송 주문과 매장 픽업 주문을 선택할 수 있으며, 주문 내역에서
-            진행 상태를 확인할 수 있습니다.
+            배송 주문과 매장 픽업 주문을 선택할 수 있으며, 주문 내역에서 진행
+            상태를 확인할 수 있습니다.
           </p>
           <NuxtLink to="/guide">이용안내 보기</NuxtLink>
         </article>
@@ -119,7 +119,10 @@ const products = computed(() => productStore.visibleProducts);
 const activeBestCategoryId = ref("");
 
 onMounted(async () => {
-  await Promise.all([productStore.fetchCatalog(), settingsStore.fetchSettings()]);
+  await Promise.all([
+    productStore.fetchCatalog(),
+    settingsStore.fetchSettings(),
+  ]);
 });
 
 const byCategory = (categoryId: string) =>
@@ -235,50 +238,54 @@ const bestProducts = computed(() =>
     : products.value.slice(0, 5),
 );
 
-const sections = computed(() => [
-  {
-    title: "오늘의 인기 상품",
-    description: "지금 많이 찾는 디바이스와 액상, 소모품을 모았습니다.",
-    to: "/products",
-    products: products.value.slice(0, 5),
-  },
-  {
-    title: "처음이라면 이 상품부터",
-    description: "구성과 호환성을 쉽게 확인할 수 있는 입문 추천 상품입니다.",
-    to: "/products?category=starter-pick",
-    products: byCategory("starter-pick"),
-  },
-  {
-    title: "무니코틴 액상",
-    description: "니코틴 없이 향과 쿨링감 중심으로 고르는 셀렉션입니다.",
-    to: "/products?category=nicotine-free",
-    products: byCategory("nicotine-free"),
-  },
-  {
-    title: "리필/소모품",
-    description: "팟, 카트리지, 코일 등 필요한 소모품을 모았습니다.",
-    to: "/products?category=consumable",
-    products: byCategory("consumable"),
-  },
-  {
-    title: "매장 픽업 추천",
-    description: "매장에서 직접 수령하기 좋은 상품을 확인하세요.",
-    to: "/products?category=lounge-pick",
-    products: byCategory("lounge-pick"),
-  },
-  {
-    title: "새로 들어온 상품",
-    description: "새롭게 입고된 상품을 가장 먼저 확인하세요.",
-    to: "/products",
-    products: [...products.value].reverse().slice(0, 5),
-  },
-  {
-    title: "브랜드관",
-    description: "브랜드별 취향과 대표 상품을 비교해 보세요.",
-    to: "/products?category=brand",
-    products: products.value.slice(0, 5),
-  },
-].filter((section) => !section.to.includes("category=") || section.products.length));
+const sections = computed(() =>
+  [
+    {
+      title: "오늘의 인기 상품",
+      description: "지금 많이 찾는 디바이스와 액상, 소모품을 모았습니다.",
+      to: "/products",
+      products: products.value.slice(0, 5),
+    },
+    {
+      title: "처음이라면 이 상품부터",
+      description: "구성과 호환성을 쉽게 확인할 수 있는 입문 추천 상품입니다.",
+      to: "/products?category=starter-pick",
+      products: byCategory("starter-pick"),
+    },
+    {
+      title: "무니코틴 액상",
+      description: "니코틴 없이 향과 쿨링감 중심으로 고르는 셀렉션입니다.",
+      to: "/products?category=nicotine-free",
+      products: byCategory("nicotine-free"),
+    },
+    {
+      title: "리필/소모품",
+      description: "팟, 카트리지, 코일 등 필요한 소모품을 모았습니다.",
+      to: "/products?category=consumable",
+      products: byCategory("consumable"),
+    },
+    {
+      title: "매장 픽업 추천",
+      description: "매장에서 직접 수령하기 좋은 상품을 확인하세요.",
+      to: "/products?category=lounge-pick",
+      products: byCategory("lounge-pick"),
+    },
+    {
+      title: "새로 들어온 상품",
+      description: "새롭게 입고된 상품을 가장 먼저 확인하세요.",
+      to: "/products",
+      products: [...products.value].reverse().slice(0, 5),
+    },
+    {
+      title: "브랜드관",
+      description: "브랜드별 취향과 대표 상품을 비교해 보세요.",
+      to: "/products?category=brand",
+      products: products.value.slice(0, 5),
+    },
+  ].filter(
+    (section) => !section.to.includes("category=") || section.products.length,
+  ),
+);
 
 useHead({ title: "홈" });
 </script>

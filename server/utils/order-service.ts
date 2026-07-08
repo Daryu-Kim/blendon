@@ -122,7 +122,8 @@ export const buildPendingOrder = (
     });
   if (
     pickupType === "delivery" &&
-    (!valueText(checkoutAddress.zipCode) || !valueText(checkoutAddress.address1))
+    (!valueText(checkoutAddress.zipCode) ||
+      !valueText(checkoutAddress.address1))
   ) {
     throw createError({
       statusCode: 400,

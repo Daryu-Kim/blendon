@@ -1,5 +1,9 @@
 <template>
-  <div class="rating-summary" :class="`rating-summary--${size}`" :aria-label="label">
+  <div
+    class="rating-summary"
+    :class="`rating-summary--${size}`"
+    :aria-label="label"
+  >
     <Star class="rating-summary__icon" :size="iconSize" aria-hidden="true" />
     <span>{{ average }}({{ count }})</span>
   </div>
@@ -23,9 +27,7 @@ const summary = computed(() => reviewStore.productSummary(props.productId));
 const average = computed(() => summary.value.averageRating.toFixed(1));
 const count = computed(() => summary.value.reviewCount);
 const iconSize = computed(() => (props.size === "md" ? 17 : 14));
-const label = computed(
-  () => `별점 ${average.value}, 리뷰 ${count.value}개`,
-);
+const label = computed(() => `별점 ${average.value}, 리뷰 ${count.value}개`);
 </script>
 
 <style scoped>

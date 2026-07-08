@@ -1,8 +1,18 @@
 <template>
   <Teleport to="body">
-    <div v-if="visiblePopup" class="popup-overlay" role="dialog" aria-modal="true">
+    <div
+      v-if="visiblePopup"
+      class="popup-overlay"
+      role="dialog"
+      aria-modal="true"
+    >
       <article class="popup-modal">
-        <button class="close-button" type="button" aria-label="닫기" @click="close">
+        <button
+          class="close-button"
+          type="button"
+          aria-label="닫기"
+          @click="close"
+        >
           <X :size="20" />
         </button>
         <img
@@ -10,7 +20,7 @@
           class="popup-image"
           :src="visiblePopup.imageUrl"
           :alt="visiblePopup.title"
-        >
+        />
         <div class="popup-body">
           <h2>{{ visiblePopup.title }}</h2>
           <MarkdownContent

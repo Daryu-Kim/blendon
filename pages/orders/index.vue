@@ -18,7 +18,9 @@
             <p>{{ formatDate(order.createdAt) }}</p>
           </div>
           <div class="status-pills">
-            <span class="pill">{{ paymentStatusLabel(order.paymentStatus) }}</span>
+            <span class="pill">{{
+              paymentStatusLabel(order.paymentStatus)
+            }}</span>
             <span class="pill">{{ deliveryStatusLabel(order) }}</span>
           </div>
           <strong>{{ formatCurrency(order.totalAmount) }}</strong>
@@ -64,7 +66,7 @@
               v-if="item.thumbnailUrl"
               :src="item.thumbnailUrl"
               :alt="item.productName"
-            >
+            />
             <div v-else class="order-item__empty">{{ item.productName }}</div>
             <div class="order-item__info">
               <strong>{{ item.productName }}</strong>
@@ -153,7 +155,9 @@ const deliveryStatusLabel = (order: Order) => {
   if (order.claimStatus !== "none") return claimStatusLabels[order.claimStatus];
   if (order.deliveryStatus === "none") {
     if (order.paymentStatus !== "paid") return "결제 확인 대기";
-    return order.pickupType === "store-pickup" ? "픽업 준비 전" : "배송 준비 전";
+    return order.pickupType === "store-pickup"
+      ? "픽업 준비 전"
+      : "배송 준비 전";
   }
   return deliveryStatusLabels[order.deliveryStatus] || order.deliveryStatus;
 };

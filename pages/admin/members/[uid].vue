@@ -94,11 +94,15 @@
         </label>
         <div class="field">
           <span>최근 6개월 구매확정액</span>
-          <strong>{{ formatCurrency(member.gradePurchaseAmount6Months || 0) }}</strong>
+          <strong>{{
+            formatCurrency(member.gradePurchaseAmount6Months || 0)
+          }}</strong>
         </div>
         <div class="field">
           <span>마지막 등급 평가</span>
-          <strong>{{ member.gradeEvaluatedAt ? formatDate(member.gradeEvaluatedAt) : "-" }}</strong>
+          <strong>{{
+            member.gradeEvaluatedAt ? formatDate(member.gradeEvaluatedAt) : "-"
+          }}</strong>
         </div>
       </AdminFormSection>
 
@@ -190,7 +194,9 @@ const toast = useToast();
 const users = useUserStore();
 const productStore = useProductStore();
 const uid = computed(() => String(route.params.uid));
-const member = computed(() => users.users.find((user) => user.uid === uid.value) || null);
+const member = computed(
+  () => users.users.find((user) => user.uid === uid.value) || null,
+);
 
 const activeGrades = computed(() => {
   const grades = productStore.gradeBenefits
@@ -243,7 +249,9 @@ const save = async () => {
     gradeLockedAt: form.isGradeLocked
       ? member.value.gradeLockedAt || new Date().toISOString()
       : null,
-    gradeLockedBy: form.isGradeLocked ? useAuthStore().profile?.uid || null : null,
+    gradeLockedBy: form.isGradeLocked
+      ? useAuthStore().profile?.uid || null
+      : null,
     gradeLockReason: form.isGradeLocked ? form.gradeLockReason : "",
     adminMemo: form.adminMemo,
   });

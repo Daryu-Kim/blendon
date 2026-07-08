@@ -10,10 +10,7 @@ export default defineNuxtConfig({
     appManifest: false,
   },
   modules: ["@pinia/nuxt", "@nuxt/eslint"],
-  css: [
-    "md-editor-v3/lib/style.css",
-    "~/assets/css/main.css",
-  ],
+  css: ["md-editor-v3/lib/style.css", "~/assets/css/main.css"],
   ignore: [
     "functions/**",
     ".output/**",
@@ -65,6 +62,7 @@ export default defineNuxtConfig({
     "/api/products/**": { headers: { "cache-control": "no-store" } },
     "/api/site-settings/**": { headers: { "cache-control": "no-store" } },
     "/sitemap.xml": { headers: { "cache-control": "no-store" } },
+    "/rss.xml": { headers: { "cache-control": "no-store" } },
     "/robots.txt": { headers: { "cache-control": "no-store" } },
   },
   runtimeConfig: {

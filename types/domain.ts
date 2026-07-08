@@ -4,16 +4,9 @@ export type AccessGradeCode = "PUBLIC" | GradeCode;
 export type ProductStatus =
   "draft" | "active" | "hidden" | "soldOut" | "deleted";
 export type NicotineType =
-  | "none"
-  | "alternative"
-  | "synthetic"
-  | "not_applicable";
+  "none" | "alternative" | "synthetic" | "not_applicable";
 export type DeviceType =
-  | "mtl"
-  | "dtl"
-  | "disposable"
-  | "common"
-  | "not_applicable";
+  "mtl" | "dtl" | "disposable" | "common" | "not_applicable";
 export type PaymentStatus =
   "pending" | "ready" | "paid" | "failed" | "canceled" | "refunded";
 export type PaymentMethod = "card" | "transfer";

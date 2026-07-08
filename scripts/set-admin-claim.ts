@@ -46,14 +46,17 @@ const db = getFirestore();
 const user = await auth.getUserByEmail(email);
 
 await auth.setCustomUserClaims(user.uid, { role });
-await db.collection("users").doc(user.uid).set(
-  {
-    uid: user.uid,
-    email: user.email || email,
-    role,
-    updatedAt: FieldValue.serverTimestamp(),
-  },
-  { merge: true },
-);
+await db
+  .collection("users")
+  .doc(user.uid)
+  .set(
+    {
+      uid: user.uid,
+      email: user.email || email,
+      role,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
 
 console.log(`Set ${role} claim for ${email} (${user.uid}).`);
