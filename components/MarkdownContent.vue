@@ -1,15 +1,21 @@
 <template>
   <ClientOnly>
-    <MdPreview
+    <div
       v-if="hasContent"
-      :id="previewId"
-      :model-value="viewerContent"
-      editor-id="customer-content-viewer"
-      theme="light"
-      preview-theme="github"
-      code-theme="github"
-      class="markdown-content"
-    />
+      class="markdown-viewer"
+      @click="openImagePreview"
+    >
+      <MdPreview
+        :id="previewId"
+        :model-value="viewerContent"
+        editor-id="customer-content-viewer"
+        theme="light"
+        preview-theme="github"
+        code-theme="github"
+        class="markdown-content"
+        no-img-zoom-in
+      />
+    </div>
     <p v-else class="markdown-content empty">등록된 본문이 없습니다.</p>
     <template #fallback>
       <div class="markdown-content fallback">
@@ -17,6 +23,12 @@
       </div>
     </template>
   </ClientOnly>
+  <ImageLightbox
+    :open="Boolean(previewImage.src)"
+    :src="previewImage.src"
+    :alt="previewImage.alt"
+    @close="closeImagePreview"
+  />
 </template>
 
 <script setup lang="ts">
@@ -27,6 +39,24 @@ const props = defineProps<{ content: string }>();
 const previewId = `md-preview-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
 const hasContent = computed(() => props.content.trim().length > 0);
 const viewerContent = computed(() => preserveMarkdownBlankLines(props.content));
+const previewImage = reactive({
+  src: "",
+  alt: "",
+});
+
+const openImagePreview = (event: MouseEvent) => {
+  const target = event.target;
+  if (!(target instanceof HTMLImageElement) || !target.currentSrc) return;
+
+  event.preventDefault();
+  previewImage.src = target.currentSrc;
+  previewImage.alt = target.alt || "상세 이미지";
+};
+
+const closeImagePreview = () => {
+  previewImage.src = "";
+  previewImage.alt = "";
+};
 </script>
 
 <style scoped>
@@ -66,6 +96,7 @@ const viewerContent = computed(() => preserveMarkdownBlankLines(props.content));
   border: 1px solid var(--color-line);
   border-radius: 8px;
   background: #fff;
+  cursor: zoom-in;
 }
 
 .markdown-content :deep(.md-editor-preview a) {

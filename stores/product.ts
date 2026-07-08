@@ -69,6 +69,22 @@ const normalizeNicotineType = (value: unknown): NicotineType => {
   return "not_applicable";
 };
 
+const normalizeStringList = (value: unknown) =>
+  Array.isArray(value)
+    ? value.map((item) => String(item).trim()).filter(Boolean)
+    : [];
+
+const normalizeProductBadges = (data: Partial<Product>) =>
+  normalizeStringList(data.badges);
+
+const normalizeProductCardBadges = (data: Partial<Product>) => {
+  const badges = normalizeProductBadges(data);
+  if (!Array.isArray(data.cardBadges)) return badges;
+  return normalizeStringList(data.cardBadges).filter((badge) =>
+    badges.includes(badge),
+  );
+};
+
 const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
   id,
   name: data.name || "",
@@ -87,7 +103,8 @@ const normalizeProduct = (id: string, data: Partial<Product>): Product => ({
   discountExcludedReason: data.discountExcludedReason || "",
   stock: Number(data.stock || 0),
   options: data.options || [],
-  badges: data.badges || [],
+  badges: normalizeProductBadges(data),
+  cardBadges: normalizeProductCardBadges(data),
   tags: data.tags || [],
   flavorProfile: data.flavorProfile || {
     sweetness: 0,

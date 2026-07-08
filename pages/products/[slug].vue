@@ -20,12 +20,19 @@
 
       <div class="product-detail">
         <section class="gallery">
-          <img
+          <button
             v-if="selectedImage"
-            :src="selectedImage"
-            :alt="product.name"
-            class="main-image"
-          />
+            type="button"
+            class="main-image-button"
+            :aria-label="`${product.name} 이미지 크게 보기`"
+            @click="openImageLightbox(selectedImage, product.name)"
+          >
+            <img
+              :src="selectedImage"
+              :alt="product.name"
+              class="main-image"
+            />
+          </button>
           <div v-else class="main-image image-empty">{{ product.name }}</div>
           <div v-if="galleryImages.length > 1" class="thumbs">
             <button
@@ -119,12 +126,16 @@
             />
             <p v-else class="restricted-copy">{{ description }}</p>
             <div v-if="product.detailImageUrls?.length" class="detail-images">
-              <img
+              <button
                 v-for="image in product.detailImageUrls"
                 :key="image"
-                :src="image"
-                :alt="product.name"
-              />
+                type="button"
+                class="detail-image-button"
+                :aria-label="`${product.name} 상세 이미지 크게 보기`"
+                @click="openImageLightbox(image, product.name)"
+              >
+                <img :src="image" :alt="product.name" />
+              </button>
             </div>
           </div>
 
@@ -198,6 +209,12 @@
           </div>
         </div>
       </Modal>
+      <ImageLightbox
+        :open="Boolean(lightboxImage.src)"
+        :src="lightboxImage.src"
+        :alt="lightboxImage.alt"
+        @close="closeImageLightbox"
+      />
     </div>
   </main>
 </template>
@@ -280,6 +297,10 @@ const selectedImage = ref("");
 const optionId = ref("");
 const quantity = ref(1);
 const cartPromptOpen = ref(false);
+const lightboxImage = reactive({
+  src: "",
+  alt: "",
+});
 type DetailTabKey = "description" | "reviews" | "policy";
 const activeDetailTab = ref<DetailTabKey>("description");
 const galleryImages = computed(() => {
@@ -345,6 +366,17 @@ const addToCart = () => {
 const goToCart = () => {
   cartPromptOpen.value = false;
   navigateTo("/cart");
+};
+
+const openImageLightbox = (src: string, alt: string) => {
+  if (!src) return;
+  lightboxImage.src = src;
+  lightboxImage.alt = alt;
+};
+
+const closeImageLightbox = () => {
+  lightboxImage.src = "";
+  lightboxImage.alt = "";
 };
 
 const absoluteUrl = (path: string | undefined) => {
@@ -430,6 +462,17 @@ useHead(() => {
   border-radius: 8px;
   background: #fff;
   object-fit: cover;
+}
+
+.main-image-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.main-image-button .main-image {
+  cursor: zoom-in;
 }
 
 .image-empty {
@@ -639,9 +682,17 @@ p {
   gap: 12px;
 }
 
-.detail-images img {
+.detail-image-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.detail-image-button img {
   width: 100%;
   border-radius: 8px;
+  cursor: zoom-in;
 }
 
 .reviews-panel {

@@ -245,8 +245,54 @@
           >
         </div>
         <div class="form-row wide">
-          <label>배지</label
-          ><Input v-model="badgesText" placeholder="쉼표로 구분" />
+          <label>상품 배지</label>
+          <div class="badge-picker">
+            <label
+              v-for="badge in badgeOptions"
+              :key="badge"
+              class="badge-option"
+              :class="{ selected: isBadgeSelected(badge) }"
+            >
+              <input
+                type="checkbox"
+                :checked="isBadgeSelected(badge)"
+                @change="toggleBadge(badge)"
+              >
+              <span>{{ badge }}</span>
+            </label>
+          </div>
+          <Input
+            v-model="badgesText"
+            placeholder="커스텀 배지는 쉼표로 구분해 추가"
+          />
+          <p class="field-help">
+            상품 상세 화면에 노출할 전체 배지를 선택합니다.
+          </p>
+        </div>
+        <div class="form-row wide">
+          <label>상품 카드 노출 배지</label>
+          <div v-if="selectedBadges.length" class="badge-picker">
+            <label
+              v-for="badge in selectedBadges"
+              :key="badge"
+              class="badge-option"
+              :class="{ selected: isCardBadgeSelected(badge) }"
+            >
+              <input
+                type="checkbox"
+                :checked="isCardBadgeSelected(badge)"
+                @change="toggleCardBadge(badge)"
+              >
+              <span>{{ badge }}</span>
+            </label>
+          </div>
+          <p v-else class="field-help">
+            먼저 상품 배지를 선택하거나 입력해 주세요.
+          </p>
+          <p class="field-help">
+            선택한 배지만 상품 리스트 카드에 노출됩니다. 상세 화면에는 상품
+            배지 전체가 표시됩니다.
+          </p>
         </div>
         <div class="form-row wide">
           <div class="label-row">
@@ -346,6 +392,23 @@ const fallbackGrades = [
   { gradeCode: "VIP", label: "VIP", level: 8, order: 4 },
   { gradeCode: "BLACK", label: "BLACK", level: 10, order: 5 },
 ];
+const presetBadges = [
+  "입문 추천",
+  "회원가",
+  "니코틴 프리",
+  "인기",
+  "신규",
+  "베스트",
+  "추천",
+  "특가",
+  "한정",
+  "라운지 픽",
+  "품절 임박",
+  "처음이라면",
+  "세트",
+  "성인 인증",
+  "회원 전용",
+];
 const activeGradeBenefits = computed(() => {
   const grades = productStore.gradeBenefits
     .filter((grade) => grade.isVisible)
@@ -397,6 +460,7 @@ const createEmptyProduct = (): Product => ({
   stock: 0,
   options: [defaultOption()],
   badges: [],
+  cardBadges: [],
   tags: [],
   flavorProfile: { sweetness: 0, coolness: 0, body: 0, mood: [], notes: [] },
   deviceType: "not_applicable",
@@ -432,6 +496,10 @@ const form = reactive<Product>(
 const imageUrlsText = ref((form.imageUrls || []).join("\n"));
 const detailImageUrlsText = ref((form.detailImageUrls || []).join("\n"));
 const badgesText = ref((form.badges || []).join(", "));
+const initialCardBadges = Array.isArray(form.cardBadges)
+  ? form.cardBadges
+  : form.badges || [];
+const cardBadgesText = ref(initialCardBadges.join(", "));
 const tagsText = ref((form.tags || []).join(", "));
 const seoKeywordsText = ref((form.seoKeywords || []).join(", "));
 const generatingSeoKeywords = ref(false);
@@ -513,6 +581,8 @@ const splitComma = (value: string) =>
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+const uniqueList = (items: string[]) =>
+  Array.from(new Set(items.map((item) => item.trim()).filter(Boolean)));
 const normalizeOptions = (options: ProductOption[]) =>
   (options.length ? options : [defaultOption()]).map((option, index) => {
     const optionName =
@@ -534,6 +604,52 @@ const normalizeOptions = (options: ProductOption[]) =>
 const removeCategory = (categoryId: string) => {
   form.categoryIds = form.categoryIds.filter((id) => id !== categoryId);
 };
+const selectedBadges = computed(() => uniqueList(splitComma(badgesText.value)));
+const badgeOptions = computed(() =>
+  uniqueList([
+    ...presetBadges,
+    ...productStore.products.flatMap((product) => product.badges || []),
+    ...selectedBadges.value,
+  ]),
+);
+const setSelectedBadges = (badges: string[]) => {
+  badgesText.value = uniqueList(badges).join(", ");
+};
+const isBadgeSelected = (badge: string) => selectedBadges.value.includes(badge);
+const toggleBadge = (badge: string) => {
+  const badges = selectedBadges.value;
+  setSelectedBadges(
+    badges.includes(badge)
+      ? badges.filter((item) => item !== badge)
+      : [...badges, badge],
+  );
+};
+const selectedCardBadges = computed(() => {
+  const allowedBadges = new Set(selectedBadges.value);
+  return uniqueList(splitComma(cardBadgesText.value)).filter((badge) =>
+    allowedBadges.has(badge),
+  );
+});
+const setSelectedCardBadges = (badges: string[]) => {
+  const allowedBadges = new Set(selectedBadges.value);
+  cardBadgesText.value = uniqueList(badges)
+    .filter((badge) => allowedBadges.has(badge))
+    .join(", ");
+};
+const isCardBadgeSelected = (badge: string) =>
+  selectedCardBadges.value.includes(badge);
+const toggleCardBadge = (badge: string) => {
+  const badges = selectedCardBadges.value;
+  setSelectedCardBadges(
+    badges.includes(badge)
+      ? badges.filter((item) => item !== badge)
+      : [...badges, badge],
+  );
+};
+
+watch(selectedBadges, () => {
+  setSelectedCardBadges(selectedCardBadges.value);
+});
 
 const generateProductKeywords = async (mode: KeywordMode) => {
   if (!form.name.trim()) {
@@ -594,6 +710,7 @@ const generateProductKeywords = async (mode: KeywordMode) => {
 
 const submit = async () => {
   const id = form.id || `product-${toSafeId(form.name)}`;
+  const normalizedBadges = uniqueList(splitComma(badgesText.value));
   const gradePrices: NonNullable<Product["gradePrices"]> = {};
   activeGradeBenefits.value.forEach((grade) => {
     const value = Number(gradePriceTexts.value[grade.gradeCode] || 0);
@@ -616,9 +733,12 @@ const submit = async () => {
     stock: Number(form.stock || 0),
     imageUrls: splitLines(imageUrlsText.value || form.thumbnailUrl),
     detailImageUrls: splitLines(detailImageUrlsText.value),
-    badges: splitComma(badgesText.value),
-    tags: splitComma(tagsText.value),
-    seoKeywords: splitComma(seoKeywordsText.value),
+    badges: normalizedBadges,
+    cardBadges: selectedCardBadges.value.filter((badge) =>
+      normalizedBadges.includes(badge),
+    ),
+    tags: uniqueList(splitComma(tagsText.value)),
+    seoKeywords: uniqueList(splitComma(seoKeywordsText.value)),
     seoTitle: (form.seoTitle || "").trim() || seoTitlePlaceholder.value,
     seoDescription:
       (form.seoDescription || "").trim() || form.shortDescription.trim(),
@@ -711,6 +831,38 @@ onMounted(async () => {
 
 .selected-chip:hover {
   border-color: var(--color-accent);
+}
+
+.badge-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge-option {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 0 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.badge-option input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+}
+
+.badge-option.selected {
+  border-color: var(--color-primary);
+  background: #f7f3ea;
 }
 
 .label-row {

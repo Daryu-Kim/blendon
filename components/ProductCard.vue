@@ -22,9 +22,9 @@
         </NuxtLink>
       </div>
       <ProductRatingSummary class="card-rating" :product-id="product.id" />
-      <div v-if="product.badges.length" class="badge-row">
+      <div v-if="cardBadges.length" class="badge-row">
         <ProductBadge
-          v-for="badge in product.badges"
+          v-for="badge in cardBadges"
           :key="badge"
           :label="badge"
         />
@@ -56,6 +56,11 @@ const productStore = useProductStore();
 const canBuy = computed(() =>
   canBuyProduct(props.product, auth.profile, productStore.gradeBenefits),
 );
+const cardBadges = computed(() => {
+  const badges = props.product.badges || [];
+  const selected = props.product.cardBadges ?? badges;
+  return selected.filter((badge) => badges.includes(badge));
+});
 </script>
 
 <style scoped>

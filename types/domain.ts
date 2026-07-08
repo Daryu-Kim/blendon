@@ -104,6 +104,7 @@ export interface Product {
   stock: number;
   options: ProductOption[];
   badges: string[];
+  cardBadges?: string[];
   tags: string[];
   flavorProfile: FlavorProfile;
   deviceType: DeviceType;
