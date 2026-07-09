@@ -27,6 +27,7 @@
             v-model="form.description"
             path-prefix="products/descriptions"
           />
+          <AdminDetailImageMarkdownConverter />
         </div>
       </div>
     </AdminFormSection>
