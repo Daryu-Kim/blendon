@@ -156,7 +156,7 @@ const sendViaFirebaseFunction = async (
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        Authorization: `Bearer ${options.functionSecret}`,
+        "X-Blendon-SMS-Secret": options.functionSecret,
       },
       body: JSON.stringify({
         to: options.to,
@@ -165,7 +165,18 @@ const sendViaFirebaseFunction = async (
         targetUid: input.targetUid,
       }),
     });
-    const data = (await response.json().catch(() => ({}))) as SmsFunctionResponse;
+    const rawBody = await response.text().catch(() => "");
+    const data = (
+      rawBody
+        ? (() => {
+            try {
+              return JSON.parse(rawBody);
+            } catch {
+              return {};
+            }
+          })()
+        : {}
+    ) as SmsFunctionResponse;
     const sms = normalizeSmsResult(data.sms, {
       messageType: options.messageType,
       refKey: options.refKey,
@@ -179,7 +190,7 @@ const sendViaFirebaseFunction = async (
       message:
         sms?.message ||
         data.message ||
-        "Firebase 문자 발송 함수 요청을 처리하지 못했습니다.",
+        `Firebase 문자 발송 함수 요청을 처리하지 못했습니다. (${response.status})`,
       messageType: sms?.messageType || options.messageType,
       refKey: sms?.refKey || options.refKey,
       messageKey: sms?.messageKey,

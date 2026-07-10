@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import type { Request, Response } from "express";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import {
@@ -157,20 +158,24 @@ const bearerTokenFrom = (value: string | undefined) =>
     .replace(/^Bearer\s+/i, "")
     .trim();
 
-const smsFunctionRegion = String(process.env.PPURIO_FUNCTION_REGION || "").trim();
-const smsVpcConnector = String(process.env.PPURIO_VPC_CONNECTOR || "").trim();
-const smsFunctionOptions = {
+const smsSecretFrom = (request: Request) =>
+  String(request.get("x-blendon-sms-secret") || "").trim() ||
+  bearerTokenFrom(request.get("authorization"));
+
+const SMS_FUNCTION_REGION = "asia-northeast3";
+const SMS_VPC_CONNECTOR =
+  "projects/blendon-5a301/locations/asia-northeast3/connectors/blendon-sms-conn";
+const fixedIpSmsFunctionOptions = {
+  region: SMS_FUNCTION_REGION,
   timeoutSeconds: 60,
-  ...(smsFunctionRegion ? { region: smsFunctionRegion } : {}),
-  ...(smsVpcConnector
-    ? {
-        vpcConnector: smsVpcConnector,
-        vpcConnectorEgressSettings: "ALL_TRAFFIC" as const,
-      }
-    : {}),
+  vpcConnector: SMS_VPC_CONNECTOR,
+  vpcConnectorEgressSettings: "ALL_TRAFFIC" as const,
 };
 
-export const sendPpurioSmsMessage = onRequest(smsFunctionOptions, async (request, response) => {
+const handlePpurioSmsMessage = async (
+  request: Request,
+  response: Response,
+) => {
   if (request.method === "OPTIONS") {
     response.status(204).send("");
     return;
@@ -182,7 +187,7 @@ export const sendPpurioSmsMessage = onRequest(smsFunctionOptions, async (request
   }
 
   const functionSecret = String(process.env.PPURIO_FUNCTION_SECRET || "").trim();
-  const requestSecret = bearerTokenFrom(request.get("authorization"));
+  const requestSecret = smsSecretFrom(request);
 
   if (!functionSecret || requestSecret !== functionSecret) {
     response.status(401).json({ ok: false, message: "Unauthorized" });
@@ -229,4 +234,14 @@ export const sendPpurioSmsMessage = onRequest(smsFunctionOptions, async (request
     sms,
     byteLength: getKoreanSmsBytes(message),
   });
-});
+};
+
+export const sendPpurioSmsMessage = onRequest(
+  { timeoutSeconds: 60 },
+  handlePpurioSmsMessage,
+);
+
+export const sendPpurioSmsMessageFixedIp = onRequest(
+  fixedIpSmsFunctionOptions,
+  handlePpurioSmsMessage,
+);
