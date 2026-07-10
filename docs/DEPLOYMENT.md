@@ -27,7 +27,8 @@ firebase deploy --only functions
 
 - 실제 사업자 정보 입력
 - `APICK_AUTH_KEY` 설정과 APick 주민등록증 진위확인 API 운영 상태 확인
-- `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_SECRET`, `SMS_SENDER_NUMBER` 설정과 회원가입/결제 안내 문자 발송 테스트
+- `PPURIO_*` 설정과 회원가입/결제 안내 문자 발송 테스트
+- Vercel Hobby에서 뿌리오 IP 등록이 필요한 경우 `PPURIO_FUNCTION_URL`, `PPURIO_FUNCTION_SECRET`로 Firebase Functions 문자 프록시 사용
 - 결제 안내 문자 발송/입금 확인 운영 절차 확정
 - 환불/취소 API 검증
 - Firestore Rules emulator 테스트

@@ -28,9 +28,10 @@ npm run dev
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: 서버/seed용 Firebase service account JSON
 - `ADMIN_INITIAL_EMAIL`: 초기 관리자 이메일
 - `APICK_AUTH_KEY`: APick 주민등록증 진위확인 API 인증키
-- `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_SECRET`, `SMS_SENDER_NUMBER`: 관리자 수동 회원 등록 안내 문자 발송 웹훅 설정
+- `PPURIO_API_BASE_URL`, `PPURIO_ACCOUNT`, `PPURIO_AUTH_KEY`, `PPURIO_SENDER_NUMBER`: 뿌리오 문자 발송 설정
+- `PPURIO_FUNCTION_URL`, `PPURIO_FUNCTION_SECRET`: Vercel에서 직접 뿌리오를 호출하지 않고 Firebase Functions 문자 프록시를 사용할 때 설정
 
-`FIREBASE_SERVICE_ACCOUNT_JSON`, `APICK_AUTH_KEY`, `SMS_WEBHOOK_SECRET`은 절대 `NUXT_PUBLIC_` 접두사를 붙이지 않습니다.
+`FIREBASE_SERVICE_ACCOUNT_JSON`, `APICK_AUTH_KEY`, `PPURIO_AUTH_KEY`, `PPURIO_FUNCTION_SECRET`은 절대 `NUXT_PUBLIC_` 접두사를 붙이지 않습니다.
 
 ## Firebase 설정
 

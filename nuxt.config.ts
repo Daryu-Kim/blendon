@@ -69,9 +69,13 @@ export default defineNuxtConfig({
     firebaseServiceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
     adminInitialEmail: process.env.ADMIN_INITIAL_EMAIL,
     apickAuthKey: process.env.APICK_AUTH_KEY,
-    smsWebhookUrl: process.env.SMS_WEBHOOK_URL,
-    smsWebhookSecret: process.env.SMS_WEBHOOK_SECRET,
-    smsSenderNumber: process.env.SMS_SENDER_NUMBER,
+    ppurioApiBaseUrl:
+      process.env.PPURIO_API_BASE_URL || "https://message.ppurio.com",
+    ppurioAccount: process.env.PPURIO_ACCOUNT,
+    ppurioAuthKey: process.env.PPURIO_AUTH_KEY,
+    ppurioSenderNumber: process.env.PPURIO_SENDER_NUMBER,
+    ppurioFunctionUrl: process.env.PPURIO_FUNCTION_URL,
+    ppurioFunctionSecret: process.env.PPURIO_FUNCTION_SECRET,
     openaiApiKey: process.env.OPENAI_API_KEY,
     openaiModel: process.env.OPENAI_MODEL || "gpt-5.5",
     public: {

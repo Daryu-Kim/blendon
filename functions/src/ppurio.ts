@@ -35,25 +35,15 @@ interface CachedPpurioToken {
   expiresAt: number;
 }
 
-interface SmsFunctionResponse {
-  ok?: boolean;
-  sms?: SendSmsResult;
-  message?: string;
-}
-
 let cachedToken: CachedPpurioToken | null = null;
 
-export const normalizePhoneDigits = (value: string) =>
-  value.replace(/\D/g, "");
+export const normalizePhoneDigits = (value: string) => value.replace(/\D/g, "");
 
-export const maskPhoneNumber = (value: string) => {
-  const digits = normalizePhoneDigits(value);
-  if (digits.length < 7) return value;
-  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
-};
-
-const ppurioErrorMessage = (response?: PpurioTokenResponse | PpurioMessageResponse) => {
-  if (!response?.code) return "뿌리오 문자 발송 요청을 처리하지 못했습니다.";
+const ppurioErrorMessage = (
+  response?: PpurioTokenResponse | PpurioMessageResponse,
+) => {
+  if (!response?.code)
+    return "뿌리오 문자 발송 요청을 처리하지 못했습니다.";
 
   const messages: Record<number, string> = {
     2000: "뿌리오 문자 발송 요청 형식이 올바르지 않습니다.",
@@ -70,7 +60,11 @@ const ppurioErrorMessage = (response?: PpurioTokenResponse | PpurioMessageRespon
     4007: "뿌리오 개발 인증키가 발급되지 않았습니다.",
   };
 
-  return messages[response.code] || response.description || "뿌리오 문자 발송 중 오류가 발생했습니다.";
+  return (
+    messages[response.code] ||
+    response.description ||
+    "뿌리오 문자 발송 중 오류가 발생했습니다."
+  );
 };
 
 const parsePpurioExpiredAt = (expired?: number | string) => {
@@ -88,7 +82,9 @@ const parsePpurioExpiredAt = (expired?: number | string) => {
     Number(second),
   ).getTime();
 
-  return Number.isFinite(expiresAt) ? expiresAt : Date.now() + 23 * 60 * 60 * 1000;
+  return Number.isFinite(expiresAt)
+    ? expiresAt
+    : Date.now() + 23 * 60 * 60 * 1000;
 };
 
 export const getKoreanSmsBytes = (value: string) =>
@@ -97,7 +93,7 @@ export const getKoreanSmsBytes = (value: string) =>
     return sum + (code <= 0x7f ? 1 : 2);
   }, 0);
 
-export const messageTypeFor = (message: string): "SMS" | "LMS" =>
+const messageTypeFor = (message: string): "SMS" | "LMS" =>
   getKoreanSmsBytes(message) <= 90 ? "SMS" : "LMS";
 
 const normalizeApiBaseUrl = (value: unknown) =>
@@ -109,97 +105,10 @@ const createRefKey = (input: SendSmsInput) =>
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .slice(0, 32);
 
-const normalizeSmsResult = (
-  sms: SendSmsResult | undefined,
-  fallback: Pick<SendSmsResult, "messageType" | "refKey">,
-): SendSmsResult | null => {
-  if (!sms) return null;
-  const status = ["sent", "not_configured", "failed"].includes(sms.status)
-    ? sms.status
-    : sms.sent
-      ? "sent"
-      : "failed";
-
-  return {
-    sent: Boolean(sms.sent),
-    status,
-    message: sms.message,
-    messageType: sms.messageType || fallback.messageType,
-    refKey: sms.refKey || fallback.refKey,
-    messageKey: sms.messageKey,
-  };
-};
-
-const sendViaFirebaseFunction = async (
-  input: SendSmsInput,
-  options: {
-    to: string;
-    functionUrl: string;
-    functionSecret: string;
-    messageType: "SMS" | "LMS";
-    refKey: string;
-  },
-): Promise<SendSmsResult> => {
-  if (!options.functionSecret) {
-    return {
-      sent: false,
-      status: "not_configured",
-      message: "Firebase 문자 발송 함수 시크릿이 설정되지 않았습니다.",
-      messageType: options.messageType,
-      refKey: options.refKey,
-    };
-  }
-
-  try {
-    const response = await fetch(options.functionUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${options.functionSecret}`,
-      },
-      body: JSON.stringify({
-        to: options.to,
-        message: input.message,
-        category: input.category,
-        targetUid: input.targetUid,
-      }),
-    });
-    const data = (await response.json().catch(() => ({}))) as SmsFunctionResponse;
-    const sms = normalizeSmsResult(data.sms, {
-      messageType: options.messageType,
-      refKey: options.refKey,
-    });
-
-    if (response.ok && sms) return sms;
-
-    return {
-      sent: false,
-      status: "failed",
-      message:
-        sms?.message ||
-        data.message ||
-        "Firebase 문자 발송 함수 요청을 처리하지 못했습니다.",
-      messageType: sms?.messageType || options.messageType,
-      refKey: sms?.refKey || options.refKey,
-      messageKey: sms?.messageKey,
-    };
-  } catch {
-    return {
-      sent: false,
-      status: "failed",
-      message: "Firebase 문자 발송 함수에 연결하지 못했습니다.",
-      messageType: options.messageType,
-      refKey: options.refKey,
-    };
-  }
-};
-
 const getPpurioAccessToken = async () => {
-  const config = useRuntimeConfig();
-  const account = String(config.ppurioAccount || "").trim();
-  const authKey = String(config.ppurioAuthKey || "").trim();
-  const apiBaseUrl = normalizeApiBaseUrl(config.ppurioApiBaseUrl);
+  const account = String(process.env.PPURIO_ACCOUNT || "").trim();
+  const authKey = String(process.env.PPURIO_AUTH_KEY || "").trim();
+  const apiBaseUrl = normalizeApiBaseUrl(process.env.PPURIO_API_BASE_URL);
 
   if (!account || !authKey) {
     return {
@@ -238,16 +147,13 @@ const getPpurioAccessToken = async () => {
   return { ok: true as const, token: cachedToken.token };
 };
 
-export const sendSmsMessage = async (
+export const sendPpurioSms = async (
   input: SendSmsInput,
 ): Promise<SendSmsResult> => {
-  const config = useRuntimeConfig();
-  const account = String(config.ppurioAccount || "").trim();
-  const from = normalizePhoneDigits(String(config.ppurioSenderNumber || ""));
+  const account = String(process.env.PPURIO_ACCOUNT || "").trim();
+  const from = normalizePhoneDigits(String(process.env.PPURIO_SENDER_NUMBER || ""));
   const to = normalizePhoneDigits(input.to);
-  const apiBaseUrl = normalizeApiBaseUrl(config.ppurioApiBaseUrl);
-  const functionUrl = String(config.ppurioFunctionUrl || "").trim();
-  const functionSecret = String(config.ppurioFunctionSecret || "").trim();
+  const apiBaseUrl = normalizeApiBaseUrl(process.env.PPURIO_API_BASE_URL);
   const messageType = messageTypeFor(input.message);
   const refKey = createRefKey(input);
 
@@ -261,17 +167,7 @@ export const sendSmsMessage = async (
     };
   }
 
-  if (functionUrl) {
-    return sendViaFirebaseFunction(input, {
-      to,
-      functionUrl,
-      functionSecret,
-      messageType,
-      refKey,
-    });
-  }
-
-  if (!account || !String(config.ppurioAuthKey || "").trim() || !from) {
+  if (!account || !String(process.env.PPURIO_AUTH_KEY || "").trim() || !from) {
     return {
       sent: false,
       status: "not_configured",

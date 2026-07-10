@@ -1,8 +1,13 @@
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
-import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import {
+  getKoreanSmsBytes,
+  normalizePhoneDigits,
+  sendPpurioSms,
+} from "./ppurio.js";
 
 initializeApp();
 
@@ -15,6 +20,13 @@ interface GradeBenefitDoc {
   gradeCode?: string;
   level?: number;
   minPurchaseAmount?: number;
+}
+
+interface SmsProxyBody {
+  to?: string;
+  message?: string;
+  category?: string;
+  targetUid?: string;
 }
 
 const GRADE_EVALUATION_MONTHS = 6;
@@ -138,4 +150,83 @@ export const setInitialAdminClaim = onCall(async (request) => {
       { merge: true },
     );
   return { ok: true, uid: user.uid };
+});
+
+const bearerTokenFrom = (value: string | undefined) =>
+  String(value || "")
+    .replace(/^Bearer\s+/i, "")
+    .trim();
+
+const smsFunctionRegion = String(process.env.PPURIO_FUNCTION_REGION || "").trim();
+const smsVpcConnector = String(process.env.PPURIO_VPC_CONNECTOR || "").trim();
+const smsFunctionOptions = {
+  timeoutSeconds: 60,
+  ...(smsFunctionRegion ? { region: smsFunctionRegion } : {}),
+  ...(smsVpcConnector
+    ? {
+        vpcConnector: smsVpcConnector,
+        vpcConnectorEgressSettings: "ALL_TRAFFIC" as const,
+      }
+    : {}),
+};
+
+export const sendPpurioSmsMessage = onRequest(smsFunctionOptions, async (request, response) => {
+  if (request.method === "OPTIONS") {
+    response.status(204).send("");
+    return;
+  }
+
+  if (request.method !== "POST") {
+    response.status(405).json({ ok: false, message: "Method not allowed" });
+    return;
+  }
+
+  const functionSecret = String(process.env.PPURIO_FUNCTION_SECRET || "").trim();
+  const requestSecret = bearerTokenFrom(request.get("authorization"));
+
+  if (!functionSecret || requestSecret !== functionSecret) {
+    response.status(401).json({ ok: false, message: "Unauthorized" });
+    return;
+  }
+
+  const body = (request.body || {}) as SmsProxyBody;
+  const to = normalizePhoneDigits(String(body.to || ""));
+  const message = String(body.message || "").trim();
+  const category = String(body.category || "server").trim() || "server";
+  const targetUid = body.targetUid ? String(body.targetUid) : undefined;
+
+  if (!to || to.length < 8 || to.length > 16) {
+    response
+      .status(400)
+      .json({ ok: false, message: "수신 번호를 정확히 입력해 주세요." });
+    return;
+  }
+
+  if (!message) {
+    response
+      .status(400)
+      .json({ ok: false, message: "메시지 내용을 입력해 주세요." });
+    return;
+  }
+
+  if (message.length > 2000) {
+    response
+      .status(400)
+      .json({ ok: false, message: "메시지는 최대 2000자까지 입력할 수 있습니다." });
+    return;
+  }
+
+  const sms = await sendPpurioSms({
+    to,
+    message,
+    category,
+    targetUid,
+  });
+  const statusCode = sms.sent ? 200 : sms.status === "not_configured" ? 503 : 502;
+
+  response.status(statusCode).json({
+    ok: sms.sent,
+    sms,
+    byteLength: getKoreanSmsBytes(message),
+  });
 });
