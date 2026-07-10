@@ -27,7 +27,9 @@
             v-model="form.description"
             path-prefix="products/descriptions"
           />
-          <AdminDetailImageMarkdownConverter />
+          <AdminDetailImageMarkdownConverter
+            @options-extracted="applyCrawledOptions"
+          />
         </div>
       </div>
     </AdminFormSection>
@@ -601,6 +603,15 @@ const normalizeOptions = (options: ProductOption[]) =>
       isActive: option.isActive !== false,
     };
   });
+
+const applyCrawledOptions = (options: ProductOption[]) => {
+  if (!options.length) return;
+  form.options = options;
+  form.stock = options.reduce(
+    (total, option) => total + Math.max(0, Number(option.stock || 0)),
+    0,
+  );
+};
 
 const removeCategory = (categoryId: string) => {
   form.categoryIds = form.categoryIds.filter((id) => id !== categoryId);

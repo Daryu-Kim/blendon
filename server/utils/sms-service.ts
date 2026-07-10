@@ -105,7 +105,8 @@ export const getKoreanSmsBytes = (value: string) =>
     return sum + (code <= 0x7f ? 1 : 2);
   }, 0);
 
-export const messageTypeFor = (_message: string): "LMS" => "LMS";
+export const messageTypeFor = (message: string): "SMS" | "LMS" =>
+  getKoreanSmsBytes(message) <= 90 ? "SMS" : "LMS";
 
 const normalizeApiBaseUrl = (value: unknown) =>
   String(value || "https://message.ppurio.com").replace(/\/+$/, "");

@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -503,6 +504,49 @@ export const useProductStore = defineStore("product", {
         status: "deleted",
         isVisible: false,
       });
+    },
+    async duplicateProduct(sourceId: string, targetId: string) {
+      const source = this.findById(sourceId);
+      const id = targetId.trim();
+
+      if (!source) throw new Error("복제할 상품을 찾을 수 없습니다.");
+      if (!id) throw new Error("복제 상품의 문서 ID를 입력해 주세요.");
+      if (id.includes("/"))
+        throw new Error("문서 ID에는 슬래시(/)를 사용할 수 없습니다.");
+      if (id === source.id)
+        throw new Error("원본 상품과 다른 문서 ID를 입력해 주세요.");
+      if (this.findById(id))
+        throw new Error("이미 사용 중인 상품 문서 ID입니다.");
+
+      const firebase = useNuxtApp().$firebase;
+      const now = new Date().toISOString();
+      const payload: Product = {
+        ...JSON.parse(JSON.stringify(source)),
+        id,
+        slug: id,
+        status: "draft",
+        isVisible: false,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      if (firebase.enabled && firebase.db) {
+        await useGlobalLoading().withLoading(async () => {
+          const targetRef = doc(firebase.db!, "products", id);
+          const targetSnap = await getDoc(targetRef);
+          if (targetSnap.exists())
+            throw new Error("이미 사용 중인 상품 문서 ID입니다.");
+
+          await setDoc(targetRef, {
+            ...payload,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        }, "상품을 복제하는 중");
+      }
+
+      this.products.unshift(payload);
+      return payload;
     },
     async toggleVisibility(id: string) {
       const product = this.findById(id);

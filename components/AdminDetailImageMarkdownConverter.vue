@@ -8,7 +8,9 @@
           마크다운 이미지 문법으로 복사합니다.
         </p>
       </div>
-      <span v-if="imageCount">{{ imageCount }}개 이미지</span>
+      <span v-if="imageCount || optionCount">
+        {{ imageCount }}개 이미지 · {{ optionCount }}개 옵션
+      </span>
     </div>
 
     <Textarea
@@ -39,21 +41,42 @@
         </Button>
       </div>
     </div>
+
+    <div v-if="convertedOptionsText" class="converter-result">
+      <Textarea v-model="convertedOptionsText" rows="5" readonly />
+      <div class="result-actions">
+        <p>추출된 옵션을 상품 옵션 영역에 반영했습니다.</p>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          @click="copyOptions"
+        >
+          옵션 복사
+        </Button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { ProductOption } from "~/types/domain";
 import {
   detailImageBuyerRules,
   detailImageUrlsToMarkdown,
   extractDetailImageUrls,
+  extractProductOptions,
+  productOptionsToText,
   type DetailImageBuyerKey,
 } from "~/utils/detail-image-markdown";
 
+const emit = defineEmits<{ optionsExtracted: [options: ProductOption[]] }>();
 const toast = useToast();
 const sourceHtml = ref("");
 const convertedMarkdown = ref("");
+const convertedOptionsText = ref("");
 const imageCount = ref(0);
+const optionCount = ref(0);
 
 const copyToClipboard = async (value: string) => {
   if (!import.meta.client) return false;
@@ -90,8 +113,18 @@ const copyResult = async () => {
   }
 };
 
+const copyOptions = async () => {
+  if (!convertedOptionsText.value) return;
+
+  try {
+    await copyToClipboard(convertedOptionsText.value);
+    toast.show("추출된 옵션 목록을 다시 복사했습니다.", "success");
+  } catch {
+    toast.show("클립보드 복사에 실패했어요.", "error");
+  }
+};
+
 const convertAndCopy = async (buyerKey: DetailImageBuyerKey) => {
-  const urls = extractDetailImageUrls(sourceHtml.value, buyerKey);
   const buyerLabel =
     detailImageBuyerRules.find((buyer) => buyer.key === buyerKey)?.label ||
     buyerKey;
@@ -101,10 +134,32 @@ const convertAndCopy = async (buyerKey: DetailImageBuyerKey) => {
     return;
   }
 
+  const urls = extractDetailImageUrls(sourceHtml.value, buyerKey);
+  const options = extractProductOptions(sourceHtml.value, buyerKey);
+
+  if (options.length) {
+    convertedOptionsText.value = productOptionsToText(options);
+    optionCount.value = options.length;
+    emit("optionsExtracted", options);
+  } else {
+    convertedOptionsText.value = "";
+    optionCount.value = 0;
+  }
+
   if (!urls.length) {
     convertedMarkdown.value = "";
     imageCount.value = 0;
-    toast.show(`${buyerLabel} 상세 이미지 링크를 찾지 못했어요.`, "warning");
+    if (options.length) {
+      toast.show(
+        `${buyerLabel} 옵션 ${options.length}개를 불러왔습니다. 상세 이미지 링크는 찾지 못했어요.`,
+        "success",
+      );
+      return;
+    }
+    toast.show(
+      `${buyerLabel} 상세 이미지 링크와 옵션을 찾지 못했어요.`,
+      "warning",
+    );
     return;
   }
 
@@ -113,7 +168,12 @@ const convertAndCopy = async (buyerKey: DetailImageBuyerKey) => {
 
   try {
     await copyToClipboard(convertedMarkdown.value);
-    toast.show(`${buyerLabel} 상세 이미지 ${urls.length}개를 복사했습니다.`, "success");
+    toast.show(
+      options.length
+        ? `${buyerLabel} 상세 이미지 ${urls.length}개를 복사하고 옵션 ${options.length}개를 불러왔습니다.`
+        : `${buyerLabel} 상세 이미지 ${urls.length}개를 복사했습니다.`,
+      "success",
+    );
   } catch {
     toast.show("변환은 완료했지만 클립보드 복사에 실패했어요.", "error");
   }

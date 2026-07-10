@@ -108,7 +108,7 @@ const byteLength = computed(() =>
     return sum + (code <= 0x7f ? 1 : 2);
   }, 0),
 );
-const messageType = computed(() => "LMS");
+const messageType = computed(() => (byteLength.value <= 90 ? "SMS" : "LMS"));
 
 const resetMessage = () => {
   form.message = defaultMessage();
