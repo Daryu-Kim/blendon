@@ -5,6 +5,7 @@ import type { Request, Response } from "express";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import {
+  getPpurioTokenDiagnostic,
   getKoreanSmsBytes,
   normalizePhoneDigits,
   sendPpurioSms,
@@ -235,6 +236,60 @@ const handlePpurioSmsMessage = async (
     byteLength: getKoreanSmsBytes(message),
   });
 };
+
+const getOutboundIpDiagnostic = async () => {
+  try {
+    const ipResponse = await fetch("https://api.ipify.org?format=json", {
+      headers: { Accept: "application/json" },
+    });
+    const data = (await ipResponse.json().catch(() => ({}))) as { ip?: string };
+
+    return {
+      ok: ipResponse.ok && Boolean(data.ip),
+      httpStatus: ipResponse.status,
+      ip: data.ip || null,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
+
+export const diagnosePpurioSmsEgress = onRequest(
+  fixedIpSmsFunctionOptions,
+  async (request, response) => {
+    if (request.method === "OPTIONS") {
+      response.status(204).send("");
+      return;
+    }
+
+    if (request.method !== "POST") {
+      response.status(405).json({ ok: false, message: "Method not allowed" });
+      return;
+    }
+
+    const functionSecret = String(process.env.PPURIO_FUNCTION_SECRET || "").trim();
+    const requestSecret = smsSecretFrom(request);
+
+    if (!functionSecret || requestSecret !== functionSecret) {
+      response.status(401).json({ ok: false, message: "Unauthorized" });
+      return;
+    }
+
+    const [outboundIp, ppurioToken] = await Promise.all([
+      getOutboundIpDiagnostic(),
+      getPpurioTokenDiagnostic(),
+    ]);
+
+    response.status(200).json({
+      ok: outboundIp.ok && ppurioToken.ok,
+      outboundIp,
+      ppurioToken,
+    });
+  },
+);
 
 export const sendPpurioSmsMessage = onRequest(
   { timeoutSeconds: 60 },

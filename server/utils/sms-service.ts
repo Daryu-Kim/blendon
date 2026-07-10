@@ -18,12 +18,12 @@ interface PpurioTokenResponse {
   token?: string;
   type?: string;
   expired?: number | string;
-  code?: number;
+  code?: number | string;
   description?: string;
 }
 
 interface PpurioMessageResponse {
-  code?: number;
+  code?: number | string;
   description?: string;
   refKey?: string;
   messageKey?: string;
@@ -43,8 +43,13 @@ interface SmsFunctionResponse {
 
 let cachedToken: CachedPpurioToken | null = null;
 
-export const normalizePhoneDigits = (value: string) =>
-  value.replace(/\D/g, "");
+export const normalizePhoneDigits = (value: string) => {
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("82") && digits.length >= 10) {
+    return `0${digits.slice(2)}`;
+  }
+  return digits;
+};
 
 export const maskPhoneNumber = (value: string) => {
   const digits = normalizePhoneDigits(value);
@@ -52,8 +57,11 @@ export const maskPhoneNumber = (value: string) => {
   return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
 };
 
+const ppurioCodeNumber = (code: number | string | undefined) => Number(code);
+
 const ppurioErrorMessage = (response?: PpurioTokenResponse | PpurioMessageResponse) => {
-  if (!response?.code) return "뿌리오 문자 발송 요청을 처리하지 못했습니다.";
+  const code = ppurioCodeNumber(response?.code);
+  if (!Number.isFinite(code)) return "뿌리오 문자 발송 요청을 처리하지 못했습니다.";
 
   const messages: Record<number, string> = {
     2000: "뿌리오 문자 발송 요청 형식이 올바르지 않습니다.",
@@ -70,7 +78,7 @@ const ppurioErrorMessage = (response?: PpurioTokenResponse | PpurioMessageRespon
     4007: "뿌리오 개발 인증키가 발급되지 않았습니다.",
   };
 
-  return messages[response.code] || response.description || "뿌리오 문자 발송 중 오류가 발생했습니다.";
+  return messages[code] || response?.description || "뿌리오 문자 발송 중 오류가 발생했습니다.";
 };
 
 const parsePpurioExpiredAt = (expired?: number | string) => {
@@ -97,14 +105,19 @@ export const getKoreanSmsBytes = (value: string) =>
     return sum + (code <= 0x7f ? 1 : 2);
   }, 0);
 
-export const messageTypeFor = (message: string): "SMS" | "LMS" =>
-  getKoreanSmsBytes(message) <= 90 ? "SMS" : "LMS";
+export const messageTypeFor = (_message: string): "LMS" => "LMS";
 
 const normalizeApiBaseUrl = (value: unknown) =>
   String(value || "https://message.ppurio.com").replace(/\/+$/, "");
 
 const createRefKey = (input: SendSmsInput) =>
-  [input.category, input.targetUid || Date.now().toString(36)]
+  [
+    input.category || "server",
+    input.targetUid ? input.targetUid.slice(-8) : "",
+    Date.now().toString(36),
+    Math.random().toString(36).slice(2, 8),
+  ]
+    .filter(Boolean)
     .join("-")
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .slice(0, 32);
@@ -324,8 +337,10 @@ export const sendSmsMessage = async (
     });
     const data = (await response.json().catch(() => ({}))) as PpurioMessageResponse;
 
-    if (!response.ok || data.code !== 1000) {
-      if (data.code === 3002 || data.code === 3005) cachedToken = null;
+    const code = ppurioCodeNumber(data.code);
+
+    if (!response.ok || code !== 1000) {
+      if (code === 3002 || code === 3005) cachedToken = null;
       return {
         sent: false,
         status: "failed",
@@ -338,6 +353,8 @@ export const sendSmsMessage = async (
     return {
       sent: true,
       status: "sent",
+      message:
+        "뿌리오에 발송 요청이 접수되었습니다. 실제 수신 결과는 뿌리오 전송결과에서 확인해 주세요.",
       messageType,
       refKey: data.refKey || refKey,
       messageKey: data.messageKey || data.messsageKey,

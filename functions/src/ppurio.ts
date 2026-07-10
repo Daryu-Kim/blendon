@@ -14,16 +14,24 @@ export interface SendSmsResult {
   messageKey?: string;
 }
 
+export interface PpurioTokenDiagnostic {
+  ok: boolean;
+  httpStatus?: number;
+  code?: number | string;
+  description?: string;
+  error?: string;
+}
+
 interface PpurioTokenResponse {
   token?: string;
   type?: string;
   expired?: number | string;
-  code?: number;
+  code?: number | string;
   description?: string;
 }
 
 interface PpurioMessageResponse {
-  code?: number;
+  code?: number | string;
   description?: string;
   refKey?: string;
   messageKey?: string;
@@ -37,12 +45,21 @@ interface CachedPpurioToken {
 
 let cachedToken: CachedPpurioToken | null = null;
 
-export const normalizePhoneDigits = (value: string) => value.replace(/\D/g, "");
+export const normalizePhoneDigits = (value: string) => {
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("82") && digits.length >= 10) {
+    return `0${digits.slice(2)}`;
+  }
+  return digits;
+};
+
+const ppurioCodeNumber = (code: number | string | undefined) => Number(code);
 
 const ppurioErrorMessage = (
   response?: PpurioTokenResponse | PpurioMessageResponse,
 ) => {
-  if (!response?.code)
+  const code = ppurioCodeNumber(response?.code);
+  if (!Number.isFinite(code))
     return "뿌리오 문자 발송 요청을 처리하지 못했습니다.";
 
   const messages: Record<number, string> = {
@@ -61,8 +78,8 @@ const ppurioErrorMessage = (
   };
 
   return (
-    messages[response.code] ||
-    response.description ||
+    messages[code] ||
+    response?.description ||
     "뿌리오 문자 발송 중 오류가 발생했습니다."
   );
 };
@@ -93,14 +110,19 @@ export const getKoreanSmsBytes = (value: string) =>
     return sum + (code <= 0x7f ? 1 : 2);
   }, 0);
 
-const messageTypeFor = (message: string): "SMS" | "LMS" =>
-  getKoreanSmsBytes(message) <= 90 ? "SMS" : "LMS";
+const messageTypeFor = (_message: string): "LMS" => "LMS";
 
 const normalizeApiBaseUrl = (value: unknown) =>
   String(value || "https://message.ppurio.com").replace(/\/+$/, "");
 
 const createRefKey = (input: SendSmsInput) =>
-  [input.category, input.targetUid || Date.now().toString(36)]
+  [
+    input.category || "server",
+    input.targetUid ? input.targetUid.slice(-8) : "",
+    Date.now().toString(36),
+    Math.random().toString(36).slice(2, 8),
+  ]
+    .filter(Boolean)
     .join("-")
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .slice(0, 32);
@@ -133,6 +155,11 @@ const getPpurioAccessToken = async () => {
 
   if (!response.ok || !data.token) {
     cachedToken = null;
+    console.warn("ppurio.token.failed", {
+      httpStatus: response.status,
+      code: data.code || null,
+      description: data.description || null,
+    });
     return {
       ok: false as const,
       message: ppurioErrorMessage(data),
@@ -146,6 +173,43 @@ const getPpurioAccessToken = async () => {
 
   return { ok: true as const, token: cachedToken.token };
 };
+
+export const getPpurioTokenDiagnostic =
+  async (): Promise<PpurioTokenDiagnostic> => {
+    const account = String(process.env.PPURIO_ACCOUNT || "").trim();
+    const authKey = String(process.env.PPURIO_AUTH_KEY || "").trim();
+    const apiBaseUrl = normalizeApiBaseUrl(process.env.PPURIO_API_BASE_URL);
+
+    if (!account || !authKey) {
+      return { ok: false, error: "PPURIO_ACCOUNT or PPURIO_AUTH_KEY is missing" };
+    }
+
+    try {
+      const basicToken = Buffer.from(`${account}:${authKey}`).toString("base64");
+      const response = await fetch(`${apiBaseUrl}/v1/token`, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${basicToken}`,
+          Accept: "application/json",
+        },
+      });
+      const data = (await response.json().catch(() => ({}))) as PpurioTokenResponse;
+
+      return {
+        ok: response.ok && Boolean(data.token),
+        httpStatus: response.status,
+        code: data.code,
+        description:
+          data.description ||
+          (data.token ? "PPURIO token issued successfully" : undefined),
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  };
 
 export const sendPpurioSms = async (
   input: SendSmsInput,
@@ -209,8 +273,17 @@ export const sendPpurioSms = async (
     });
     const data = (await response.json().catch(() => ({}))) as PpurioMessageResponse;
 
-    if (!response.ok || data.code !== 1000) {
-      if (data.code === 3002 || data.code === 3005) cachedToken = null;
+    const code = ppurioCodeNumber(data.code);
+
+    if (!response.ok || code !== 1000) {
+      if (code === 3002 || code === 3005) cachedToken = null;
+      console.warn("ppurio.message.failed", {
+        httpStatus: response.status,
+        code: data.code || null,
+        description: data.description || null,
+        refKey,
+        messageType,
+      });
       return {
         sent: false,
         status: "failed",
@@ -220,14 +293,25 @@ export const sendPpurioSms = async (
       };
     }
 
+    console.info("ppurio.message.sent", {
+      refKey: data.refKey || refKey,
+      messageType,
+      messageKey: data.messageKey || data.messsageKey || null,
+    });
+
     return {
       sent: true,
       status: "sent",
+      message:
+        "뿌리오에 발송 요청이 접수되었습니다. 실제 수신 결과는 뿌리오 전송결과에서 확인해 주세요.",
       messageType,
       refKey: data.refKey || refKey,
       messageKey: data.messageKey || data.messsageKey,
     };
-  } catch {
+  } catch (error) {
+    console.error("ppurio.message.exception", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return {
       sent: false,
       status: "failed",
