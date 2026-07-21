@@ -252,6 +252,41 @@ export const useProductReviewStore = defineStore("productReview", {
         this.loading = false;
       }
     },
+    async fetchPublicReviews(force = false) {
+      if (this.initialized && this.reviews.length && !force) return;
+      const firebase = useNuxtApp().$firebase;
+      this.loading = true;
+      try {
+        await useGlobalLoading().withLoading(async () => {
+          if (!firebase.enabled || !firebase.db) {
+            this.reviews = [];
+            this.initialized = true;
+            return;
+          }
+          const snap = await getDocs(
+            query(
+              collection(firebase.db, "productReviews"),
+              where("isVisible", "==", true),
+            ),
+          );
+          const reviews = snap.docs
+            .map((item) =>
+              normalizeReview(item.id, item.data() as Partial<ProductReview>),
+            )
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            );
+          this.reviews = reviews;
+          this.byProduct = {};
+          reviews.forEach((review) => this.syncReview(review));
+          this.initialized = true;
+        }, "구매후기를 불러오는 중");
+      } finally {
+        this.loading = false;
+      }
+    },
     async createReview(input: CreateReviewInput) {
       const auth = useAuthStore();
       await auth.init();

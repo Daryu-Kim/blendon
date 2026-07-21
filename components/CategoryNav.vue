@@ -3,7 +3,7 @@
     <NuxtLink
       class="nav-link"
       to="/products"
-      :class="{ active: !activeCategoryId }"
+      :class="{ active: route.path === '/products' && !activeCategoryId }"
       >전체</NuxtLink
     >
     <div v-for="category in categoryTree" :key="category.id" class="nav-item">
@@ -56,6 +56,13 @@
         </div>
       </div>
     </div>
+    <NuxtLink
+      class="nav-link"
+      to="/reviews"
+      :class="{ active: route.path === '/reviews' }"
+    >
+      구매후기
+    </NuxtLink>
   </nav>
 </template>
 
